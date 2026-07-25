@@ -1,7 +1,11 @@
 import actsData from './scripture/generated/sblgnt/acts.json'
+import ephesiansData from './scripture/generated/sblgnt/ephesians.json'
 import johnData from './scripture/generated/sblgnt/john.json'
 import lukeData from './scripture/generated/sblgnt/luke.json'
 import markData from './scripture/generated/sblgnt/mark.json'
+import matthewData from './scripture/generated/sblgnt/matthew.json'
+import revelationData from './scripture/generated/sblgnt/revelation.json'
+import romansData from './scripture/generated/sblgnt/romans.json'
 
 export type ScriptureVerse = {
   id: string
@@ -39,6 +43,14 @@ export type PrayerReading = OfficeEntryBase & {
   kind: 'prayer'
   textGreek: string
   textEnglish: string
+  weekdayGreek?: string
+  weekdayEnglish?: string
+  traditionalEnding?: {
+    labelGreek: string
+    labelEnglish: string
+    textGreek: string
+    textEnglish: string
+  }
 }
 
 export type OfficeEntry = ScriptureReading | PrayerReading
@@ -75,6 +87,16 @@ const progressiveBooks = [
   { data: actsData as ScriptureBookData, english: 'Acts', days: 7 },
 ] as const
 
+export const weekdayTabs = [
+  { short: 'ΚΥΡ', greek: 'Κυριακή', english: 'Sunday' },
+  { short: 'ΔΕΥ', greek: 'Δευτέρα', english: 'Monday' },
+  { short: 'ΤΡΙ', greek: 'Τρίτη', english: 'Tuesday' },
+  { short: 'ΤΕΤ', greek: 'Τετάρτη', english: 'Wednesday' },
+  { short: 'ΠΕΜ', greek: 'Πέμπτη', english: 'Thursday' },
+  { short: 'ΠΑΡ', greek: 'Παρασκευή', english: 'Friday' },
+  { short: 'ΣΑΒ', greek: 'Σάββατον', english: 'Saturday' },
+] as const
+
 const challengeRanges: PassageRange[] = [
   { startChapter: 1, startVerse: 1, endChapter: 1, endVerse: 4 },
   { startChapter: 1, startVerse: 5, endChapter: 1, endVerse: 25 },
@@ -100,6 +122,162 @@ function dayNumberFor(date: Date) {
 function flattenBook(book: ScriptureBookData) {
   return book.chapters.flatMap((chapter) => chapter.verses)
 }
+
+function passageText(
+  book: ScriptureBookData,
+  startChapter: number,
+  startVerse: number,
+  endChapter: number,
+  endVerse: number,
+) {
+  const verses = flattenBook(book)
+  const startId = `${book.book.id}.${startChapter}.${startVerse}`
+  const endId = `${book.book.id}.${endChapter}.${endVerse}`
+  const startIndex = verses.findIndex((verse) => verse.id === startId)
+  const endIndex = verses.findIndex((verse) => verse.id === endId)
+
+  if (startIndex < 0 || endIndex < startIndex) {
+    throw new Error(`Invalid configured prayer passage: ${startId}–${endId}`)
+  }
+
+  return verses
+    .slice(startIndex, endIndex + 1)
+    .map((verse) => verse.displayText)
+    .join(' ')
+}
+
+function scripturePrayer({
+  weekday,
+  titleGreek,
+  reference,
+  book,
+  startChapter,
+  startVerse,
+  endChapter,
+  endVerse,
+  englishAid,
+}: {
+  weekday: number
+  titleGreek: string
+  reference: string
+  book: ScriptureBookData
+  startChapter: number
+  startVerse: number
+  endChapter: number
+  endVerse: number
+  englishAid: string
+}): PrayerReading {
+  const day = weekdayTabs[weekday]
+
+  return {
+    id: `weekday-prayer:${weekday}`,
+    kind: 'prayer',
+    sectionGreek: 'Προσευχὴ ἡμέρας',
+    sectionEnglish: 'Prayer of the day',
+    titleGreek,
+    reference,
+    textGreek: passageText(
+      book,
+      startChapter,
+      startVerse,
+      endChapter,
+      endVerse,
+    ),
+    textEnglish: englishAid,
+    weekdayGreek: day.greek,
+    weekdayEnglish: day.english,
+  }
+}
+
+export const weeklyPrayerCycle: PrayerReading[] = [
+  {
+    ...scripturePrayer({
+      weekday: 0,
+      titleGreek: 'Πάτερ ἡμῶν',
+      reference: 'Matthew 6:9–13',
+      book: matthewData as ScriptureBookData,
+      startChapter: 6,
+      startVerse: 9,
+      endChapter: 6,
+      endVerse: 13,
+      englishAid: "The Lord's Prayer · Matthew 6:9–13",
+    }),
+    traditionalEnding: {
+      labelGreek: 'Παραδεδομένη δοξολογία',
+      labelEnglish: 'Traditional doxology · not part of the base SBLGNT text',
+      textGreek:
+        'ὅτι σοῦ ἐστιν ἡ βασιλεία καὶ ἡ δύναμις καὶ ἡ δόξα εἰς τοὺς αἰῶνας. Ἀμήν.',
+      textEnglish:
+        'For yours is the kingdom and the power and the glory forever. Amen.',
+    },
+  },
+  scripturePrayer({
+    weekday: 1,
+    titleGreek: 'Μεγαλύνει ἡ ψυχή μου τὸν κύριον',
+    reference: 'Luke 1:46–55',
+    book: lukeData as ScriptureBookData,
+    startChapter: 1,
+    startVerse: 46,
+    endChapter: 1,
+    endVerse: 55,
+    englishAid: 'The Magnificat · Luke 1:46–55',
+  }),
+  scripturePrayer({
+    weekday: 2,
+    titleGreek: 'Εὐλογητὸς κύριος ὁ θεὸς τοῦ Ἰσραήλ',
+    reference: 'Luke 1:68–79',
+    book: lukeData as ScriptureBookData,
+    startChapter: 1,
+    startVerse: 68,
+    endChapter: 1,
+    endVerse: 79,
+    englishAid: 'The Benedictus · Luke 1:68–79',
+  }),
+  scripturePrayer({
+    weekday: 3,
+    titleGreek: 'Νῦν ἀπολύεις τὸν δοῦλόν σου, δέσποτα',
+    reference: 'Luke 2:29–32',
+    book: lukeData as ScriptureBookData,
+    startChapter: 2,
+    startVerse: 29,
+    endChapter: 2,
+    endVerse: 32,
+    englishAid: 'The Nunc Dimittis · Luke 2:29–32',
+  }),
+  scripturePrayer({
+    weekday: 4,
+    titleGreek: 'Ὢ βάθος πλούτου καὶ σοφίας καὶ γνώσεως θεοῦ',
+    reference: 'Romans 11:33–36',
+    book: romansData as ScriptureBookData,
+    startChapter: 11,
+    startVerse: 33,
+    endChapter: 11,
+    endVerse: 36,
+    englishAid: 'A doxology to the wisdom of God · Romans 11:33–36',
+  }),
+  scripturePrayer({
+    weekday: 5,
+    titleGreek: 'Τούτου χάριν κάμπτω τὰ γόνατά μου',
+    reference: 'Ephesians 3:14–21',
+    book: ephesiansData as ScriptureBookData,
+    startChapter: 3,
+    startVerse: 14,
+    endChapter: 3,
+    endVerse: 21,
+    englishAid: "Paul's prayer for strength and fullness · Ephesians 3:14–21",
+  }),
+  scripturePrayer({
+    weekday: 6,
+    titleGreek: 'Ἅγιος ἅγιος ἅγιος κύριος ὁ θεὸς ὁ παντοκράτωρ',
+    reference: 'Revelation 4:8–11',
+    book: revelationData as ScriptureBookData,
+    startChapter: 4,
+    startVerse: 8,
+    endChapter: 4,
+    endVerse: 11,
+    englishAid: 'The worship of the living creatures and elders · Revelation 4:8–11',
+  }),
+]
 
 function formatReference(
   bookName: string,
@@ -200,18 +378,7 @@ export function resolveDailyOffice(date = new Date()): DailyOffice {
   return {
     dayNumber,
     psalmNumber: (dayNumber % PSALM_COUNT) + 1,
-    openingPrayer: {
-      id: 'prayer:opening',
-      kind: 'prayer',
-      sectionGreek: 'Πρὸ τῆς ἀναγνώσεως',
-      sectionEnglish: 'Opening Prayer',
-      titleGreek: 'Ἀποκάλυψον τοὺς ὀφθαλμούς μου',
-      reference: 'Psalm 118:18',
-      textGreek:
-        'ἀποκάλυψον τοὺς ὀφθαλμούς μου, καὶ κατανοήσω τὰ θαυμάσια ἐκ τοῦ νόμου σου. Ἀμήν.',
-      textEnglish:
-        'Open my eyes, and I shall understand the wondrous things of your law. Amen.',
-    },
+    openingPrayer: weeklyPrayerCycle[date.getDay()],
     progressiveReading: progressiveReadingFor(dayNumber),
     challengeReading: selectedPassage(
       lukeData as ScriptureBookData,
