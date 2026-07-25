@@ -8,38 +8,56 @@
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  --page: #eeeae1;
-  --paper: #faf8f2;
-  --ink: #27251f;
-  --muted: #797263;
-  --line: #d8d1c2;
-  --accent: #6f2e28;
-  --accent-dark: #52201c;
-  --surface-translucent: rgba(250, 248, 242, 0.96);
+  --page: #4a372c;
+  --paper: #f7f0df;
+  --ink: #2d261e;
+  --muted: #756a5b;
+  --line: #d8cdb7;
+  --line-strong: #c4b396;
+  --accent: #762f2c;
+  --accent-dark: #55201f;
+  --antique-gold: #927238;
+  --surface-translucent: rgba(247, 240, 223, 0.95);
   --hover: rgba(111, 46, 40, 0.04);
   --current: rgba(111, 46, 40, 0.065);
-  --shadow: rgba(55, 47, 34, 0.1);
+  --shadow: rgba(24, 16, 10, 0.24);
   --disabled: #b8b1a5;
   --focus: rgba(111, 46, 40, 0.28);
+  --shell-top: #5b4335;
+  --shell-highlight: rgba(183, 143, 91, 0.16);
+  --page-edge: #bcae92;
+  --inner-rule: rgba(146, 114, 56, 0.14);
+  --sheet-two: #e4dac6;
+  --sheet-three: #cdbfa5;
+  --paper-fleck: rgba(132, 98, 54, 0.055);
 }
 
 :root[data-theme='dark'] {
   color: #eee9dd;
   background: #141311;
   color-scheme: dark;
-  --page: #141311;
-  --paper: #1d1b18;
-  --ink: #eee9dd;
-  --muted: #aaa294;
-  --line: #3b362f;
-  --accent: #d39a86;
+  --page: #15120f;
+  --paper: #211d18;
+  --ink: #eee4d3;
+  --muted: #aaa08f;
+  --line: #41392e;
+  --line-strong: #584b3b;
+  --accent: #d29482;
   --accent-dark: #b97d69;
-  --surface-translucent: rgba(29, 27, 24, 0.96);
-  --hover: rgba(211, 154, 134, 0.08);
-  --current: rgba(211, 154, 134, 0.13);
+  --antique-gold: #c2a063;
+  --surface-translucent: rgba(33, 29, 24, 0.95);
+  --hover: rgba(210, 148, 130, 0.08);
+  --current: rgba(210, 148, 130, 0.13);
   --shadow: rgba(0, 0, 0, 0.42);
   --disabled: #6f685f;
   --focus: rgba(211, 154, 134, 0.38);
+  --shell-top: #2b211b;
+  --shell-highlight: rgba(194, 160, 99, 0.09);
+  --page-edge: #4b4034;
+  --inner-rule: rgba(194, 160, 99, 0.08);
+  --sheet-two: #29231d;
+  --sheet-three: #17130f;
+  --paper-fleck: rgba(210, 184, 139, 0.025);
 }
 
 * {
@@ -53,6 +71,7 @@ html {
 body {
   min-width: 320px;
   min-height: 100vh;
+  overflow-x: hidden;
   margin: 0;
   color: var(--ink);
   background: var(--page);
