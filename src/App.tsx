@@ -4,6 +4,8 @@ import { VoiceText } from './components/VoiceText'
 import {
   loadPsalm,
   resolveDailyOffice,
+  weekdayTabs,
+  weeklyPrayerCycle,
   type OfficeEntry,
   type ScriptureReading,
 } from './data/dailyOffice'
@@ -27,9 +29,11 @@ type OfficeDate = {
   iso: string
   greek: string
   english: string
+  weekdayGreek: string
 }
 
-type MealIconKind = 'cup' | 'bread' | 'fish'
+type MealIconKind = 'cup' | 'bread' | 'table'
+type OfficeIconKind = 'orans' | 'codex' | 'lamp' | 'lyre' | 'lampstand'
 
 const OPTIONS_KEY = 'anagnosis.options.v1'
 const POSITIONS_KEY = 'anagnosis.reading-positions.v1'
@@ -49,20 +53,87 @@ const GREEK_MONTHS = [
   'Δεκεμβρίου',
 ] as const
 
+const GREEK_WEEKDAYS = [
+  'Κυριακή',
+  'Δευτέρα',
+  'Τρίτη',
+  'Τετάρτη',
+  'Πέμπτη',
+  'Παρασκευή',
+  'Σάββατον',
+] as const
+
 interface OfficeReadingButtonProps {
   entry: OfficeEntry
+  icon: OfficeIconKind
   showGloss: boolean
   onOpen: (entry: OfficeEntry) => void
 }
 
-function ScrollIcon() {
+function OfficeIcon({ kind }: { kind: OfficeIconKind }) {
   return (
-    <span className="scroll-icon" aria-hidden="true">
-      <svg viewBox="0 0 28 28" role="presentation">
-        <path d="M10 7.5h8.25a2.25 2.25 0 0 1 0 4.5H17v8.5H8.75a2.25 2.25 0 0 1 0-4.5H11V7.5" />
-        <path d="M11 11h5.25M11 14h4.25" />
+    <span className={`office-icon office-icon-${kind}`} aria-hidden="true">
+      <svg viewBox="0 0 32 32" role="presentation">
+        {kind === 'orans' && (
+          <>
+            <circle cx="16" cy="7.2" r="2.8" />
+            <path d="M12.5 25.5 14 15l-4.5-3.2-4 4.2M19.5 25.5 18 15l4.5-3.2 4 4.2M11.2 26h9.6M14 15h4" />
+          </>
+        )}
+
+        {kind === 'codex' && (
+          <>
+            <path d="M4.5 7.5c4.4-1.3 8.2-.5 11.5 2.2v16c-3.3-2.7-7.1-3.5-11.5-2.2v-16ZM27.5 7.5c-4.4-1.3-8.2-.5-11.5 2.2v16c3.3-2.7 7.1-3.5 11.5-2.2v-16Z" />
+            <path d="M8 11.5c2.1-.2 3.8.2 5.4 1.2M19 12.7c1.6-1 3.3-1.4 5.4-1.2M8 15.5c2.1-.2 3.8.2 5.4 1.2M19 16.7c1.6-1 3.3-1.4 5.4-1.2" />
+          </>
+        )}
+
+        {kind === 'lamp' && (
+          <>
+            <path d="M7 18.5c4.4-4.8 10.8-6.6 18-4.3-1.1 5.7-5.3 9.3-11.5 9.3H8.2L7 18.5Z" />
+            <path d="M23.2 14.1c1.6-2.7 3.2-4.4 4.8-5.1M14 23.5v3M9.5 26.5h9" />
+            <path className="office-icon-flame" d="M27.8 8.8c-2.3-1.5-2.1-3.6-.2-5.3 1.3 2 .9 3.7.2 5.3Z" />
+          </>
+        )}
+
+        {kind === 'lyre' && (
+          <>
+            <path d="M9 5.5c-1.2 6.3-.8 12.6 2 18.5M23 5.5c1.2 6.3.8 12.6-2 18.5M11 24c3.1 2.2 6.9 2.2 10 0M9.5 9.5c4.2 2.2 8.8 2.2 13 0" />
+            <path d="M13 10.8v13.7M16 11v14.7M19 10.8v13.7" />
+          </>
+        )}
+
+        {kind === 'lampstand' && (
+          <>
+            <path d="M16 7v18M10 25h12M12.5 28h7M16 13c-4.5 0-7.5-2.4-7.5-6M16 18c-6.7 0-11-3-11-8M16 13c4.5 0 7.5-2.4 7.5-6M16 18c6.7 0 11-3 11-8" />
+            <path d="M5 7h3M8.5 4.5c-1.5-1.2-1.4-2.5 0-3.5 1 1.3.7 2.4 0 3.5ZM12.5 5h7M16 3.5c-1.5-1.2-1.4-2.5 0-3.5 1 1.3.7 2.4 0 3.5ZM23.5 4.5c-1.5-1.2-1.4-2.5 0-3.5 1 1.3.7 2.4 0 3.5ZM24 7h3" />
+          </>
+        )}
       </svg>
     </span>
+  )
+}
+
+function MenuIcon() {
+  return (
+    <svg viewBox="0 0 24 24" role="presentation" aria-hidden="true">
+      <path d="M5 7h14M5 12h14M5 17h14" />
+    </svg>
+  )
+}
+
+function ThemeIcon({ dark }: { dark: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" role="presentation" aria-hidden="true">
+      {dark ? (
+        <>
+          <circle cx="12" cy="12" r="3.5" />
+          <path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M18.7 5.3l-1.4 1.4M6.7 17.3l-1.4 1.4" />
+        </>
+      ) : (
+        <path d="M20 15.1A8 8 0 0 1 8.9 4a8 8 0 1 0 11.1 11.1Z" />
+      )}
+    </svg>
   )
 }
 
@@ -84,11 +155,11 @@ function MealIcon({ kind }: { kind: MealIconKind }) {
           </>
         )}
 
-        {kind === 'fish' && (
+        {kind === 'table' && (
           <>
-            <path d="M7 16c3.4-5 8.4-7.4 14-6.5l4-3v7.2l-4-3.2c-5.6-.9-10.6 1.5-14 5.5Z" />
-            <path d="M7 16c3.4 5 8.4 7.4 14 6.5l4 3v-7.2l-4 3.2C15.4 22.4 10.4 20 7 16Z" />
-            <circle cx="13" cy="14" r=".9" />
+            <path d="M5 18h22M8 18v9M24 18v9" />
+            <path d="M8.5 16.5c.5-3 2.4-4.8 5-4.8s4.5 1.8 5 4.8M11.5 13.1l1.3 1.5M15 12.1l1.1 1.6" />
+            <path d="M21 9.5h5l-.7 4a2 2 0 0 1-3.9 0l-.4-4ZM23.5 15.5v2.5" />
           </>
         )}
       </svg>
@@ -98,6 +169,7 @@ function MealIcon({ kind }: { kind: MealIconKind }) {
 
 function OfficeReadingButton({
   entry,
+  icon,
   showGloss,
   onOpen,
 }: OfficeReadingButtonProps) {
@@ -107,6 +179,8 @@ function OfficeReadingButton({
       type="button"
       onClick={() => onOpen(entry)}
     >
+      <OfficeIcon kind={icon} />
+
       <span className="office-reading-copy">
         <VoiceText
           term={{
@@ -118,14 +192,10 @@ function OfficeReadingButton({
 
         <span className="office-reading-title">{entry.titleGreek}</span>
 
-        {showGloss && (
-          <span className="office-reading-reference">{entry.reference}</span>
-        )}
+        <span className="office-reading-reference">{entry.reference}</span>
       </span>
 
-      <span className="office-reading-action">
-        <ScrollIcon />
-      </span>
+      <span className="office-reading-disclosure" aria-hidden="true">›</span>
     </button>
   )
 }
@@ -137,7 +207,12 @@ function MealPrayerDock({
   showGloss: boolean
   onOpen: (entry: OfficeEntry) => void
 }) {
-  const icons: MealIconKind[] = ['cup', 'bread', 'fish']
+  const icons: MealIconKind[] = ['cup', 'bread', 'table']
+  const labels = [
+    { greek: 'Ποτήριον', english: 'Cup' },
+    { greek: 'Κλάσμα', english: 'Bread' },
+    { greek: 'Μετὰ τροφήν', english: 'After food' },
+  ]
 
   return (
     <section className="meal-prayers" aria-labelledby="meal-prayers-title">
@@ -160,7 +235,10 @@ function MealPrayerDock({
             }
           >
             <MealIcon kind={icons[index]} />
-            <span>{prayer.sectionGreek}</span>
+            <span className="meal-prayer-label">
+              <span>{labels[index].greek}</span>
+              {showGloss && <small>{labels[index].english}</small>}
+            </span>
           </button>
         ))}
       </nav>
@@ -195,6 +273,7 @@ function formatOfficeDate(date: Date): OfficeDate {
       month: 'long',
       day: 'numeric',
     }).format(date),
+    weekdayGreek: GREEK_WEEKDAYS[date.getDay()],
   }
 }
 
@@ -240,7 +319,11 @@ function App() {
   const [currentVerseIndex, setCurrentVerseIndex] = useState(0)
   const [psalmReading, setPsalmReading] = useState<ScriptureReading | null>(null)
   const [psalmError, setPsalmError] = useState<string | null>(null)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [selectedWeekday, setSelectedWeekday] = useState(today.getDay())
   const verseElements = useRef<Record<string, HTMLElement | null>>({})
+  const menuTrigger = useRef<HTMLButtonElement | null>(null)
+  const menuPanel = useRef<HTMLElement | null>(null)
 
   const scriptureReading =
     activeEntry?.kind === 'scripture' ? activeEntry : null
@@ -250,6 +333,26 @@ function App() {
     window.localStorage.setItem(OPTIONS_KEY, JSON.stringify(options))
     document.documentElement.dataset.theme = options.darkMode ? 'dark' : 'light'
   }, [options])
+
+  useEffect(() => {
+    if (!menuOpen) {
+      return
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMenuOpen(false)
+        window.requestAnimationFrame(() => menuTrigger.current?.focus())
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    window.requestAnimationFrame(() => {
+      menuPanel.current?.querySelector<HTMLInputElement>('input')?.focus()
+    })
+
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [menuOpen])
 
   useEffect(() => {
     if (!options.showPsalm) {
@@ -316,8 +419,22 @@ function App() {
       setCurrentVerseIndex(0)
     }
 
+    if (entry.id.startsWith('weekday-prayer:')) {
+      setSelectedWeekday(today.getDay())
+    }
+
     setActiveEntry(entry)
     setView('reader')
+  }
+
+  function previewWeekday(weekday: number) {
+    setSelectedWeekday(weekday)
+    setActiveEntry(weeklyPrayerCycle[weekday])
+  }
+
+  function closeMenu() {
+    setMenuOpen(false)
+    window.requestAnimationFrame(() => menuTrigger.current?.focus())
   }
 
   function moveToVerse(nextIndex: number) {
@@ -347,16 +464,43 @@ function App() {
     return (
       <main className="office-shell">
         <section className="office-card" aria-labelledby="office-title">
-          <header className="office-masthead">
-            <p className="app-name">Ἀνάγνωσις</p>
+          <header className="office-toolbar">
+            <button
+              className="icon-button"
+              type="button"
+              ref={menuTrigger}
+              aria-label="Ἐπιλογαί"
+              aria-haspopup="dialog"
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen(true)}
+            >
+              <MenuIcon />
+            </button>
 
-            <time className="calendar-date" dateTime={officeDate.iso}>
-              <span className="calendar-kicker">Σήμερον</span>
-              <span className="calendar-greek">{officeDate.greek}</span>
+            <div className="office-identity">
+              <p className="app-name">Ἀνάγνωσις</p>
+              <time className="toolbar-date" dateTime={officeDate.iso}>
+                <span>{officeDate.weekdayGreek}</span>
+                <span aria-hidden="true">·</span>
+                <span>{officeDate.greek}</span>
+              </time>
               {options.showGloss && (
                 <span className="calendar-english">{officeDate.english}</span>
               )}
-            </time>
+            </div>
+
+            <button
+              className="icon-button"
+              type="button"
+              aria-label={
+                options.darkMode
+                  ? 'Χρῆσαι φωτεινῇ ὄψει'
+                  : 'Χρῆσαι σκοτεινῇ ὄψει'
+              }
+              onClick={() => updateOption('darkMode', !options.darkMode)}
+            >
+              <ThemeIcon dark={options.darkMode} />
+            </button>
           </header>
 
           <header className="office-heading" id="office-title">
@@ -369,6 +513,7 @@ function App() {
           <div className="office-list">
             <OfficeReadingButton
               entry={office.openingPrayer}
+              icon="orans"
               showGloss={options.showGloss}
               onOpen={openEntry}
             />
@@ -376,6 +521,7 @@ function App() {
             {options.showProgressive && (
               <OfficeReadingButton
                 entry={office.progressiveReading}
+                icon="codex"
                 showGloss={options.showGloss}
                 onOpen={openEntry}
               />
@@ -384,6 +530,7 @@ function App() {
             {options.showChallenge && (
               <OfficeReadingButton
                 entry={office.challengeReading}
+                icon="lamp"
                 showGloss={options.showGloss}
                 onOpen={openEntry}
               />
@@ -393,6 +540,7 @@ function App() {
               (psalmReading ? (
                 <OfficeReadingButton
                   entry={psalmReading}
+                  icon="lyre"
                   showGloss={options.showGloss}
                   onOpen={openEntry}
                 />
@@ -406,89 +554,11 @@ function App() {
 
             <OfficeReadingButton
               entry={office.closingPrayer}
+              icon="lampstand"
               showGloss={options.showGloss}
               onOpen={openEntry}
             />
           </div>
-
-          <fieldset className="options-panel">
-            <legend>
-              <VoiceText
-                term={UI.options}
-                showGloss={options.showGloss}
-              />
-            </legend>
-
-            <label>
-              <input
-                type="checkbox"
-                checked={options.showGloss}
-                onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                  updateOption('showGloss', event.target.checked)
-                }
-              />
-              <VoiceText
-                term={UI.englishAids}
-                showGloss={options.showGloss}
-              />
-            </label>
-
-            <label>
-              <input
-                type="checkbox"
-                checked={options.darkMode}
-                onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                  updateOption('darkMode', event.target.checked)
-                }
-              />
-              <VoiceText
-                term={UI.darkMode}
-                showGloss={options.showGloss}
-              />
-            </label>
-
-            <label>
-              <input
-                type="checkbox"
-                checked={options.showProgressive}
-                onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                  updateOption('showProgressive', event.target.checked)
-                }
-              />
-              <VoiceText
-                term={UI.progressiveReading}
-                showGloss={options.showGloss}
-              />
-            </label>
-
-            <label>
-              <input
-                type="checkbox"
-                checked={options.showChallenge}
-                onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                  updateOption('showChallenge', event.target.checked)
-                }
-              />
-              <VoiceText
-                term={UI.challengeReading}
-                showGloss={options.showGloss}
-              />
-            </label>
-
-            <label>
-              <input
-                type="checkbox"
-                checked={options.showPsalm}
-                onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                  updateOption('showPsalm', event.target.checked)
-                }
-              />
-              <VoiceText
-                term={UI.psalm}
-                showGloss={options.showGloss}
-              />
-            </label>
-          </fieldset>
 
           <MealPrayerDock
             showGloss={options.showGloss}
@@ -496,9 +566,89 @@ function App() {
           />
 
           <p className="source-note">
-            SBLGNT 1.2 · CC BY 4.0 · LXX Swete / First1KGreek · CC BY-SA 4.0 · Διδαχὴ 9–10 · public domain
+            SBLGNT 1.2 · CC BY 4.0 · LXX Swete / First1KGreek · CC BY-SA 4.0 · Διδαχὴ 9–10 and traditional Greek prayers · public domain
           </p>
         </section>
+
+        {menuOpen && (
+          <div
+            className="options-backdrop"
+            role="presentation"
+            onPointerDown={(event) => {
+              if (event.target === event.currentTarget) {
+                closeMenu()
+              }
+            }}
+          >
+            <section
+              className="options-menu"
+              ref={menuPanel}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="options-title"
+            >
+              <header className="options-menu-header">
+                <h2 id="options-title">
+                  <VoiceText
+                    term={UI.options}
+                    showGloss={options.showGloss}
+                  />
+                </h2>
+                <button
+                  className="options-close"
+                  type="button"
+                  aria-label="Κλεῖσον"
+                  onClick={closeMenu}
+                >
+                  ×
+                </button>
+              </header>
+
+              <div className="options-list">
+                {[
+                  {
+                    key: 'showGloss',
+                    term: UI.englishAids,
+                  },
+                  {
+                    key: 'showProgressive',
+                    term: UI.progressiveReading,
+                  },
+                  {
+                    key: 'showChallenge',
+                    term: UI.challengeReading,
+                  },
+                  {
+                    key: 'showPsalm',
+                    term: UI.psalm,
+                  },
+                ].map(({ key, term }) => {
+                  const optionKey = key as Exclude<
+                    keyof ReaderOptions,
+                    'darkMode'
+                  >
+
+                  return (
+                    <label className="option-switch" key={key}>
+                      <VoiceText
+                        term={term}
+                        showGloss={options.showGloss}
+                      />
+                      <input
+                        type="checkbox"
+                        checked={options[optionKey]}
+                        onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                          updateOption(optionKey, event.target.checked)
+                        }
+                      />
+                      <span className="switch-track" aria-hidden="true" />
+                    </label>
+                  )
+                })}
+              </div>
+            </section>
+          </div>
+        )}
       </main>
     )
   }
@@ -506,6 +656,10 @@ function App() {
   if (!activeEntry) {
     return null
   }
+
+  const isWeekdayPrayer =
+    activeEntry.kind === 'prayer' &&
+    activeEntry.id.startsWith('weekday-prayer:')
 
   return (
     <main className="reader-shell">
@@ -535,11 +689,66 @@ function App() {
       {activeEntry.kind === 'prayer' ? (
         <article className="prayer-reader" lang="grc">
           <p className="prayer-section">{activeEntry.sectionGreek}</p>
+
+          {isWeekdayPrayer && (
+            <nav
+              className="weekday-tabs"
+              aria-label="Ἡμέραι προσευχῆς"
+            >
+              {weekdayTabs.map((day, index) => (
+                <button
+                  className={[
+                    'weekday-tab',
+                    index === selectedWeekday ? 'is-selected' : '',
+                    index === today.getDay() ? 'is-today' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                  type="button"
+                  key={day.short}
+                  aria-label={`${day.greek}${index === today.getDay() ? ', σήμερον' : ''}`}
+                  aria-pressed={index === selectedWeekday}
+                  onClick={() => previewWeekday(index)}
+                >
+                  {day.short}
+                </button>
+              ))}
+            </nav>
+          )}
+
+          <div className="prayer-meta">
+            {activeEntry.weekdayGreek && (
+              <p className="prayer-weekday">{activeEntry.weekdayGreek}</p>
+            )}
+            <h1 className="prayer-name">{activeEntry.titleGreek}</h1>
+            <p className="prayer-reference">{activeEntry.reference}</p>
+          </div>
+
           <p className="prayer-text">{activeEntry.textGreek}</p>
+
+          {activeEntry.traditionalEnding && (
+            <aside className="traditional-ending">
+              <p className="traditional-ending-label">
+                {activeEntry.traditionalEnding.labelGreek}
+                {options.showGloss && (
+                  <span lang="en">
+                    {activeEntry.traditionalEnding.labelEnglish}
+                  </span>
+                )}
+              </p>
+              <p>{activeEntry.traditionalEnding.textGreek}</p>
+            </aside>
+          )}
 
           {options.showGloss && (
             <p className="prayer-gloss" lang="en">
               {activeEntry.textEnglish}
+              {activeEntry.traditionalEnding && (
+                <>
+                  <br />
+                  {activeEntry.traditionalEnding.textEnglish}
+                </>
+              )}
             </p>
           )}
         </article>

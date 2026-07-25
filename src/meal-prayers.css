@@ -1,13 +1,16 @@
 .meal-prayers {
-  margin-top: 34px;
-  padding-top: 26px;
-  border-top: 1px solid var(--line);
+  position: relative;
+  z-index: 4;
+  margin-top: 23px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line-strong);
 }
 
 .meal-prayers-heading {
-  display: grid;
-  justify-items: center;
-  gap: 5px;
+  display: flex;
+  gap: 7px;
+  align-items: baseline;
+  justify-content: center;
   color: var(--ink);
   font-family:
     "Iowan Old Style",
@@ -15,7 +18,7 @@
     "Book Antiqua",
     "Times New Roman",
     serif;
-  font-size: 1.05rem;
+  font-size: 0.92rem;
   text-align: center;
 }
 
@@ -24,31 +27,37 @@
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
-  font-size: 0.68rem;
+  font-size: 0.58rem;
   font-weight: 500;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
 .meal-prayer-dock {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin-top: 18px;
+  gap: 7px;
+  margin-top: 12px;
 }
 
 .meal-prayer-button {
   display: grid;
+  grid-template-rows: 40px auto;
+  justify-items: center;
   min-width: 0;
-  min-height: 112px;
-  place-items: center;
-  align-content: center;
-  gap: 10px;
-  padding: 14px 8px 12px;
+  min-height: 84px;
+  gap: 5px;
+  align-items: center;
+  padding: 8px 6px 7px;
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: 3px 8px 3px 8px;
   color: var(--ink);
-  background: color-mix(in srgb, var(--paper) 92%, var(--accent) 8%);
+  background:
+    linear-gradient(145deg, rgba(255, 249, 225, 0.34), transparent 55%),
+    color-mix(in srgb, var(--paper) 89%, var(--accent) 11%);
+  box-shadow:
+    inset 0 0 0 2px var(--inner-rule),
+    0 2px 0 color-mix(in srgb, var(--page-edge) 55%, transparent);
   cursor: pointer;
   font-family:
     "Iowan Old Style",
@@ -64,35 +73,51 @@
     transform 130ms ease;
 }
 
-.meal-prayer-button > span:last-child {
+.meal-prayer-label {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+  justify-items: center;
+  text-align: center;
+}
+
+.meal-prayer-label > span {
   max-width: 100%;
   overflow: hidden;
-  font-size: 0.86rem;
-  line-height: 1.2;
-  text-align: center;
+  font-size: 0.8rem;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meal-prayer-label small {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--muted);
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  font-size: 0.53rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .meal-icon {
   display: grid;
-  width: 52px;
-  height: 52px;
+  width: 40px;
+  height: 40px;
   place-items: center;
-  border: 1px solid color-mix(in srgb, var(--accent) 60%, var(--line));
-  border-radius: 12px;
   color: var(--accent);
-  background: color-mix(in srgb, var(--paper) 96%, var(--accent) 4%);
 }
 
 .meal-icon svg {
-  width: 31px;
-  height: 31px;
+  width: 36px;
+  height: 36px;
   fill: none;
   stroke: currentColor;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 1.35;
+  stroke-width: 1.55;
 }
 
 .meal-icon circle {
@@ -104,14 +129,6 @@
   transform: scale(0.975);
 }
 
-.prayer-reader .prayer-section {
-  margin-bottom: 26px;
-}
-
-.prayer-reader .prayer-text {
-  margin-top: 0;
-}
-
 @media (hover: hover) {
   .meal-prayer-button:hover {
     border-color: color-mix(in srgb, var(--accent) 60%, var(--line));
@@ -121,30 +138,33 @@
 
 @media (max-width: 640px) {
   .meal-prayers {
-    margin-top: 30px;
-    padding-top: 24px;
+    margin-top: 20px;
+    padding-top: 16px;
   }
 
   .meal-prayer-dock {
-    gap: 8px;
+    gap: 5px;
   }
 
   .meal-prayer-button {
-    min-height: 104px;
-    padding-inline: 5px;
+    grid-template-rows: 38px auto;
+    min-height: 82px;
+    gap: 4px;
+    padding: 7px 3px 6px;
+  }
+
+  .meal-prayer-label > span {
+    font-size: 0.7rem;
   }
 
   .meal-icon {
-    width: 48px;
-    height: 48px;
+    width: 38px;
+    height: 38px;
   }
 
-  .meal-prayer-button > span:last-child {
-    font-size: 0.78rem;
-  }
-
-  .prayer-reader .prayer-section {
-    margin-bottom: 22px;
+  .meal-icon svg {
+    width: 34px;
+    height: 34px;
   }
 }
 
