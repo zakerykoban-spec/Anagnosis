@@ -33,7 +33,7 @@ type OfficeDate = {
 }
 
 type MealIconKind = 'cup' | 'bread' | 'table'
-type OfficeIconKind = 'orans' | 'codex' | 'lamp' | 'lyre' | 'lampstand'
+type OfficeIconKind = 'prayer' | 'codex' | 'lamp' | 'lyre' | 'lampstand'
 
 const OPTIONS_KEY = 'anagnosis.options.v1'
 const POSITIONS_KEY = 'anagnosis.reading-positions.v1'
@@ -74,10 +74,11 @@ function OfficeIcon({ kind }: { kind: OfficeIconKind }) {
   return (
     <span className={`office-icon office-icon-${kind}`} aria-hidden="true">
       <svg viewBox="0 0 32 32" role="presentation">
-        {kind === 'orans' && (
+        {kind === 'prayer' && (
           <>
-            <circle cx="16" cy="7.2" r="2.8" />
-            <path d="M12.5 25.5 14 15l-4.5-3.2-4 4.2M19.5 25.5 18 15l4.5-3.2 4 4.2M11.2 26h9.6M14 15h4" />
+            <path d="M15.8 5.2c-1.4.8-2.3 2.4-3.1 4.2l-3.2 7.3c-.8 1.9-2.1 3.4-4 4.8l4.7 5.1c2.6-2.2 4.4-4.9 5.8-8.2" />
+            <path d="M16.2 5.2c1.4.8 2.3 2.4 3.1 4.2l3.2 7.3c.8 1.9 2.1 3.4 4 4.8l-4.7 5.1c-2.6-2.2-4.4-4.9-5.8-8.2" />
+            <path d="M16 5.2v13.2M12.7 9.4l3.3 9M19.3 9.4l-3.3 9M7.4 23.4l4.6 4.2M24.6 23.4 20 27.6" />
           </>
         )}
 
@@ -513,7 +514,7 @@ function App() {
           <div className="office-list">
             <OfficeReadingButton
               entry={office.openingPrayer}
-              icon="orans"
+              icon="prayer"
               showGloss={options.showGloss}
               onOpen={openEntry}
             />
