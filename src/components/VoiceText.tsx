@@ -1,4 +1,5 @@
-import type { UiTerm } from "../ui/lexicon"
+import type { UiTerm } from '../ui/lexicon'
+import './VoiceText.css'
 
 interface VoiceTextProps {
   term: UiTerm
@@ -10,16 +11,12 @@ export function VoiceText({
   showGloss = true,
 }: VoiceTextProps) {
   return (
-    <div className="voice-text">
-      <div className="voice-text-greek">
-        {term.greek}
-      </div>
+    <span className="voice-text">
+      <span className="voice-text-greek">{term.greek}</span>
 
       {showGloss && (
-        <div className="voice-text-gloss">
-          {term.english}
-        </div>
+        <span className="voice-text-gloss">{term.english}</span>
       )}
-    </div>
+    </span>
   )
 }
