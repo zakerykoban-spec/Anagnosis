@@ -1,11 +1,8 @@
 import actsData from './scripture/generated/sblgnt/acts.json'
-import ephesiansData from './scripture/generated/sblgnt/ephesians.json'
 import johnData from './scripture/generated/sblgnt/john.json'
 import lukeData from './scripture/generated/sblgnt/luke.json'
 import markData from './scripture/generated/sblgnt/mark.json'
 import matthewData from './scripture/generated/sblgnt/matthew.json'
-import revelationData from './scripture/generated/sblgnt/revelation.json'
-import romansData from './scripture/generated/sblgnt/romans.json'
 
 export type ScriptureVerse = {
   id: string
@@ -143,7 +140,7 @@ function passageText(
   return verses
     .slice(startIndex, endIndex + 1)
     .map((verse) => verse.displayText)
-    .join(' ')
+    .join('\n')
 }
 
 function scripturePrayer({
@@ -189,6 +186,35 @@ function scripturePrayer({
   }
 }
 
+function traditionalPrayer({
+  weekday,
+  titleGreek,
+  reference,
+  textGreek,
+  textEnglish,
+}: {
+  weekday: number
+  titleGreek: string
+  reference: string
+  textGreek: string
+  textEnglish: string
+}): PrayerReading {
+  const day = weekdayTabs[weekday]
+
+  return {
+    id: `weekday-prayer:${weekday}`,
+    kind: 'prayer',
+    sectionGreek: 'Προσευχὴ ἡμέρας',
+    sectionEnglish: 'Prayer of the day',
+    titleGreek,
+    reference,
+    textGreek,
+    textEnglish,
+    weekdayGreek: day.greek,
+    weekdayEnglish: day.english,
+  }
+}
+
 export const weeklyPrayerCycle: PrayerReading[] = [
   {
     ...scripturePrayer({
@@ -211,71 +237,59 @@ export const weeklyPrayerCycle: PrayerReading[] = [
         'For yours is the kingdom and the power and the glory forever. Amen.',
     },
   },
-  scripturePrayer({
+  traditionalPrayer({
     weekday: 1,
-    titleGreek: 'Μεγαλύνει ἡ ψυχή μου τὸν κύριον',
-    reference: 'Luke 1:46–55',
-    book: lukeData as ScriptureBookData,
-    startChapter: 1,
-    startVerse: 46,
-    endChapter: 1,
-    endVerse: 55,
-    englishAid: 'The Magnificat · Luke 1:46–55',
+    titleGreek: 'Τρισάγιον',
+    reference: 'Παραδεδομένη προσευχή · λέγεται τρίς',
+    textGreek:
+      'Ἅγιος ὁ Θεός,\nἅγιος Ἰσχυρός,\nἅγιος Ἀθάνατος,\nἐλέησον ἡμᾶς.',
+    textEnglish:
+      'Holy God,\nHoly Mighty,\nHoly Immortal,\nhave mercy on us.',
   }),
-  scripturePrayer({
+  traditionalPrayer({
     weekday: 2,
-    titleGreek: 'Εὐλογητὸς κύριος ὁ θεὸς τοῦ Ἰσραήλ',
-    reference: 'Luke 1:68–79',
-    book: lukeData as ScriptureBookData,
-    startChapter: 1,
-    startVerse: 68,
-    endChapter: 1,
-    endVerse: 79,
-    englishAid: 'The Benedictus · Luke 1:68–79',
+    titleGreek: 'Εὐχὴ τοῦ Ἰησοῦ',
+    reference: 'Παραδεδομένη προσευχή · Jesus Prayer',
+    textGreek:
+      'Κύριε Ἰησοῦ Χριστέ,\nΥἱὲ τοῦ Θεοῦ,\nἐλέησόν με τὸν ἁμαρτωλόν.',
+    textEnglish:
+      'Lord Jesus Christ,\nSon of God,\nhave mercy on me, a sinner.',
   }),
-  scripturePrayer({
+  traditionalPrayer({
     weekday: 3,
-    titleGreek: 'Νῦν ἀπολύεις τὸν δοῦλόν σου, δέσποτα',
-    reference: 'Luke 2:29–32',
-    book: lukeData as ScriptureBookData,
-    startChapter: 2,
-    startVerse: 29,
-    endChapter: 2,
-    endVerse: 32,
-    englishAid: 'The Nunc Dimittis · Luke 2:29–32',
+    titleGreek: 'Βασιλεῦ οὐράνιε',
+    reference: 'Παραδεδομένη προσευχὴ τοῦ Ἁγίου Πνεύματος',
+    textGreek:
+      'Βασιλεῦ οὐράνιε, Παράκλητε,\nτὸ Πνεῦμα τῆς ἀληθείας,\nὁ πανταχοῦ παρὼν καὶ τὰ πάντα πληρῶν,\nὁ θησαυρὸς τῶν ἀγαθῶν καὶ ζωῆς χορηγός,\nἐλθὲ καὶ σκήνωσον ἐν ἡμῖν,\nκαὶ καθάρισον ἡμᾶς ἀπὸ πάσης κηλῖδος,\nκαὶ σῶσον, Ἀγαθέ, τὰς ψυχὰς ἡμῶν.',
+    textEnglish:
+      'O Heavenly King, Comforter,\nSpirit of truth,\nwho are everywhere present and fill all things,\nTreasury of good things and Giver of life,\ncome and dwell in us,\ncleanse us from every stain,\nand save our souls, O Good One.',
   }),
-  scripturePrayer({
+  traditionalPrayer({
     weekday: 4,
-    titleGreek: 'Ὢ βάθος πλούτου καὶ σοφίας καὶ γνώσεως θεοῦ',
-    reference: 'Romans 11:33–36',
-    book: romansData as ScriptureBookData,
-    startChapter: 11,
-    startVerse: 33,
-    endChapter: 11,
-    endVerse: 36,
-    englishAid: 'A doxology to the wisdom of God · Romans 11:33–36',
+    titleGreek: 'Δόξα Πατρί',
+    reference: 'Μικρὰ δοξολογία · Lesser Doxology',
+    textGreek:
+      'Δόξα Πατρὶ καὶ Υἱῷ καὶ Ἁγίῳ Πνεύματι,\nκαὶ νῦν καὶ ἀεὶ καὶ εἰς τοὺς αἰῶνας τῶν αἰώνων.\nἈμήν.',
+    textEnglish:
+      'Glory to the Father and to the Son and to the Holy Spirit,\nboth now and ever and unto ages of ages.\nAmen.',
   }),
-  scripturePrayer({
+  traditionalPrayer({
     weekday: 5,
-    titleGreek: 'Τούτου χάριν κάμπτω τὰ γόνατά μου',
-    reference: 'Ephesians 3:14–21',
-    book: ephesiansData as ScriptureBookData,
-    startChapter: 3,
-    startVerse: 14,
-    endChapter: 3,
-    endVerse: 21,
-    englishAid: "Paul's prayer for strength and fullness · Ephesians 3:14–21",
+    titleGreek: 'Εὐχὴ τοῦ Ἁγίου Ἐφραίμ',
+    reference: 'Κύριε καὶ Δέσποτα τῆς ζωῆς μου',
+    textGreek:
+      'Κύριε καὶ Δέσποτα τῆς ζωῆς μου,\nπνεῦμα ἀργίας, περιεργίας, φιλαρχίας καὶ ἀργολογίας μή μοι δῷς.\nΠνεῦμα δὲ σωφροσύνης, ταπεινοφροσύνης, ὑπομονῆς καὶ ἀγάπης χάρισαί μοι τῷ σῷ δούλῳ.\nΝαί, Κύριε Βασιλεῦ, δώρησαί μοι τοῦ ὁρᾶν τὰ ἐμὰ πταίσματα καὶ μὴ κατακρίνειν τὸν ἀδελφόν μου·\nὅτι εὐλογητὸς εἶ εἰς τοὺς αἰῶνας τῶν αἰώνων.\nἈμήν.',
+    textEnglish:
+      'O Lord and Master of my life, give me not a spirit of idleness, meddling, love of power, and idle talk.\nBut grant to me, your servant, a spirit of chastity, humility, patience, and love.\nYes, Lord and King, grant me to see my own faults and not to condemn my brother;\nfor you are blessed unto ages of ages.\nAmen.',
   }),
-  scripturePrayer({
+  traditionalPrayer({
     weekday: 6,
-    titleGreek: 'Ἅγιος ἅγιος ἅγιος κύριος ὁ θεὸς ὁ παντοκράτωρ',
-    reference: 'Revelation 4:8–11',
-    book: revelationData as ScriptureBookData,
-    startChapter: 4,
-    startVerse: 8,
-    endChapter: 4,
-    endVerse: 11,
-    englishAid: 'The worship of the living creatures and elders · Revelation 4:8–11',
+    titleGreek: 'Φῶς ἱλαρόν',
+    reference: 'Ἀρχαῖος ὕμνος ἑσπερινός · Ancient evening hymn',
+    textGreek:
+      'Φῶς ἱλαρὸν ἁγίας δόξης\nἀθανάτου Πατρός,\nοὐρανίου, ἁγίου, μάκαρος,\nἸησοῦ Χριστέ,\nἐλθόντες ἐπὶ τὴν ἡλίου δύσιν,\nἰδόντες φῶς ἑσπερινόν,\nὑμνοῦμεν Πατέρα, Υἱόν,\nκαὶ Ἅγιον Πνεῦμα, Θεόν.\nἌξιόν σε ἐν πᾶσι καιροῖς\nὑμνεῖσθαι φωναῖς αἰσίαις,\nΥἱὲ Θεοῦ, ζωὴν ὁ διδούς,\nδιὸ ὁ κόσμος σὲ δοξάζει.',
+    textEnglish:
+      'O Gladsome Light of the holy glory\nof the immortal Father,\nheavenly, holy, blessed Jesus Christ:\nhaving come to the setting of the sun\nand having seen the evening light,\nwe praise Father, Son,\nand Holy Spirit, God.\nIt is fitting at all times\nto praise you with joyful voices,\nO Son of God, Giver of life;\ntherefore the world glorifies you.',
   }),
 ]
 
