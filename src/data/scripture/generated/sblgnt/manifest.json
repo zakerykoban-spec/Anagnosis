@@ -1,0 +1,250 @@
+{
+  "schemaVersion": 1,
+  "source": "sblgnt",
+  "sourceVersion": "1.2",
+  "books": [
+    {
+      "id": "matthew",
+      "code": "Matt",
+      "order": 1,
+      "titleGreek": "Κατὰ Ματθαῖον",
+      "filename": "matthew.json",
+      "chapters": 28,
+      "verses": 1068
+    },
+    {
+      "id": "mark",
+      "code": "Mark",
+      "order": 2,
+      "titleGreek": "Κατὰ Μᾶρκον",
+      "filename": "mark.json",
+      "chapters": 16,
+      "verses": 673
+    },
+    {
+      "id": "luke",
+      "code": "Luke",
+      "order": 3,
+      "titleGreek": "Κατὰ Λουκᾶν",
+      "filename": "luke.json",
+      "chapters": 24,
+      "verses": 1149
+    },
+    {
+      "id": "john",
+      "code": "John",
+      "order": 4,
+      "titleGreek": "Κατὰ Ἰωάννην",
+      "filename": "john.json",
+      "chapters": 21,
+      "verses": 878
+    },
+    {
+      "id": "acts",
+      "code": "Acts",
+      "order": 5,
+      "titleGreek": "Πράξεις Ἀποστόλων",
+      "filename": "acts.json",
+      "chapters": 28,
+      "verses": 1002
+    },
+    {
+      "id": "romans",
+      "code": "Rom",
+      "order": 6,
+      "titleGreek": "Πρὸς Ῥωμαίους",
+      "filename": "romans.json",
+      "chapters": 16,
+      "verses": 430
+    },
+    {
+      "id": "1-corinthians",
+      "code": "1Cor",
+      "order": 7,
+      "titleGreek": "Πρὸς Κορινθίους Αʹ",
+      "filename": "1-corinthians.json",
+      "chapters": 16,
+      "verses": 437
+    },
+    {
+      "id": "2-corinthians",
+      "code": "2Cor",
+      "order": 8,
+      "titleGreek": "Πρὸς Κορινθίους Βʹ",
+      "filename": "2-corinthians.json",
+      "chapters": 13,
+      "verses": 256
+    },
+    {
+      "id": "galatians",
+      "code": "Gal",
+      "order": 9,
+      "titleGreek": "Πρὸς Γαλάτας",
+      "filename": "galatians.json",
+      "chapters": 6,
+      "verses": 149
+    },
+    {
+      "id": "ephesians",
+      "code": "Eph",
+      "order": 10,
+      "titleGreek": "Πρὸς Ἐφεσίους",
+      "filename": "ephesians.json",
+      "chapters": 6,
+      "verses": 155
+    },
+    {
+      "id": "philippians",
+      "code": "Phil",
+      "order": 11,
+      "titleGreek": "Πρὸς Φιλιππησίους",
+      "filename": "philippians.json",
+      "chapters": 4,
+      "verses": 104
+    },
+    {
+      "id": "colossians",
+      "code": "Col",
+      "order": 12,
+      "titleGreek": "Πρὸς Κολοσσαεῖς",
+      "filename": "colossians.json",
+      "chapters": 4,
+      "verses": 95
+    },
+    {
+      "id": "1-thessalonians",
+      "code": "1Thess",
+      "order": 13,
+      "titleGreek": "Πρὸς Θεσσαλονικεῖς Αʹ",
+      "filename": "1-thessalonians.json",
+      "chapters": 5,
+      "verses": 89
+    },
+    {
+      "id": "2-thessalonians",
+      "code": "2Thess",
+      "order": 14,
+      "titleGreek": "Πρὸς Θεσσαλονικεῖς Βʹ",
+      "filename": "2-thessalonians.json",
+      "chapters": 3,
+      "verses": 47
+    },
+    {
+      "id": "1-timothy",
+      "code": "1Tim",
+      "order": 15,
+      "titleGreek": "Πρὸς Τιμόθεον Αʹ",
+      "filename": "1-timothy.json",
+      "chapters": 6,
+      "verses": 113
+    },
+    {
+      "id": "2-timothy",
+      "code": "2Tim",
+      "order": 16,
+      "titleGreek": "Πρὸς Τιμόθεον Βʹ",
+      "filename": "2-timothy.json",
+      "chapters": 4,
+      "verses": 83
+    },
+    {
+      "id": "titus",
+      "code": "Titus",
+      "order": 17,
+      "titleGreek": "Πρὸς Τίτον",
+      "filename": "titus.json",
+      "chapters": 3,
+      "verses": 46
+    },
+    {
+      "id": "philemon",
+      "code": "Phlm",
+      "order": 18,
+      "titleGreek": "Πρὸς Φιλήμονα",
+      "filename": "philemon.json",
+      "chapters": 1,
+      "verses": 25
+    },
+    {
+      "id": "hebrews",
+      "code": "Heb",
+      "order": 19,
+      "titleGreek": "Πρὸς Ἑβραίους",
+      "filename": "hebrews.json",
+      "chapters": 13,
+      "verses": 303
+    },
+    {
+      "id": "james",
+      "code": "Jas",
+      "order": 20,
+      "titleGreek": "Ἰακώβου",
+      "filename": "james.json",
+      "chapters": 5,
+      "verses": 108
+    },
+    {
+      "id": "1-peter",
+      "code": "1Pet",
+      "order": 21,
+      "titleGreek": "Πέτρου Αʹ",
+      "filename": "1-peter.json",
+      "chapters": 5,
+      "verses": 105
+    },
+    {
+      "id": "2-peter",
+      "code": "2Pet",
+      "order": 22,
+      "titleGreek": "Πέτρου Βʹ",
+      "filename": "2-peter.json",
+      "chapters": 3,
+      "verses": 61
+    },
+    {
+      "id": "1-john",
+      "code": "1John",
+      "order": 23,
+      "titleGreek": "Ἰωάννου Αʹ",
+      "filename": "1-john.json",
+      "chapters": 5,
+      "verses": 105
+    },
+    {
+      "id": "2-john",
+      "code": "2John",
+      "order": 24,
+      "titleGreek": "Ἰωάννου Βʹ",
+      "filename": "2-john.json",
+      "chapters": 1,
+      "verses": 13
+    },
+    {
+      "id": "3-john",
+      "code": "3John",
+      "order": 25,
+      "titleGreek": "Ἰωάννου Γʹ",
+      "filename": "3-john.json",
+      "chapters": 1,
+      "verses": 15
+    },
+    {
+      "id": "jude",
+      "code": "Jude",
+      "order": 26,
+      "titleGreek": "Ἰούδα",
+      "filename": "jude.json",
+      "chapters": 1,
+      "verses": 25
+    },
+    {
+      "id": "revelation",
+      "code": "Rev",
+      "order": 27,
+      "titleGreek": "Ἀποκάλυψις Ἰωάννου",
+      "filename": "revelation.json",
+      "chapters": 22,
+      "verses": 405
+    }
+  ]
+}
