@@ -157,8 +157,9 @@ function MealIcon({ kind }: { kind: MealIconKind }) {
 
         {kind === 'table' && (
           <>
-            <path d="M5.5 15.5h21M8 15.5l1 11M24 15.5l-1 11M7 12.5c4.8-2.2 13.2-2.2 18 0" />
-            <path d="M13 10c0-2 1.3-3.5 3-3.5S19 8 19 10M16 6.5V4" />
+            <path d="M5 18h22M8 18v9M24 18v9" />
+            <path d="M8.5 16.5c.5-3 2.4-4.8 5-4.8s4.5 1.8 5 4.8M11.5 13.1l1.3 1.5M15 12.1l1.1 1.6" />
+            <path d="M21 9.5h5l-.7 4a2 2 0 0 1-3.9 0l-.4-4ZM23.5 15.5v2.5" />
           </>
         )}
       </svg>
@@ -463,12 +464,6 @@ function App() {
     return (
       <main className="office-shell">
         <section className="office-card" aria-labelledby="office-title">
-          <div className="codex-binding" aria-hidden="true" />
-          <div className="codex-tabs" aria-hidden="true">
-            <span>ΕΥΧΗ</span>
-            <span>ΓΡΑΦΗ</span>
-            <span>ΨΑΛΜΟΣ</span>
-          </div>
           <header className="office-toolbar">
             <button
               className="icon-button"
