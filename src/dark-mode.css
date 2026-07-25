@@ -1,0 +1,23 @@
+:root[data-theme='dark'] .office-card,
+:root[data-theme='dark'] .reader-shell {
+  box-shadow: 0 24px 70px var(--shadow);
+}
+
+:root[data-theme='dark'] .reader-header,
+:root[data-theme='dark'] .reader-navigation {
+  background: var(--surface-translucent);
+}
+
+:root[data-theme='dark'] .office-reading:hover,
+:root[data-theme='dark'] .verse:hover,
+:root[data-theme='dark'] .navigation-button:hover:not(:disabled) {
+  background: var(--hover);
+}
+
+:root[data-theme='dark'] .current-verse {
+  background: var(--current);
+}
+
+:root[data-theme='dark'] .navigation-button:disabled {
+  color: var(--disabled);
+}

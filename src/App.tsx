@@ -14,6 +14,7 @@ type AppView = 'office' | 'reader'
 
 type ReaderOptions = {
   showGloss: boolean
+  darkMode: boolean
   showProgressive: boolean
   showChallenge: boolean
   showPsalm: boolean
@@ -66,6 +67,7 @@ function OfficeReadingButton({
 
 const DEFAULT_OPTIONS: ReaderOptions = {
   showGloss: true,
+  darkMode: false,
   showProgressive: true,
   showChallenge: true,
   showPsalm: true,
@@ -119,6 +121,7 @@ function App() {
 
   useEffect(() => {
     window.localStorage.setItem(OPTIONS_KEY, JSON.stringify(options))
+    document.documentElement.dataset.theme = options.darkMode ? 'dark' : 'light'
   }, [options])
 
   useEffect(() => {
@@ -288,6 +291,20 @@ function App() {
               />
               <VoiceText
                 term={UI.englishAids}
+                showGloss={options.showGloss}
+              />
+            </label>
+
+            <label>
+              <input
+                type="checkbox"
+                checked={options.darkMode}
+                onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                  updateOption('darkMode', event.target.checked)
+                }
+              />
+              <VoiceText
+                term={UI.darkMode}
                 showGloss={options.showGloss}
               />
             </label>
