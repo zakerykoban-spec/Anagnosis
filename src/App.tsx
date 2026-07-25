@@ -70,18 +70,22 @@ function App() {
   )
 
   const [view, setView] = useState<AppView>('office')
+  const [hasReadingPosition, setHasReadingPosition] = useState(
+    initialPosition !== null,
+  )
   const [currentVerseIndex, setCurrentVerseIndex] =
     useState(initialVerseIndex)
 
   const verseElements = useRef<Record<string, HTMLElement | null>>({})
 
   const currentVerse = readingVerses[currentVerseIndex]
-  const hasSavedPosition = initialPosition !== null
 
   useEffect(() => {
     if (view !== 'reader') {
       return
     }
+
+    setHasReadingPosition(true)
 
     window.localStorage.setItem(
       STORAGE_KEY,
@@ -136,7 +140,7 @@ function App() {
             type="button"
             onClick={beginReading}
           >
-            {hasSavedPosition ? 'Resume Reading' : 'Begin Reading'}
+            {hasReadingPosition ? 'Resume Reading' : 'Begin Reading'}
           </button>
         </section>
       </main>
@@ -225,3 +229,6 @@ function App() {
 }
 
 export default App
+
+
+

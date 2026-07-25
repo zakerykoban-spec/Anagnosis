@@ -16,7 +16,7 @@
 .app-name {
   margin: 0 0 70px;
   color: var(--accent);
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", "Times New Roman", serif;
   font-size: 1.1rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -39,7 +39,7 @@
 .office-heading h1 {
   margin: 0;
   color: var(--ink);
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", "Times New Roman", serif;
   font-size: clamp(2.4rem, 8vw, 4.25rem);
   font-weight: 400;
   line-height: 0.98;
@@ -52,7 +52,7 @@
 .reading-book {
   margin: 0 0 8px;
   color: var(--ink);
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", "Times New Roman", serif;
   font-size: 1.75rem;
 }
 
@@ -132,7 +132,7 @@
 
 .reader-title p {
   color: var(--ink);
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", "Times New Roman", serif;
   font-size: 1.05rem;
 }
 
@@ -156,7 +156,7 @@
 .scripture h1 {
   margin: 0;
   color: var(--ink);
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", "Times New Roman", serif;
   font-size: clamp(1.65rem, 5vw, 2.3rem);
   font-weight: 400;
   letter-spacing: 0.08em;
@@ -166,7 +166,7 @@
 .chapter-number {
   margin: 14px 0 52px;
   color: var(--accent);
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", "Times New Roman", serif;
   font-size: 1.1rem;
   text-align: center;
 }
@@ -187,7 +187,7 @@
   border-radius: 2px;
   color: var(--ink);
   cursor: pointer;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", "Times New Roman", serif;
   font-size: clamp(1.35rem, 3.5vw, 1.7rem);
   line-height: 1.72;
   transition:
@@ -280,3 +280,5 @@
     padding-right: 4px;
   }
 }
+
+
