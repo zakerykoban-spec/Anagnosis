@@ -22,13 +22,45 @@ type ReaderOptions = {
 
 type StoredPositions = Record<string, string>
 
+type OfficeDate = {
+  iso: string
+  greek: string
+  english: string
+}
+
 const OPTIONS_KEY = 'anagnosis.options.v1'
 const POSITIONS_KEY = 'anagnosis.reading-positions.v1'
+
+const GREEK_MONTHS = [
+  'Ἰανουαρίου',
+  'Φεβρουαρίου',
+  'Μαρτίου',
+  'Ἀπριλίου',
+  'Μαΐου',
+  'Ἰουνίου',
+  'Ἰουλίου',
+  'Αὐγούστου',
+  'Σεπτεμβρίου',
+  'Ὀκτωβρίου',
+  'Νοεμβρίου',
+  'Δεκεμβρίου',
+] as const
 
 interface OfficeReadingButtonProps {
   entry: OfficeEntry
   showGloss: boolean
   onOpen: (entry: OfficeEntry) => void
+}
+
+function ScrollIcon() {
+  return (
+    <span className="scroll-icon" aria-hidden="true">
+      <svg viewBox="0 0 28 28" role="presentation">
+        <path d="M10 7.5h8.25a2.25 2.25 0 0 1 0 4.5H17v8.5H8.75a2.25 2.25 0 0 1 0-4.5H11V7.5" />
+        <path d="M11 11h5.25M11 14h4.25" />
+      </svg>
+    </span>
+  )
 }
 
 function OfficeReadingButton({
@@ -58,8 +90,8 @@ function OfficeReadingButton({
         )}
       </span>
 
-      <span className="office-reading-action" aria-hidden="true">
-        ›
+      <span className="office-reading-action">
+        <ScrollIcon />
       </span>
     </button>
   )
@@ -71,6 +103,28 @@ const DEFAULT_OPTIONS: ReaderOptions = {
   showProgressive: true,
   showChallenge: true,
   showPsalm: true,
+}
+
+function formatDatePart(value: number) {
+  return String(value).padStart(2, '0')
+}
+
+function formatOfficeDate(date: Date): OfficeDate {
+  const iso = [
+    date.getFullYear(),
+    formatDatePart(date.getMonth() + 1),
+    formatDatePart(date.getDate()),
+  ].join('-')
+
+  return {
+    iso,
+    greek: `${date.getDate()} ${GREEK_MONTHS[date.getMonth()]}`,
+    english: new Intl.DateTimeFormat('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+    }).format(date),
+  }
 }
 
 function loadOptions(): ReaderOptions {
@@ -106,7 +160,9 @@ function savePosition(readingId: string, verseId: string) {
 }
 
 function App() {
-  const office = useMemo(() => resolveDailyOffice(), [])
+  const today = useMemo(() => new Date(), [])
+  const officeDate = useMemo(() => formatOfficeDate(today), [today])
+  const office = useMemo(() => resolveDailyOffice(today), [today])
   const [view, setView] = useState<AppView>('office')
   const [options, setOptions] = useState<ReaderOptions>(() => loadOptions())
   const [activeEntry, setActiveEntry] = useState<OfficeEntry | null>(null)
@@ -171,6 +227,7 @@ function App() {
 
     window.requestAnimationFrame(() => {
       verseElements.current[verse.id]?.scrollIntoView({
+        behavior: 'smooth',
         block: 'center',
       })
     })
@@ -219,7 +276,17 @@ function App() {
     return (
       <main className="office-shell">
         <section className="office-card" aria-labelledby="office-title">
-          <p className="app-name">Ἀνάγνωσις</p>
+          <header className="office-masthead">
+            <p className="app-name">Ἀνάγνωσις</p>
+
+            <time className="calendar-date" dateTime={officeDate.iso}>
+              <span className="calendar-kicker">Σήμερον</span>
+              <span className="calendar-greek">{officeDate.greek}</span>
+              {options.showGloss && (
+                <span className="calendar-english">{officeDate.english}</span>
+              )}
+            </time>
+          </header>
 
           <header className="office-heading" id="office-title">
             <VoiceText
@@ -446,16 +513,17 @@ function App() {
       {scriptureReading && (
         <nav className="reader-navigation" aria-label="Reading navigation">
           <button
-            className="navigation-button"
+            className="navigation-button navigation-button-back"
             type="button"
             disabled={currentVerseIndex === 0}
             onClick={() => moveToVerse(currentVerseIndex - 1)}
           >
+            <span className="navigation-arrow" aria-hidden="true">‹</span>
             <VoiceText term={UI.back} showGloss={options.showGloss} />
           </button>
 
           <button
-            className="navigation-button"
+            className="navigation-button navigation-button-next"
             type="button"
             disabled={
               currentVerseIndex === scriptureReading.verses.length - 1
@@ -463,6 +531,7 @@ function App() {
             onClick={() => moveToVerse(currentVerseIndex + 1)}
           >
             <VoiceText term={UI.next} showGloss={options.showGloss} />
+            <span className="navigation-arrow" aria-hidden="true">›</span>
           </button>
         </nav>
       )}
