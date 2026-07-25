@@ -7,6 +7,7 @@ import {
   type OfficeEntry,
   type ScriptureReading,
 } from './data/dailyOffice'
+import { mealPrayers } from './data/mealPrayers'
 import { UI } from './ui/lexicon'
 import './App.css'
 
@@ -27,6 +28,8 @@ type OfficeDate = {
   greek: string
   english: string
 }
+
+type MealIconKind = 'cup' | 'bread' | 'fish'
 
 const OPTIONS_KEY = 'anagnosis.options.v1'
 const POSITIONS_KEY = 'anagnosis.reading-positions.v1'
@@ -63,6 +66,36 @@ function ScrollIcon() {
   )
 }
 
+function MealIcon({ kind }: { kind: MealIconKind }) {
+  return (
+    <span className="meal-icon" aria-hidden="true">
+      <svg viewBox="0 0 32 32" role="presentation">
+        {kind === 'cup' && (
+          <>
+            <path d="M10 6h12l-1.5 8.5a4.6 4.6 0 0 1-9 0L10 6Z" />
+            <path d="M16 19v7M12.5 26h7" />
+          </>
+        )}
+
+        {kind === 'bread' && (
+          <>
+            <path d="M7 19.5v-5.7c0-4.2 3.8-7.3 9-7.3s9 3.1 9 7.3v5.7c0 3.2-2.4 5.5-5.5 5.5h-7C9.4 25 7 22.7 7 19.5Z" />
+            <path d="m12 11.5 1.8 2M16 10.2l1.6 2.2M20 11.5l-1.8 2" />
+          </>
+        )}
+
+        {kind === 'fish' && (
+          <>
+            <path d="M7 16c3.4-5 8.4-7.4 14-6.5l4-3v7.2l-4-3.2c-5.6-.9-10.6 1.5-14 5.5Z" />
+            <path d="M7 16c3.4 5 8.4 7.4 14 6.5l4 3v-7.2l-4 3.2C15.4 22.4 10.4 20 7 16Z" />
+            <circle cx="13" cy="14" r=".9" />
+          </>
+        )}
+      </svg>
+    </span>
+  )
+}
+
 function OfficeReadingButton({
   entry,
   showGloss,
@@ -94,6 +127,44 @@ function OfficeReadingButton({
         <ScrollIcon />
       </span>
     </button>
+  )
+}
+
+function MealPrayerDock({
+  showGloss,
+  onOpen,
+}: {
+  showGloss: boolean
+  onOpen: (entry: OfficeEntry) => void
+}) {
+  const icons: MealIconKind[] = ['cup', 'bread', 'fish']
+
+  return (
+    <section className="meal-prayers" aria-labelledby="meal-prayers-title">
+      <div className="meal-prayers-heading" id="meal-prayers-title">
+        <span>Εὐχαριστίαι τραπέζης</span>
+        {showGloss && <small>Meal prayers</small>}
+      </div>
+
+      <nav className="meal-prayer-dock" aria-label="Meal prayers">
+        {mealPrayers.map((prayer, index) => (
+          <button
+            className="meal-prayer-button"
+            type="button"
+            key={prayer.id}
+            onClick={() => onOpen(prayer)}
+            aria-label={
+              showGloss
+                ? `${prayer.titleGreek}, ${prayer.sectionEnglish}`
+                : prayer.titleGreek
+            }
+          >
+            <MealIcon kind={icons[index]} />
+            <span>{prayer.sectionGreek}</span>
+          </button>
+        ))}
+      </nav>
+    </section>
   )
 }
 
@@ -419,8 +490,13 @@ function App() {
             </label>
           </fieldset>
 
+          <MealPrayerDock
+            showGloss={options.showGloss}
+            onOpen={openEntry}
+          />
+
           <p className="source-note">
-            SBLGNT 1.2 · CC BY 4.0 · LXX Swete / First1KGreek · CC BY-SA 4.0
+            SBLGNT 1.2 · CC BY 4.0 · LXX Swete / First1KGreek · CC BY-SA 4.0 · Διδαχὴ 9–10 · public domain
           </p>
         </section>
       </main>
@@ -459,7 +535,6 @@ function App() {
       {activeEntry.kind === 'prayer' ? (
         <article className="prayer-reader" lang="grc">
           <p className="prayer-section">{activeEntry.sectionGreek}</p>
-          <h1>{activeEntry.titleGreek}</h1>
           <p className="prayer-text">{activeEntry.textGreek}</p>
 
           {options.showGloss && (
