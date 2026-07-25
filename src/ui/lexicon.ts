@@ -5,42 +5,39 @@ export interface UiTerm {
 
 export const UI = {
   read: {
-    greek: "Ἀνάγνωθι",
-    english: "Read",
+    greek: 'Ἀνάγνωθι',
+    english: 'Read',
   },
-
   back: {
-    greek: "Ὀπίσω",
-    english: "Back",
+    greek: 'Ὀπίσω',
+    english: 'Back',
   },
-
-  study: {
-    greek: "Μελέτα",
-    english: "Study",
+  next: {
+    greek: 'Ἐφεξῆς',
+    english: 'Next',
   },
-
-  seek: {
-    greek: "Ζήτει",
-    english: "Seek",
-  },
-
-  help: {
-    greek: "Βοήθει",
-    english: "Help",
-  },
-
-  about: {
-    greek: "Περί",
-    english: "About",
-  },
-
-  remember: {
-    greek: "Μνήσθητι",
-    english: "Remember",
-  },
-
   todaysReading: {
-    greek: "Ἡμερινὴ Ἀνάγνωσις",
+    greek: 'Ἡμερινὴ Ἀνάγνωσις',
     english: "Today's Reading",
+  },
+  options: {
+    greek: 'Ἐπιλογαί',
+    english: 'Options',
+  },
+  englishAids: {
+    greek: 'Ἀγγλικὰ βοηθήματα',
+    english: 'English aids',
+  },
+  progressiveReading: {
+    greek: 'Πρόοδος',
+    english: 'Progressive reading',
+  },
+  challengeReading: {
+    greek: 'Ἄσκησις',
+    english: 'Challenge reading',
+  },
+  psalm: {
+    greek: 'Ψαλμός',
+    english: 'Psalm',
   },
 } satisfies Record<string, UiTerm>

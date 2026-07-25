@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Local source repositories used by import scripts
+imports/scripture/first1k-lxx/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
