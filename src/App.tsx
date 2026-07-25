@@ -32,7 +32,8 @@ type OfficeDate = {
   weekdayGreek: string
 }
 
-type MealIconKind = 'cup' | 'bread' | 'fish'
+type MealIconKind = 'cup' | 'bread' | 'table'
+type OfficeIconKind = 'orans' | 'codex' | 'lamp' | 'lyre' | 'lampstand'
 
 const OPTIONS_KEY = 'anagnosis.options.v1'
 const POSITIONS_KEY = 'anagnosis.reading-positions.v1'
@@ -64,16 +65,50 @@ const GREEK_WEEKDAYS = [
 
 interface OfficeReadingButtonProps {
   entry: OfficeEntry
+  icon: OfficeIconKind
   showGloss: boolean
   onOpen: (entry: OfficeEntry) => void
 }
 
-function ScrollIcon() {
+function OfficeIcon({ kind }: { kind: OfficeIconKind }) {
   return (
-    <span className="scroll-icon" aria-hidden="true">
-      <svg viewBox="0 0 28 28" role="presentation">
-        <path d="M9 6.5h10a2.5 2.5 0 0 1 0 5H17.5v10H8.75a2.75 2.75 0 0 1 0-5.5H11V6.5" />
-        <path d="M11 10h6.25M11 13.5h5.25M11 17h4.5" />
+    <span className={`office-icon office-icon-${kind}`} aria-hidden="true">
+      <svg viewBox="0 0 32 32" role="presentation">
+        {kind === 'orans' && (
+          <>
+            <circle cx="16" cy="7.2" r="2.8" />
+            <path d="M12.5 25.5 14 15l-4.5-3.2-4 4.2M19.5 25.5 18 15l4.5-3.2 4 4.2M11.2 26h9.6M14 15h4" />
+          </>
+        )}
+
+        {kind === 'codex' && (
+          <>
+            <path d="M4.5 7.5c4.4-1.3 8.2-.5 11.5 2.2v16c-3.3-2.7-7.1-3.5-11.5-2.2v-16ZM27.5 7.5c-4.4-1.3-8.2-.5-11.5 2.2v16c3.3-2.7 7.1-3.5 11.5-2.2v-16Z" />
+            <path d="M8 11.5c2.1-.2 3.8.2 5.4 1.2M19 12.7c1.6-1 3.3-1.4 5.4-1.2M8 15.5c2.1-.2 3.8.2 5.4 1.2M19 16.7c1.6-1 3.3-1.4 5.4-1.2" />
+          </>
+        )}
+
+        {kind === 'lamp' && (
+          <>
+            <path d="M7 18.5c4.4-4.8 10.8-6.6 18-4.3-1.1 5.7-5.3 9.3-11.5 9.3H8.2L7 18.5Z" />
+            <path d="M23.2 14.1c1.6-2.7 3.2-4.4 4.8-5.1M14 23.5v3M9.5 26.5h9" />
+            <path className="office-icon-flame" d="M27.8 8.8c-2.3-1.5-2.1-3.6-.2-5.3 1.3 2 .9 3.7.2 5.3Z" />
+          </>
+        )}
+
+        {kind === 'lyre' && (
+          <>
+            <path d="M9 5.5c-1.2 6.3-.8 12.6 2 18.5M23 5.5c1.2 6.3.8 12.6-2 18.5M11 24c3.1 2.2 6.9 2.2 10 0M9.5 9.5c4.2 2.2 8.8 2.2 13 0" />
+            <path d="M13 10.8v13.7M16 11v14.7M19 10.8v13.7" />
+          </>
+        )}
+
+        {kind === 'lampstand' && (
+          <>
+            <path d="M16 7v18M10 25h12M12.5 28h7M16 13c-4.5 0-7.5-2.4-7.5-6M16 18c-6.7 0-11-3-11-8M16 13c4.5 0 7.5-2.4 7.5-6M16 18c6.7 0 11-3 11-8" />
+            <path d="M5 7h3M8.5 4.5c-1.5-1.2-1.4-2.5 0-3.5 1 1.3.7 2.4 0 3.5ZM12.5 5h7M16 3.5c-1.5-1.2-1.4-2.5 0-3.5 1 1.3.7 2.4 0 3.5ZM23.5 4.5c-1.5-1.2-1.4-2.5 0-3.5 1 1.3.7 2.4 0 3.5ZM24 7h3" />
+          </>
+        )}
       </svg>
     </span>
   )
@@ -120,11 +155,10 @@ function MealIcon({ kind }: { kind: MealIconKind }) {
           </>
         )}
 
-        {kind === 'fish' && (
+        {kind === 'table' && (
           <>
-            <path d="M7 16c3.4-5 8.4-7.4 14-6.5l4-3v7.2l-4-3.2c-5.6-.9-10.6 1.5-14 5.5Z" />
-            <path d="M7 16c3.4 5 8.4 7.4 14 6.5l4 3v-7.2l-4 3.2C15.4 22.4 10.4 20 7 16Z" />
-            <circle cx="13" cy="14" r=".9" />
+            <path d="M5.5 15.5h21M8 15.5l1 11M24 15.5l-1 11M7 12.5c4.8-2.2 13.2-2.2 18 0" />
+            <path d="M13 10c0-2 1.3-3.5 3-3.5S19 8 19 10M16 6.5V4" />
           </>
         )}
       </svg>
@@ -134,6 +168,7 @@ function MealIcon({ kind }: { kind: MealIconKind }) {
 
 function OfficeReadingButton({
   entry,
+  icon,
   showGloss,
   onOpen,
 }: OfficeReadingButtonProps) {
@@ -143,7 +178,7 @@ function OfficeReadingButton({
       type="button"
       onClick={() => onOpen(entry)}
     >
-      <ScrollIcon />
+      <OfficeIcon kind={icon} />
 
       <span className="office-reading-copy">
         <VoiceText
@@ -171,7 +206,7 @@ function MealPrayerDock({
   showGloss: boolean
   onOpen: (entry: OfficeEntry) => void
 }) {
-  const icons: MealIconKind[] = ['cup', 'bread', 'fish']
+  const icons: MealIconKind[] = ['cup', 'bread', 'table']
   const labels = [
     { greek: 'Ποτήριον', english: 'Cup' },
     { greek: 'Κλάσμα', english: 'Bread' },
@@ -428,6 +463,12 @@ function App() {
     return (
       <main className="office-shell">
         <section className="office-card" aria-labelledby="office-title">
+          <div className="codex-binding" aria-hidden="true" />
+          <div className="codex-tabs" aria-hidden="true">
+            <span>ΕΥΧΗ</span>
+            <span>ΓΡΑΦΗ</span>
+            <span>ΨΑΛΜΟΣ</span>
+          </div>
           <header className="office-toolbar">
             <button
               className="icon-button"
@@ -477,6 +518,7 @@ function App() {
           <div className="office-list">
             <OfficeReadingButton
               entry={office.openingPrayer}
+              icon="orans"
               showGloss={options.showGloss}
               onOpen={openEntry}
             />
@@ -484,6 +526,7 @@ function App() {
             {options.showProgressive && (
               <OfficeReadingButton
                 entry={office.progressiveReading}
+                icon="codex"
                 showGloss={options.showGloss}
                 onOpen={openEntry}
               />
@@ -492,6 +535,7 @@ function App() {
             {options.showChallenge && (
               <OfficeReadingButton
                 entry={office.challengeReading}
+                icon="lamp"
                 showGloss={options.showGloss}
                 onOpen={openEntry}
               />
@@ -501,6 +545,7 @@ function App() {
               (psalmReading ? (
                 <OfficeReadingButton
                   entry={psalmReading}
+                  icon="lyre"
                   showGloss={options.showGloss}
                   onOpen={openEntry}
                 />
@@ -514,6 +559,7 @@ function App() {
 
             <OfficeReadingButton
               entry={office.closingPrayer}
+              icon="lampstand"
               showGloss={options.showGloss}
               onOpen={openEntry}
             />
@@ -525,7 +571,7 @@ function App() {
           />
 
           <p className="source-note">
-            SBLGNT 1.2 · CC BY 4.0 · LXX Swete / First1KGreek · CC BY-SA 4.0 · Διδαχὴ 9–10 · public domain
+            SBLGNT 1.2 · CC BY 4.0 · LXX Swete / First1KGreek · CC BY-SA 4.0 · Διδαχὴ 9–10 and traditional Greek prayers · public domain
           </p>
         </section>
 
