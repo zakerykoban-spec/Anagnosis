@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { VoiceText } from './components/VoiceText'
 import markData from './data/scripture/generated/sblgnt/mark.json'
+import { UI } from './ui/lexicon'
 import './App.css'
 
 type AppView = 'office' | 'reader'
@@ -70,9 +72,6 @@ function App() {
   )
 
   const [view, setView] = useState<AppView>('office')
-  const [hasReadingPosition, setHasReadingPosition] = useState(
-    initialPosition !== null,
-  )
   const [currentVerseIndex, setCurrentVerseIndex] =
     useState(initialVerseIndex)
 
@@ -84,8 +83,6 @@ function App() {
     if (view !== 'reader') {
       return
     }
-
-    setHasReadingPosition(true)
 
     window.localStorage.setItem(
       STORAGE_KEY,
@@ -125,8 +122,11 @@ function App() {
           <p className="app-name">Ἀνάγνωσις</p>
 
           <div className="office-heading">
-            <p className="eyebrow">Today’s Office</p>
-            <h1 id="office-title">Morning Reading</h1>
+            <p className="eyebrow">Ἀνάγνωσις</p>
+
+            <div id="office-title">
+              <VoiceText term={UI.todaysReading} />
+            </div>
           </div>
 
           <div className="reading-summary">
@@ -140,7 +140,7 @@ function App() {
             type="button"
             onClick={beginReading}
           >
-            {hasReadingPosition ? 'Resume Reading' : 'Begin Reading'}
+            <VoiceText term={UI.read} />
           </button>
         </section>
       </main>
@@ -155,7 +155,7 @@ function App() {
           type="button"
           onClick={() => setView('office')}
         >
-          Today’s Office
+          <VoiceText term={UI.back} />
         </button>
 
         <div className="reader-title">
@@ -212,7 +212,7 @@ function App() {
           disabled={currentVerseIndex === 0}
           onClick={() => moveToVerse(currentVerseIndex - 1)}
         >
-          Previous
+          <VoiceText term={UI.back} />
         </button>
 
         <button
@@ -229,6 +229,3 @@ function App() {
 }
 
 export default App
-
-
-
