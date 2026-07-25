@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import './dark-mode.css'
+import './meal-prayers.css'
 import App from './App.tsx'
 
 createRoot(document.getElementById('root')!).render(
