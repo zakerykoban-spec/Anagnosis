@@ -1,6 +1,6 @@
 :root {
   color: #27251f;
-  background: #eeeae1;
+  background: #2f241d;
   color-scheme: light;
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
@@ -8,28 +8,33 @@
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  --page: #4a372c;
-  --paper: #f7f0df;
-  --ink: #2d261e;
-  --muted: #756a5b;
-  --line: #d8cdb7;
-  --line-strong: #c4b396;
-  --accent: #762f2c;
-  --accent-dark: #55201f;
-  --antique-gold: #927238;
-  --surface-translucent: rgba(247, 240, 223, 0.95);
+  --page: #30231b;
+  --paper: #eee0bd;
+  --paper-light: #f6ebcd;
+  --ink: #33281c;
+  --muted: #77664f;
+  --line: #cbbb94;
+  --line-strong: #a98d61;
+  --accent: #7b2d28;
+  --accent-dark: #55201c;
+  --antique-gold: #9a722b;
+  --surface-translucent: rgba(238, 224, 189, 0.96);
   --hover: rgba(111, 46, 40, 0.04);
   --current: rgba(111, 46, 40, 0.065);
   --shadow: rgba(24, 16, 10, 0.24);
   --disabled: #b8b1a5;
   --focus: rgba(111, 46, 40, 0.28);
-  --shell-top: #5b4335;
-  --shell-highlight: rgba(183, 143, 91, 0.16);
-  --page-edge: #bcae92;
-  --inner-rule: rgba(146, 114, 56, 0.14);
-  --sheet-two: #e4dac6;
-  --sheet-three: #cdbfa5;
-  --paper-fleck: rgba(132, 98, 54, 0.055);
+  --shell-top: #5a402e;
+  --shell-highlight: rgba(190, 145, 77, 0.19);
+  --page-edge: #a78758;
+  --inner-rule: rgba(115, 76, 35, 0.22);
+  --sheet-two: #c9b78e;
+  --sheet-three: #9f855d;
+  --paper-fleck: rgba(111, 74, 34, 0.085);
+  --leather-deep: #241812;
+  --leather-warm: #513727;
+  --binding: #5d402d;
+  --binding-dark: #2e1d16;
 }
 
 :root[data-theme='dark'] {
@@ -38,6 +43,7 @@
   color-scheme: dark;
   --page: #15120f;
   --paper: #211d18;
+  --paper-light: #29231c;
   --ink: #eee4d3;
   --muted: #aaa08f;
   --line: #41392e;
@@ -58,6 +64,10 @@
   --sheet-two: #29231d;
   --sheet-three: #17130f;
   --paper-fleck: rgba(210, 184, 139, 0.025);
+  --leather-deep: #0c0907;
+  --leather-warm: #211711;
+  --binding: #2b1e17;
+  --binding-dark: #100b08;
 }
 
 * {
