@@ -8,8 +8,10 @@ import {
   weeklyPrayerCycle,
   type OfficeEntry,
   type ScriptureReading,
+  type ScriptureVerse,
 } from './data/dailyOffice'
 import { mealPrayers } from './data/mealPrayers'
+import { resolveProgressiveReading } from './data/progressiveReadings'
 import {
   completeStreamAssignment,
   isDailySectionMarked,
@@ -23,6 +25,7 @@ import {
 import { UI } from './ui/lexicon'
 import './App.css'
 import './pass1.css'
+import './pass2.css'
 
 type AppView = 'office' | 'reader'
 
@@ -129,10 +132,25 @@ function streamForEntry(entry: OfficeEntry | null): ReadingStreamId | null {
   return null
 }
 
+function groupVersesByChapter(verses: ScriptureVerse[]) {
+  const chapters: Array<{ chapter: number; verses: ScriptureVerse[] }> = []
+
+  for (const verse of verses) {
+    const current = chapters[chapters.length - 1]
+    if (!current || current.chapter !== verse.chapter) {
+      chapters.push({ chapter: verse.chapter, verses: [verse] })
+    } else {
+      current.verses.push(verse)
+    }
+  }
+
+  return chapters
+}
+
 function OfficeIcon({ kind }: { kind: OfficeIconKind }) {
   return (
     <span className={`office-icon office-icon-${kind}`} aria-hidden="true">
-      <svg viewBox="0 0 32 32" role="presentation">
+      <svg viewBox="0 0 32 32">
         {kind === 'prayer' && (
           <>
             <path d="M15.8 5.2c-1.4.8-2.3 2.4-3.1 4.2l-3.2 7.3c-.8 1.9-2.1 3.4-4 4.8l4.7 5.1c2.6-2.2 4.4-4.9 5.8-8.2" />
@@ -229,7 +247,10 @@ function OfficeReadingButton({ entry, icon, showGloss, complete, onOpen }: {
   )
 }
 
-function MealPrayerDock({ showGloss, onOpen }: { showGloss: boolean; onOpen: (entry: OfficeEntry) => void }) {
+function MealPrayerDock({ showGloss, onOpen }: {
+  showGloss: boolean
+  onOpen: (entry: OfficeEntry) => void
+}) {
   const icons: MealIconKind[] = ['cup', 'bread', 'table']
   const labels = [
     { greek: 'Ποτήριον', english: 'Cup' },
@@ -239,12 +260,18 @@ function MealPrayerDock({ showGloss, onOpen }: { showGloss: boolean; onOpen: (en
 
   return (
     <section className="meal-prayers" aria-labelledby="meal-prayers-title">
-      <div className="meal-prayers-heading" id="meal-prayers-title"><span>Εὐχαριστίαι τραπέζης</span>{showGloss && <small>Meal prayers</small>}</div>
+      <div className="meal-prayers-heading" id="meal-prayers-title">
+        <span>Εὐχαριστίαι τραπέζης</span>
+        {showGloss && <small>Meal prayers</small>}
+      </div>
       <nav className="meal-prayer-dock" aria-label="Meal prayers">
         {mealPrayers.map((prayer, index) => (
           <button className="meal-prayer-button" type="button" key={prayer.id} onClick={() => onOpen(prayer)}>
             <MealIcon kind={icons[index]} />
-            <span className="meal-prayer-label"><span>{labels[index].greek}</span>{showGloss && <small>{labels[index].english}</small>}</span>
+            <span className="meal-prayer-label">
+              <span>{labels[index].greek}</span>
+              {showGloss && <small>{labels[index].english}</small>}
+            </span>
           </button>
         ))}
       </nav>
@@ -269,7 +296,7 @@ function App() {
   const menuTrigger = useRef<HTMLButtonElement | null>(null)
 
   const progressiveReading = useMemo(
-    () => resolveDailyOffice(dateForAssignment(progress.streams.progressive.assignmentIndex)).progressiveReading,
+    () => resolveProgressiveReading(progress.streams.progressive.assignmentIndex),
     [progress.streams.progressive.assignmentIndex],
   )
   const challengeReading = useMemo(
@@ -280,6 +307,11 @@ function App() {
   const scriptureReading = activeEntry?.kind === 'scripture' ? activeEntry : null
   const currentVerse = scriptureReading?.verses[currentVerseIndex]
   const activeStream = streamForEntry(activeEntry)
+  const isLongForm = activeStream === 'progressive' || activeStream === 'challenge'
+  const chapterGroups = useMemo(
+    () => scriptureReading ? groupVersesByChapter(scriptureReading.verses) : [],
+    [scriptureReading],
+  )
 
   useEffect(() => {
     window.localStorage.setItem(OPTIONS_KEY, JSON.stringify(options))
@@ -300,7 +332,9 @@ function App() {
         }
       })
       .catch((error: unknown) => {
-        if (!cancelled) setPsalmError(error instanceof Error ? error.message : 'Unable to load the Psalm.')
+        if (!cancelled) {
+          setPsalmError(error instanceof Error ? error.message : 'Unable to load the Psalm.')
+        }
       })
     return () => { cancelled = true }
   }, [options.showPsalm, psalmNumber])
@@ -313,7 +347,9 @@ function App() {
   useEffect(() => {
     if (view !== 'reader' || !scriptureReading) return
     const verse = scriptureReading.verses[currentVerseIndex]
-    window.requestAnimationFrame(() => verseElements.current[verse.id]?.scrollIntoView({ behavior: 'smooth', block: 'center' }))
+    window.requestAnimationFrame(() => {
+      verseElements.current[verse.id]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    })
   }, [currentVerseIndex, scriptureReading, view])
 
   function openEntry(entry: OfficeEntry) {
@@ -325,6 +361,7 @@ function App() {
     } else {
       setCurrentVerseIndex(0)
     }
+
     if (entry.id.startsWith('weekday-prayer:')) setSelectedWeekday(today.getDay())
     setActiveEntry(entry)
     setView('reader')
@@ -354,11 +391,13 @@ function App() {
 
   function proceed() {
     if (!activeStream) return
+
     const nextEntry = activeStream === 'progressive'
-      ? resolveDailyOffice(dateForAssignment(progress.streams.progressive.assignmentIndex)).progressiveReading
+      ? resolveProgressiveReading(progress.streams.progressive.assignmentIndex)
       : activeStream === 'challenge'
         ? resolveDailyOffice(dateForAssignment(progress.streams.challenge.assignmentIndex)).challengeReading
         : psalmReading
+
     if (nextEntry) openEntry(nextEntry)
   }
 
@@ -444,18 +483,71 @@ function App() {
           {options.showGloss && <p className="prayer-gloss" lang="en">{activeEntry.textEnglish}{activeEntry.traditionalEnding && <><br />{activeEntry.traditionalEnding.textEnglish}</>}</p>}
         </article>
       ) : (
-        <article className="scripture" lang="grc">
-          <p className="reading-section">{activeEntry.sectionGreek}</p><h1>{activeEntry.titleGreek}</h1>{options.showGloss && <p className="reader-reference">{activeEntry.reference}</p>}
-          <div className="verse-list">{activeEntry.verses.map((verse, index) => <p className={index === currentVerseIndex ? 'verse current-verse' : 'verse'} id={verse.id} key={verse.id} ref={(element: HTMLParagraphElement | null) => { verseElements.current[verse.id] = element }} onClick={() => setCurrentVerseIndex(index)}><button className="verse-number" type="button" aria-label={`Verse ${verse.number}`} onClick={(event: MouseEvent<HTMLButtonElement>) => { event.stopPropagation(); moveToVerse(index) }}>{verse.number}</button><span>{verse.displayText}</span></p>)}</div>
+        <article className={`scripture${isLongForm ? ' scripture-long-form' : ''}`} lang="grc">
+          <p className="reading-section">{activeEntry.sectionGreek}</p>
+          <h1>{activeEntry.titleGreek}</h1>
+          {options.showGloss && <p className="reader-reference">{activeEntry.reference}</p>}
+
+          {isLongForm ? (
+            <div className="long-form-text">
+              {chapterGroups.map((chapter) => (
+                <section className="long-form-chapter" key={chapter.chapter} aria-label={`Chapter ${chapter.chapter}`}>
+                  <span className="chapter-marker" aria-hidden="true">{chapter.chapter}</span>
+                  <p>
+                    {chapter.verses.map((verse) => {
+                      const index = activeEntry.verses.findIndex((candidate) => candidate.id === verse.id)
+                      return (
+                        <span
+                          className={index === currentVerseIndex ? 'long-form-verse current-verse' : 'long-form-verse'}
+                          id={verse.id}
+                          key={verse.id}
+                          ref={(element: HTMLSpanElement | null) => { verseElements.current[verse.id] = element }}
+                          onClick={() => setCurrentVerseIndex(index)}
+                        >
+                          <button
+                            className="verse-number"
+                            type="button"
+                            aria-label={`Verse ${verse.number}`}
+                            onClick={(event: MouseEvent<HTMLButtonElement>) => {
+                              event.stopPropagation()
+                              moveToVerse(index)
+                            }}
+                          >
+                            {verse.number}
+                          </button>
+                          <span>{verse.displayText}</span>{' '}
+                        </span>
+                      )
+                    })}
+                  </p>
+                </section>
+              ))}
+            </div>
+          ) : (
+            <div className="verse-list">
+              {activeEntry.verses.map((verse, index) => (
+                <p
+                  className={index === currentVerseIndex ? 'verse current-verse' : 'verse'}
+                  id={verse.id}
+                  key={verse.id}
+                  ref={(element: HTMLParagraphElement | null) => { verseElements.current[verse.id] = element }}
+                  onClick={() => setCurrentVerseIndex(index)}
+                >
+                  <button className="verse-number" type="button" aria-label={`Verse ${verse.number}`} onClick={(event: MouseEvent<HTMLButtonElement>) => { event.stopPropagation(); moveToVerse(index) }}>{verse.number}</button>
+                  <span>{verse.displayText}</span>
+                </p>
+              ))}
+            </div>
+          )}
         </article>
       )}
 
       {!isMealPrayer && (
-        <div className="completion-actions">
+        <footer className="completion-actions">
           {!isMarked ? <button className="completion-button" type="button" onClick={completeActiveEntry}><Seal complete={false} /><span>Σφράγισον</span>{options.showGloss && <small>Mark complete</small>}</button> : <div className="completion-confirmed"><Seal complete /><span>Πεπλήρωται</span></div>}
           {isMarked && activeStream && <button className="proceed-button" type="button" onClick={proceed}><span>Πρόβαινε</span><span aria-hidden="true">›</span></button>}
           {isMarked && <button className="home-button" type="button" onClick={() => setView('office')}><span aria-hidden="true">⌂</span><span>Οἶκος</span></button>}
-        </div>
+        </footer>
       )}
 
       {scriptureReading && !isMarked && (
