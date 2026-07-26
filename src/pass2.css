@@ -1,0 +1,97 @@
+.reader-shell {
+  padding-bottom: max(2.75rem, env(safe-area-inset-bottom));
+}
+
+.completion-actions {
+  margin-top: clamp(3rem, 7vh, 5.5rem);
+  margin-bottom: clamp(3.25rem, 8vh, 6rem);
+  padding-inline: 1rem;
+}
+
+.prayer-reader + .completion-actions,
+.scripture + .completion-actions {
+  position: relative;
+}
+
+.scripture-long-form {
+  max-width: 58rem;
+}
+
+.long-form-text {
+  margin-top: 2.5rem;
+}
+
+.long-form-chapter {
+  position: relative;
+  margin: 0;
+}
+
+.long-form-chapter + .long-form-chapter {
+  margin-top: 3.4rem;
+  padding-top: 2.7rem;
+}
+
+.long-form-chapter + .long-form-chapter::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 12%;
+  right: 12%;
+  height: 1px;
+  background: color-mix(in srgb, currentColor 16%, transparent);
+}
+
+.chapter-marker {
+  display: block;
+  margin-bottom: 0.8rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-align: center;
+  opacity: 0.55;
+}
+
+.long-form-chapter p {
+  margin: 0;
+  font: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  text-align: left;
+}
+
+.long-form-verse {
+  display: inline;
+  border-radius: 0.22em;
+  cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.long-form-verse .verse-number {
+  display: inline;
+  margin: 0 0.28em 0 0.08em;
+  padding: 0;
+  vertical-align: 0.48em;
+  font-size: 0.42em;
+  line-height: 1;
+}
+
+.long-form-verse.current-verse {
+  background: color-mix(in srgb, var(--accent, #8d3731) 9%, transparent);
+  box-shadow:
+    0.12em 0 0 color-mix(in srgb, var(--accent, #8d3731) 9%, transparent),
+    -0.12em 0 0 color-mix(in srgb, var(--accent, #8d3731) 9%, transparent);
+}
+
+@media (max-width: 720px) {
+  .completion-actions {
+    margin-top: 2.75rem;
+    margin-bottom: max(3.5rem, calc(env(safe-area-inset-bottom) + 2.5rem));
+  }
+
+  .long-form-chapter + .long-form-chapter {
+    margin-top: 2.7rem;
+    padding-top: 2.2rem;
+  }
+}
