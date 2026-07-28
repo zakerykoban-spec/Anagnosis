@@ -21,3 +21,14 @@
 :root[data-theme='dark'] .navigation-button:disabled {
   color: var(--disabled);
 }
+
+:root[data-theme='dark'] .canonical-icon {
+  filter: invert(88%) sepia(18%) saturate(520%) hue-rotate(335deg) brightness(94%) contrast(88%);
+  mix-blend-mode: screen;
+}
+
+:root[data-theme='dark'] .manuscript-art {
+  filter: invert(86%) sepia(22%) saturate(430%) hue-rotate(335deg) brightness(82%) contrast(88%);
+  mix-blend-mode: screen;
+  opacity: 0.78;
+}

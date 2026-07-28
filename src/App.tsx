@@ -23,6 +23,20 @@ import {
   type ReadingStreamId,
 } from './readingProgress'
 import { UI } from './ui/lexicon'
+import altarBanner from './assets/banners/altar.png'
+import afterMealBanner from './assets/banners/after_meal.png'
+import mealBanner from './assets/banners/meal.png'
+import psalmBanner from './assets/banners/psalm.png'
+import breadIcon from './assets/icons/bread.png'
+import codexIcon from './assets/icons/codex.png'
+import cupIcon from './assets/icons/cup.png'
+import lampIcon from './assets/icons/lamp.png'
+import lyreIcon from './assets/icons/lyre.png'
+import plateIcon from './assets/icons/plate.png'
+import prayerHandsIcon from './assets/icons/prayer_hands.png'
+import scrollIcon from './assets/icons/scroll.png'
+import sealMarkIcon from './assets/icons/seal_mark.png'
+import waxSealIcon from './assets/icons/wax_seal.png'
 import './App.css'
 import './pass1.css'
 import './pass2.css'
@@ -33,6 +47,7 @@ type ReaderOptions = { showGloss: boolean; darkMode: boolean; showProgressive: b
 type MealIconKind = 'cup' | 'bread' | 'table'
 type OfficeIconKind = 'prayer' | 'codex' | 'lamp' | 'lyre' | 'lampstand'
 type OfficeDate = { iso: string; day: number; monthGreek: string; year: number; english: string; weekdayGreek: string }
+type ReaderBannerKind = 'altar' | 'meal' | 'after-meal' | 'psalm'
 
 const OPTIONS_KEY = 'anagnosis.options.v1'
 const OFFICE_START = new Date(2026, 6, 25)
@@ -40,6 +55,24 @@ const PSALM_COUNT = 150
 const GREEK_MONTHS = ['Ἰανουαρίου','Φεβρουαρίου','Μαρτίου','Ἀπριλίου','Μαΐου','Ἰουνίου','Ἰουλίου','Αὐγούστου','Σεπτεμβρίου','Ὀκτωβρίου','Νοεμβρίου','Δεκεμβρίου'] as const
 const GREEK_WEEKDAYS = ['Κυριακή','Δευτέρα','Τρίτη','Τετάρτη','Πέμπτη','Παρασκευή','Σάββατον'] as const
 const DEFAULT_OPTIONS: ReaderOptions = { showGloss: true, darkMode: false, showProgressive: true, showChallenge: true, showPsalm: true }
+const OFFICE_ICONS: Record<OfficeIconKind, string> = {
+  prayer: prayerHandsIcon,
+  codex: codexIcon,
+  lamp: lampIcon,
+  lyre: lyreIcon,
+  lampstand: scrollIcon,
+}
+const MEAL_ICONS: Record<MealIconKind, string> = {
+  cup: cupIcon,
+  bread: breadIcon,
+  table: plateIcon,
+}
+const READER_BANNERS: Record<ReaderBannerKind, string> = {
+  altar: altarBanner,
+  meal: mealBanner,
+  'after-meal': afterMealBanner,
+  psalm: psalmBanner,
+}
 
 function formatOfficeDate(date: Date): OfficeDate {
   const iso = [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-')
@@ -79,18 +112,13 @@ function groupVersesByChapter(verses: ScriptureVerse[]) {
 }
 
 function OfficeIcon({ kind }: { kind: OfficeIconKind }) {
-  return <span className={`office-icon office-icon-${kind}`} aria-hidden="true"><svg viewBox="0 0 32 32">
-    {kind === 'prayer' && <><path d="M15.8 5.2c-1.4.8-2.3 2.4-3.1 4.2l-3.2 7.3c-.8 1.9-2.1 3.4-4 4.8l4.7 5.1c2.6-2.2 4.4-4.9 5.8-8.2"/><path d="M16.2 5.2c1.4.8 2.3 2.4 3.1 4.2l3.2 7.3c.8 1.9 2.1 3.4 4 4.8l-4.7 5.1c-2.6-2.2-4.4-4.9-5.8-8.2"/><path d="M16 5.2v13.2M12.7 9.4l3.3 9M19.3 9.4l-3.3 9M7.4 23.4l4.6 4.2M24.6 23.4 20 27.6"/></>}
-    {kind === 'codex' && <><path d="M4.5 7.5c4.4-1.3 8.2-.5 11.5 2.2v16c-3.3-2.7-7.1-3.5-11.5-2.2v-16ZM27.5 7.5c-4.4-1.3-8.2-.5-11.5 2.2v16c3.3-2.7 7.1-3.5 11.5-2.2v-16Z"/><path d="M8 11.5c2.1-.2 3.8.2 5.4 1.2M19 12.7c1.6-1 3.3-1.4 5.4-1.2M8 15.5c2.1-.2 3.8.2 5.4 1.2M19 16.7c1.6-1 3.3-1.4 5.4-1.2"/></>}
-    {kind === 'lamp' && <><path d="M7 18.5c4.4-4.8 10.8-6.6 18-4.3-1.1 5.7-5.3 9.3-11.5 9.3H8.2L7 18.5Z"/><path d="M23.2 14.1c1.6-2.7 3.2-4.4 4.8-5.1M14 23.5v3M9.5 26.5h9"/><path className="office-icon-flame" d="M27.8 8.8c-2.3-1.5-2.1-3.6-.2-5.3 1.3 2 .9 3.7.2 5.3Z"/></>}
-    {kind === 'lyre' && <><path d="M9 5.5c-1.2 6.3-.8 12.6 2 18.5M23 5.5c1.2 6.3.8 12.6-2 18.5M11 24c3.1 2.2 6.9 2.2 10 0M9.5 9.5c4.2 2.2 8.8 2.2 13 0"/><path d="M13 10.8v13.7M16 11v14.7M19 10.8v13.7"/></>}
-    {kind === 'lampstand' && <><path d="M16 7v18M10 25h12M12.5 28h7M16 13c-4.5 0-7.5-2.4-7.5-6M16 18c-6.7 0-11-3-11-8M16 13c4.5 0 7.5-2.4 7.5-6M16 18c6.7 0 11-3 11-8"/><path d="M5 7h3M8.5 4.5c-1.5-1.2-1.4-2.5 0-3.5 1 1.3.7 2.4 0 3.5ZM12.5 5h7M16 3.5c-1.5-1.2-1.4-2.5 0-3.5 1 1.3.7 2.4 0 3.5ZM23.5 4.5c-1.5-1.2-1.4-2.5 0-3.5 1 1.3.7 2.4 0 3.5ZM24 7h3"/></>}
-  </svg></span>
+  return <span className={`office-icon office-icon-${kind}`} aria-hidden="true"><img className="canonical-icon" src={OFFICE_ICONS[kind]} alt=""/></span>
 }
-function Seal({ complete }: { complete: boolean }) { return <span className={`completion-seal${complete ? ' is-complete' : ''}`} aria-label={complete ? 'Πεπλήρωται' : 'Οὔπω πεπλήρωται'}><span aria-hidden="true"/></span> }
+function Seal({ complete }: { complete: boolean }) { return <span className={`completion-seal${complete ? ' is-complete' : ''}`} aria-label={complete ? 'Πεπλήρωται' : 'Οὔπω πεπλήρωται'}><img className="canonical-icon" src={complete ? sealMarkIcon : waxSealIcon} alt=""/></span> }
 function MenuIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg> }
 function ThemeIcon({ dark }: { dark: boolean }) { return <svg viewBox="0 0 24 24" aria-hidden="true">{dark ? <><circle cx="12" cy="12" r="3.5"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M18.7 5.3l-1.4 1.4M6.7 17.3l-1.4 1.4"/></> : <path d="M20 15.1A8 8 0 0 1 8.9 4a8 8 0 1 0 11.1 11.1Z"/>}</svg> }
-function MealIcon({ kind }: { kind: MealIconKind }) { return <span className="meal-icon" aria-hidden="true"><svg viewBox="0 0 32 32">{kind === 'cup' && <><path d="M10 6h12l-1.5 8.5a4.6 4.6 0 0 1-9 0L10 6Z"/><path d="M16 19v7M12.5 26h7"/></>}{kind === 'bread' && <><path d="M7 19.5v-5.7c0-4.2 3.8-7.3 9-7.3s9 3.1 9 7.3v5.7c0 3.2-2.4 5.5-5.5 5.5h-7C9.4 25 7 22.7 7 19.5Z"/><path d="m12 11.5 1.8 2M16 10.2l1.6 2.2M20 11.5l-1.8 2"/></>}{kind === 'table' && <><path d="M5 18h22M8 18v9M24 18v9"/><path d="M8.5 16.5c.5-3 2.4-4.8 5-4.8s4.5 1.8 5 4.8M11.5 13.1l1.3 1.5M15 12.1l1.1 1.6"/><path d="M21 9.5h5l-.7 4a2 2 0 0 1-3.9 0l-.4-4ZM23.5 15.5v2.5"/></>}</svg></span> }
+function MealIcon({ kind }: { kind: MealIconKind }) { return <span className="meal-icon" aria-hidden="true"><img className="canonical-icon" src={MEAL_ICONS[kind]} alt=""/></span> }
+function ReaderBanner({ kind }: { kind: ReaderBannerKind }) { return <img className={`reader-banner reader-banner-${kind} manuscript-art`} src={READER_BANNERS[kind]} alt="" aria-hidden="true"/> }
 
 function OfficeReadingButton({ entry, icon, showGloss, complete, onOpen }: { entry: OfficeEntry; icon: OfficeIconKind; showGloss: boolean; complete: boolean; onOpen: (entry: OfficeEntry) => void }) {
   return <button className="office-reading" type="button" onClick={() => onOpen(entry)}><OfficeIcon kind={icon}/><span className="office-reading-copy"><VoiceText term={{ greek: entry.sectionGreek, english: entry.sectionEnglish }} showGloss={showGloss}/><span className="office-reading-title">{entry.titleGreek}</span><span className="office-reading-reference">{entry.reference}</span></span><Seal complete={complete}/></button>
@@ -147,8 +175,17 @@ export default function App() {
   const isWeekdayPrayer=activeEntry.kind==='prayer'&&activeEntry.id.startsWith('weekday-prayer:')
   const isMealPrayer=activeEntry.id.startsWith('meal:')
   const isMarked=activeStream?markedToday(activeStream):markedToday(activeEntry.id)
+  const readerBannerKind: ReaderBannerKind | null = activeStream === 'psalm'
+    ? 'psalm'
+    : activeEntry.id === 'meal:after'
+      ? 'after-meal'
+      : isMealPrayer
+        ? 'meal'
+        : activeEntry.kind === 'prayer'
+          ? 'altar'
+          : null
   return <main className="reader-shell"><header className="reader-header"><button className="text-button" type="button" onClick={()=>setView('office')}><VoiceText term={UI.back} showGloss={options.showGloss}/></button><div className="reader-title"><p>{activeEntry.titleGreek}</p>{options.showGloss&&<span>{activeEntry.reference}</span>}</div>{scriptureReading?<p className="reader-progress">{currentVerseIndex+1} / {scriptureReading.verses.length}</p>:<span/>}</header>
-    {activeEntry.kind==='prayer'?<article className="prayer-reader" lang="grc"><p className="prayer-section">{activeEntry.sectionGreek}</p>{isWeekdayPrayer&&<nav className="weekday-tabs">{weekdayTabs.map((day,index)=><button className={['weekday-tab',index===selectedWeekday?'is-selected':'',index===today.getDay()?'is-today':''].filter(Boolean).join(' ')} type="button" key={day.short} onClick={()=>{setSelectedWeekday(index);setActiveEntry(weeklyPrayerCycle[index])}}>{day.short}</button>)}</nav>}<div className="prayer-meta">{activeEntry.weekdayGreek&&<p className="prayer-weekday">{activeEntry.weekdayGreek}</p>}<h1 className="prayer-name">{activeEntry.titleGreek}</h1><p className="prayer-reference">{activeEntry.reference}</p></div><p className="prayer-text">{activeEntry.textGreek}</p>{activeEntry.traditionalEnding&&<aside className="traditional-ending"><p className="traditional-ending-label">{activeEntry.traditionalEnding.labelGreek}{options.showGloss&&<span lang="en">{activeEntry.traditionalEnding.labelEnglish}</span>}</p><p>{activeEntry.traditionalEnding.textGreek}</p></aside>}{options.showGloss&&<p className="prayer-gloss" lang="en">{activeEntry.textEnglish}{activeEntry.traditionalEnding&&<><br/>{activeEntry.traditionalEnding.textEnglish}</>}</p>}</article>:<article className={`scripture${isLongForm?' scripture-long-form':''}`} lang="grc"><p className="reading-section">{activeEntry.sectionGreek}</p><h1>{activeEntry.titleGreek}</h1>{options.showGloss&&<p className="reader-reference">{activeEntry.reference}</p>}{isLongForm?<div className="long-form-text">{chapterGroups.map(ch=><section className="long-form-chapter" key={ch.chapter}><span className="chapter-marker">{ch.chapter}</span><p>{ch.verses.map(verse=>{const index=activeEntry.verses.findIndex(v=>v.id===verse.id);return <span className={index===currentVerseIndex?'long-form-verse current-verse':'long-form-verse'} id={verse.id} key={verse.id} ref={el=>{verseElements.current[verse.id]=el}} onClick={()=>setCurrentVerseIndex(index)}><button className="verse-number" type="button" onClick={(e:MouseEvent<HTMLButtonElement>)=>{e.stopPropagation();moveToVerse(index)}}>{verse.number}</button><span>{verse.displayText}</span>{' '}</span>})}</p></section>)}</div>:<div className="verse-list">{activeEntry.verses.map((verse,index)=><p className={index===currentVerseIndex?'verse current-verse':'verse'} id={verse.id} key={verse.id} ref={el=>{verseElements.current[verse.id]=el}} onClick={()=>setCurrentVerseIndex(index)}><button className="verse-number" type="button" onClick={(e:MouseEvent<HTMLButtonElement>)=>{e.stopPropagation();moveToVerse(index)}}>{verse.number}</button><span>{verse.displayText}</span></p>)}</div>}</article>}
+    {activeEntry.kind==='prayer'?<article className="prayer-reader" lang="grc"><p className="prayer-section">{activeEntry.sectionGreek}</p>{isWeekdayPrayer&&<nav className="weekday-tabs">{weekdayTabs.map((day,index)=><button className={['weekday-tab',index===selectedWeekday?'is-selected':'',index===today.getDay()?'is-today':''].filter(Boolean).join(' ')} type="button" key={day.short} onClick={()=>{setSelectedWeekday(index);setActiveEntry(weeklyPrayerCycle[index])}}>{day.short}</button>)}</nav>}<div className="prayer-meta">{activeEntry.weekdayGreek&&<p className="prayer-weekday">{activeEntry.weekdayGreek}</p>}<h1 className="prayer-name">{activeEntry.titleGreek}</h1><p className="prayer-reference">{activeEntry.reference}</p></div>{readerBannerKind&&<ReaderBanner kind={readerBannerKind}/>}<p className="prayer-text">{activeEntry.textGreek}</p>{activeEntry.traditionalEnding&&<aside className="traditional-ending"><p className="traditional-ending-label">{activeEntry.traditionalEnding.labelGreek}{options.showGloss&&<span lang="en">{activeEntry.traditionalEnding.labelEnglish}</span>}</p><p>{activeEntry.traditionalEnding.textGreek}</p></aside>}{options.showGloss&&<p className="prayer-gloss" lang="en">{activeEntry.textEnglish}{activeEntry.traditionalEnding&&<><br/>{activeEntry.traditionalEnding.textEnglish}</>}</p>}</article>:<article className={`scripture${isLongForm?' scripture-long-form':''}`} lang="grc"><p className="reading-section">{activeEntry.sectionGreek}</p><h1>{activeEntry.titleGreek}</h1>{options.showGloss&&<p className="reader-reference">{activeEntry.reference}</p>}{readerBannerKind&&<ReaderBanner kind={readerBannerKind}/>} {isLongForm?<div className="long-form-text">{chapterGroups.map(ch=><section className="long-form-chapter" key={ch.chapter}><span className="chapter-marker">{ch.chapter}</span><p>{ch.verses.map(verse=>{const index=activeEntry.verses.findIndex(v=>v.id===verse.id);return <span className={index===currentVerseIndex?'long-form-verse current-verse':'long-form-verse'} id={verse.id} key={verse.id} ref={el=>{verseElements.current[verse.id]=el}} onClick={()=>setCurrentVerseIndex(index)}><button className="verse-number" type="button" onClick={(e:MouseEvent<HTMLButtonElement>)=>{e.stopPropagation();moveToVerse(index)}}>{verse.number}</button><span>{verse.displayText}</span>{' '}</span>})}</p></section>)}</div>:<div className="verse-list">{activeEntry.verses.map((verse,index)=><p className={index===currentVerseIndex?'verse current-verse':'verse'} id={verse.id} key={verse.id} ref={el=>{verseElements.current[verse.id]=el}} onClick={()=>setCurrentVerseIndex(index)}><button className="verse-number" type="button" onClick={(e:MouseEvent<HTMLButtonElement>)=>{e.stopPropagation();moveToVerse(index)}}>{verse.number}</button><span>{verse.displayText}</span></p>)}</div>}</article>}
     {scriptureReading&&<nav className="reader-navigation" aria-label="Πλοήγησις στίχων"><button className="navigation-button navigation-button-back" type="button" disabled={currentVerseIndex===0} onClick={()=>moveToVerse(currentVerseIndex-1)}><span className="navigation-arrow">‹</span><span><strong>Ὀπίσω</strong>{options.showGloss&&<small>Previous verse</small>}</span></button><button className="navigation-button navigation-button-next" type="button" disabled={currentVerseIndex===scriptureReading.verses.length-1} onClick={()=>moveToVerse(currentVerseIndex+1)}><span><strong>Ἔμπροσθεν</strong>{options.showGloss&&<small>Next verse</small>}</span><span className="navigation-arrow">›</span></button></nav>}
     {!isMealPrayer&&<footer className="completion-actions">{!isMarked?<button className="completion-button" type="button" onClick={completeActiveEntry}><Seal complete={false}/><span>Σφράγισον</span>{options.showGloss&&<small>Mark complete</small>}</button>:<div className="completion-confirmed"><Seal complete/><span>Πεπλήρωται</span></div>}{isMarked&&activeStream&&<button className="proceed-button" type="button" onClick={proceed}><span>Πρόβαινε</span><span>›</span></button>}{isMarked&&<button className="home-button" type="button" onClick={()=>setView('office')}><span>⌂</span><span>Οἶκος</span></button>}</footer>}
   </main>

@@ -1,39 +1,20 @@
 .completion-seal {
-  display: inline-grid;
+  display: inline-block;
   flex: 0 0 auto;
   width: 1.65rem;
   height: 1.65rem;
-  place-items: center;
-  border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
-  border-radius: 46% 54% 51% 49% / 52% 45% 55% 48%;
-  opacity: 0.48;
-  transform: rotate(-4deg);
+  opacity: 0.58;
 }
 
-.completion-seal > span {
-  width: 0.78rem;
-  height: 0.78rem;
-  border: 1px solid currentColor;
-  border-radius: 50%;
-  opacity: 0.42;
+.completion-seal img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .completion-seal.is-complete {
-  color: #7a2f2b;
-  background:
-    radial-gradient(circle at 38% 32%, rgba(255, 255, 255, 0.24), transparent 28%),
-    #8d3731;
-  border-color: #6d2825;
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.12),
-    0 2px 5px rgba(50, 20, 16, 0.22);
   opacity: 1;
-}
-
-.completion-seal.is-complete > span {
-  border-color: rgba(255, 236, 220, 0.7);
-  box-shadow: inset 0 0 0 2px rgba(76, 22, 20, 0.18);
-  opacity: 0.9;
 }
 
 .office-reading .completion-seal {

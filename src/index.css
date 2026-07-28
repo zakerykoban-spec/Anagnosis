@@ -35,6 +35,7 @@
   --leather-warm: #513727;
   --binding: #5d402d;
   --binding-dark: #2e1d16;
+  --parchment-image: url('./assets/backgrounds/parchment_light.png');
 }
 
 :root[data-theme='dark'] {
@@ -68,6 +69,7 @@
   --leather-warm: #211711;
   --binding: #2b1e17;
   --binding-dark: #100b08;
+  --parchment-image: url('./assets/backgrounds/parchment_dark.png');
 }
 
 * {

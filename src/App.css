@@ -28,17 +28,7 @@
   border: 1px solid var(--page-edge);
   border-radius: 11px 14px 13px 9px;
   background:
-    radial-gradient(ellipse at -2% 18%, rgba(91, 57, 25, 0.2), transparent 11%),
-    radial-gradient(ellipse at 102% 72%, rgba(91, 57, 25, 0.16), transparent 12%),
-    linear-gradient(90deg, rgba(88, 55, 25, 0.1), transparent 7% 94%, rgba(88, 55, 25, 0.09)),
-    radial-gradient(ellipse at 13% 8%, var(--paper-fleck), transparent 23%),
-    radial-gradient(ellipse at 87% 74%, var(--paper-fleck), transparent 28%),
-    repeating-linear-gradient(
-      0deg,
-      transparent 0 4px,
-      rgba(100, 67, 31, 0.018) 5px,
-      transparent 6px 9px
-    ),
+    var(--parchment-image) center top / 100% auto repeat-y,
     var(--paper);
   box-shadow:
     6px 5px 0 -1px var(--sheet-two),
@@ -281,33 +271,16 @@
   width: 42px;
   height: 42px;
   place-items: center;
-  border: 1px solid color-mix(in srgb, var(--accent) 56%, var(--line));
-  border-radius: 50%;
-  color: var(--accent);
-  background:
-    radial-gradient(circle, var(--paper-light) 0 56%, transparent 58%),
-    color-mix(in srgb, var(--paper) 90%, var(--accent) 10%);
-  box-shadow:
-    inset 0 0 0 2px var(--inner-rule),
-    0 1px 0 rgba(255, 248, 219, 0.6);
 }
 
-.office-icon svg {
-  width: 27px;
-  height: 27px;
-  fill: none;
-  stroke: currentColor;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 1.45;
+.office-icon img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
 }
 
-.office-icon circle {
-  fill: none;
-}
-
-.office-icon-flame {
-  fill: color-mix(in srgb, var(--antique-gold) 35%, transparent);
+.canonical-icon {
+  mix-blend-mode: multiply;
 }
 
 .office-reading-disclosure {
@@ -486,14 +459,7 @@
   margin: 0 auto;
   border-inline: 1px solid var(--page-edge);
   background:
-    linear-gradient(90deg, rgba(88, 55, 25, 0.12), transparent 7% 94%, rgba(88, 55, 25, 0.08)),
-    radial-gradient(circle at 10% 5%, var(--paper-fleck), transparent 24%),
-    repeating-linear-gradient(
-      0deg,
-      transparent 0 4px,
-      rgba(100, 67, 31, 0.018) 5px,
-      transparent 6px 9px
-    ),
+    var(--parchment-image) center top / 100% auto repeat-y,
     var(--paper);
   box-shadow:
     7px 0 0 var(--sheet-two),
@@ -611,6 +577,30 @@
   color: var(--muted);
   font-size: 0.76rem;
   text-align: center;
+}
+
+.reader-banner {
+  display: block;
+  width: min(100%, 650px);
+  height: auto;
+  margin: 24px auto 30px;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+.reader-banner-altar {
+  width: min(72%, 330px);
+  margin-block: 22px 26px;
+}
+
+.reader-banner-psalm {
+  width: min(100%, 680px);
+  margin-top: 25px;
+}
+
+.reader-banner-meal,
+.reader-banner-after-meal {
+  width: min(100%, 640px);
 }
 
 .verse-list {
@@ -975,9 +965,9 @@
     height: 38px;
   }
 
-  .office-icon svg {
-    width: 25px;
-    height: 25px;
+  .office-icon img {
+    width: 38px;
+    height: 38px;
   }
 
   .office-reading-title {
@@ -1030,6 +1020,14 @@
 
   .prayer-reader {
     padding-top: 20px;
+  }
+
+  .reader-banner {
+    margin-block: 19px 24px;
+  }
+
+  .reader-banner-altar {
+    width: min(78%, 290px);
   }
 
   .weekday-tabs {
