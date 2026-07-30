@@ -5,18 +5,18 @@
 .office-card,
 .reader-shell {
   background:
+    var(--parchment-folio-image) center top / 100% auto no-repeat,
     var(--parchment-center-image) center top / 100% auto repeat-y,
     var(--paper);
 }
 
 /*
- * A manuscript surface has one top edge, a repeatable middle, and one bottom
- * edge. The soft masks blend the cap artwork into the center texture without
- * stretching either source image or exposing a false second page.
+ * The complete folio provides the visible upper manuscript and the center
+ * texture remains hidden beneath it until content truly overflows. One masked
+ * end cap closes the manuscript after the final content without stretching
+ * either source image or exposing a false second page.
  */
-.office-card::before,
 .office-card::after,
-.reader-shell::before,
 .reader-shell::after {
   position: absolute;
   z-index: -1;
@@ -28,14 +28,6 @@
   background-repeat: no-repeat;
   background-size: 100% auto;
   content: '';
-}
-
-.office-card::before,
-.reader-shell::before {
-  top: 0;
-  background-position: center top;
-  -webkit-mask-image: linear-gradient(to bottom, #000 0 68%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 0 68%, transparent 100%);
 }
 
 .office-card::after,
