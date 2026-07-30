@@ -3,13 +3,18 @@ import assert from 'node:assert/strict'
 import {
   completeStreamAssignment,
   createDefaultProgress,
+  isLatestStreamAssignmentCompleted,
   isDailySectionMarked,
   markDailySection,
+  selectStreamAssignment,
   undoLastStreamCompletion,
   unmarkDailySection,
   updateStreamPosition,
 } from '../src/readingProgress.ts'
-import { readHistoryItems } from '../src/readHistory.ts'
+import {
+  readHistoryItems,
+  readingContentsItems,
+} from '../src/readHistory.ts'
 import {
   remembersVersePosition,
   restoredVerseIndex,
@@ -67,6 +72,93 @@ test('reading streams advance only after explicit completion', () => {
   ])
 })
 
+test('several assignments can be completed in one reading session', () => {
+  const dateIso = '2026-07-30'
+  const firstId = 'progressive:mark:chapters-1-2'
+  const secondId = 'progressive:mark:chapters-3-4'
+
+  const firstCompleted = markDailySection(
+    completeStreamAssignment(
+      createDefaultProgress(),
+      'progressive',
+      firstId,
+    ),
+    dateIso,
+    'progressive',
+  )
+
+  assert.equal(firstCompleted.streams.progressive.assignmentIndex, 1)
+  assert.equal(
+    isLatestStreamAssignmentCompleted(
+      firstCompleted,
+      'progressive',
+      firstId,
+    ),
+    true,
+  )
+  assert.equal(
+    isLatestStreamAssignmentCompleted(
+      firstCompleted,
+      'progressive',
+      secondId,
+    ),
+    false,
+  )
+
+  const secondCompleted = markDailySection(
+    completeStreamAssignment(firstCompleted, 'progressive', secondId),
+    dateIso,
+    'progressive',
+  )
+
+  assert.equal(secondCompleted.streams.progressive.assignmentIndex, 2)
+  assert.equal(
+    isLatestStreamAssignmentCompleted(
+      secondCompleted,
+      'progressive',
+      secondId,
+    ),
+    true,
+  )
+  assert.equal(
+    isDailySectionMarked(secondCompleted, dateIso, 'progressive'),
+    true,
+  )
+  assert.deepEqual(
+    secondCompleted.streams.progressive.completedAssignmentIds,
+    [firstId, secondId],
+  )
+})
+
+test('repeated readings remain completable after a plan cycle wraps', () => {
+  const firstId = 'challenge:luke:1'
+  const secondId = 'challenge:luke:2'
+  const firstCycle = completeStreamAssignment(
+    completeStreamAssignment(
+      createDefaultProgress(),
+      'challenge',
+      firstId,
+    ),
+    'challenge',
+    secondId,
+  )
+  const repeated = completeStreamAssignment(
+    firstCycle,
+    'challenge',
+    firstId,
+  )
+
+  assert.equal(repeated.streams.challenge.assignmentIndex, 3)
+  assert.deepEqual(
+    repeated.streams.challenge.completedAssignmentIds,
+    [firstId, secondId, firstId],
+  )
+  assert.equal(
+    isLatestStreamAssignmentCompleted(repeated, 'challenge', firstId),
+    true,
+  )
+})
+
 test('each reading stream progresses independently', () => {
   const initial = createDefaultProgress()
   const progressiveComplete = completeStreamAssignment(
@@ -78,6 +170,28 @@ test('each reading stream progresses independently', () => {
   assert.equal(progressiveComplete.streams.progressive.assignmentIndex, 1)
   assert.equal(progressiveComplete.streams.challenge.assignmentIndex, 0)
   assert.equal(progressiveComplete.streams.psalm.assignmentIndex, 0)
+})
+
+test('contents navigation can select any unread assignment without marking it read', () => {
+  const started = updateStreamPosition(
+    completeStreamAssignment(
+      createDefaultProgress(),
+      'progressive',
+      'progressive:mark:chapters-1-2',
+    ),
+    'progressive',
+    'mark.3.8',
+  )
+
+  const selected = selectStreamAssignment(started, 'progressive', 6)
+
+  assert.equal(selected.streams.progressive.assignmentIndex, 6)
+  assert.equal(selected.streams.progressive.lastVerseId, null)
+  assert.equal(selected.streams.progressive.status, 'not-started')
+  assert.deepEqual(
+    selected.streams.progressive.completedAssignmentIds,
+    ['progressive:mark:chapters-1-2'],
+  )
 })
 
 test('only the latest completion in a stream can be undone', () => {
@@ -182,6 +296,73 @@ test('read history resolves Psalms and ignores invalid saved IDs', () => {
   assert.deepEqual(
     items.map((item) => item.psalmNumber),
     [150, 1],
+  )
+})
+
+test('the readings menu combines canonical contents with progress state', () => {
+  const readings = [
+    {
+      id: 'progressive:mark:chapters-1-2',
+      kind: 'scripture' as const,
+      sectionGreek: 'Πρόοδος',
+      sectionEnglish: 'Progressive Reading',
+      titleGreek: 'ΚΑΤΑ ΜΑΡΚΟΝ',
+      reference: 'Mark 1–2',
+      verses: [],
+    },
+    {
+      id: 'progressive:mark:chapters-3-4',
+      kind: 'scripture' as const,
+      sectionGreek: 'Πρόοδος',
+      sectionEnglish: 'Progressive Reading',
+      titleGreek: 'ΚΑΤΑ ΜΑΡΚΟΝ',
+      reference: 'Mark 3–4',
+      verses: [],
+    },
+    {
+      id: 'progressive:mark:chapters-5-6',
+      kind: 'scripture' as const,
+      sectionGreek: 'Πρόοδος',
+      sectionEnglish: 'Progressive Reading',
+      titleGreek: 'ΚΑΤΑ ΜΑΡΚΟΝ',
+      reference: 'Mark 5–6',
+      verses: [],
+    },
+  ]
+  const items = readingContentsItems(
+    'progressive',
+    4,
+    ['progressive:mark:chapters-1-2'],
+    { progressive: readings, challenge: [] },
+  )
+
+  assert.deepEqual(
+    items.map((item) => ({
+      id: item.id,
+      assignmentIndex: item.assignmentIndex,
+      isCompleted: item.isCompleted,
+      isCurrent: item.isCurrent,
+    })),
+    [
+      {
+        id: 'progressive:mark:chapters-1-2',
+        assignmentIndex: 3,
+        isCompleted: true,
+        isCurrent: false,
+      },
+      {
+        id: 'progressive:mark:chapters-3-4',
+        assignmentIndex: 4,
+        isCompleted: false,
+        isCurrent: true,
+      },
+      {
+        id: 'progressive:mark:chapters-5-6',
+        assignmentIndex: 5,
+        isCompleted: false,
+        isCurrent: false,
+      },
+    ],
   )
 })
 

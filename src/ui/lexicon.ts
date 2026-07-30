@@ -25,8 +25,8 @@ export const UI = {
     english: 'Options',
   },
   readHistory: {
-    greek: 'Ἀνεγνωσμένα',
-    english: 'Read',
+    greek: 'Ἀναγνώσματα',
+    english: 'Readings',
   },
   englishAids: {
     greek: 'Ἀγγλικὰ βοηθήματα',

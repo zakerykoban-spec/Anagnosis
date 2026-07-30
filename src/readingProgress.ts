@@ -94,9 +94,6 @@ export function completeStreamAssignment(
   assignmentId: string,
 ): ReadingProgressState {
   const stream = progress.streams[streamId]
-  const completedAssignmentIds = stream.completedAssignmentIds.includes(assignmentId)
-    ? stream.completedAssignmentIds
-    : [...stream.completedAssignmentIds, assignmentId]
 
   return {
     ...progress,
@@ -106,10 +103,57 @@ export function completeStreamAssignment(
         assignmentIndex: stream.assignmentIndex + 1,
         lastVerseId: null,
         status: 'not-started',
-        completedAssignmentIds,
+        completedAssignmentIds: [
+          ...stream.completedAssignmentIds,
+          assignmentId,
+        ],
       },
     },
   }
+}
+
+export function selectStreamAssignment(
+  progress: ReadingProgressState,
+  streamId: ReadingStreamId,
+  assignmentIndex: number,
+): ReadingProgressState {
+  if (!Number.isSafeInteger(assignmentIndex) || assignmentIndex < 0) {
+    return progress
+  }
+
+  const stream = progress.streams[streamId]
+
+  if (
+    stream.assignmentIndex === assignmentIndex
+    && stream.lastVerseId === null
+    && stream.status === 'not-started'
+  ) {
+    return progress
+  }
+
+  return {
+    ...progress,
+    streams: {
+      ...progress.streams,
+      [streamId]: {
+        ...stream,
+        assignmentIndex,
+        lastVerseId: null,
+        status: 'not-started',
+      },
+    },
+  }
+}
+
+export function isLatestStreamAssignmentCompleted(
+  progress: ReadingProgressState,
+  streamId: ReadingStreamId,
+  assignmentId: string,
+) {
+  return (
+    progress.streams[streamId].completedAssignmentIds.at(-1)
+    === assignmentId
+  )
 }
 
 export function undoLastStreamCompletion(

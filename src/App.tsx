@@ -18,8 +18,8 @@ import {
   resolveProgressiveReading,
 } from './data/progressiveReadings'
 import {
-  readHistoryItems,
-  type ReadHistoryItem,
+  readingContentsItems,
+  type ReadingContentsItem,
 } from './readHistory'
 import {
   remembersVersePosition,
@@ -31,6 +31,7 @@ import {
   loadProgress,
   markDailySection,
   saveProgress,
+  selectStreamAssignment,
   undoLastStreamCompletion,
   unmarkDailySection,
   updateStreamPosition,
@@ -134,6 +135,24 @@ function streamForEntry(entry: OfficeEntry | null): ReadingStreamId | null {
   if (entry.id.startsWith('psalm:')) return 'psalm'
   return null
 }
+
+function assignmentIdForStreamIndex(
+  streamId: ReadingStreamId,
+  assignmentIndex: number,
+) {
+  if (streamId === 'progressive') {
+    return resolveProgressiveReading(assignmentIndex).id
+  }
+  if (streamId === 'challenge') {
+    return resolveChallengeReading(assignmentIndex).id
+  }
+
+  const psalmNumber = (
+    (assignmentIndex % PSALM_COUNT + PSALM_COUNT) % PSALM_COUNT
+  ) + 1
+  return `psalm:${psalmNumber}`
+}
+
 function groupVersesByChapter(verses: ScriptureVerse[]) {
   const groups: Array<{ chapter: number; verses: ScriptureVerse[] }> = []
   verses.forEach((verse) => {
@@ -183,6 +202,7 @@ export default function App() {
   const [selectedWeekday,setSelectedWeekday] = useState(today.getDay())
   const verseElements = useRef<Record<string,HTMLElement|null>>({})
   const menuTrigger = useRef<HTMLButtonElement|null>(null)
+  const currentContentsItem = useRef<HTMLDivElement|null>(null)
   const pendingScroll = useRef<
     { kind: 'top' } | { kind: 'verse'; verseId: string } | null
   >(null)
@@ -191,10 +211,11 @@ export default function App() {
   const challengeReading = useMemo(()=>resolveChallengeReading(progress.streams.challenge.assignmentIndex),[progress.streams.challenge.assignmentIndex])
   const psalmNumber = (progress.streams.psalm.assignmentIndex % PSALM_COUNT) + 1
   const activeStream = streamForEntry(activeEntry)
-  const historyItems = useMemo(
+  const contentsItems = useMemo(
     ()=>activeStream
-      ? readHistoryItems(
+      ? readingContentsItems(
           activeStream,
+          progress.streams[activeStream].assignmentIndex,
           progress.streams[activeStream].completedAssignmentIds,
           READ_HISTORY_CANDIDATES,
         )
@@ -204,6 +225,21 @@ export default function App() {
   const latestCompletedId = activeStream
     ? progress.streams[activeStream].completedAssignmentIds.at(-1) ?? null
     : null
+  const activeAssignmentIndex = activeStream
+    ? progress.streams[activeStream].assignmentIndex
+    : null
+  const currentAssignmentId = activeStream && activeAssignmentIndex !== null
+    ? assignmentIdForStreamIndex(activeStream, activeAssignmentIndex)
+    : null
+  const previousAssignmentId = activeStream
+    && activeAssignmentIndex !== null
+    && activeAssignmentIndex > 0
+    ? assignmentIdForStreamIndex(activeStream, activeAssignmentIndex - 1)
+    : null
+  const canUndoLatestCompletion = (
+    latestCompletedId !== null
+    && latestCompletedId === previousAssignmentId
+  )
   const displayedEntry = reviewEntry ?? activeEntry
   const scriptureReading = displayedEntry?.kind === 'scripture' ? displayedEntry : null
   const displayedVerseIndex = reviewEntry ? reviewVerseIndex : currentVerseIndex
@@ -213,6 +249,13 @@ export default function App() {
   useEffect(()=>{ localStorage.setItem(OPTIONS_KEY,JSON.stringify(options)) },[options])
   useEffect(()=>saveProgress(progress),[progress])
   useEffect(()=>{ if(!options.showPsalm)return; let cancelled=false; loadPsalm(psalmNumber).then(r=>{if(!cancelled){setPsalmReading(r);setPsalmError(null)}}).catch((e:unknown)=>{if(!cancelled)setPsalmError(e instanceof Error?e.message:'Unable to load the Psalm.')}); return()=>{cancelled=true} },[options.showPsalm,psalmNumber])
+  useLayoutEffect(() => {
+    if (!readHistoryOpen) return
+    currentContentsItem.current?.scrollIntoView({
+      behavior: 'auto',
+      block: 'center',
+    })
+  }, [readHistoryOpen, activeStream])
   useLayoutEffect(() => {
     const request = pendingScroll.current
     if (!request) return
@@ -275,7 +318,7 @@ export default function App() {
       }
     }
   }
-  async function openHistoryItem(item: ReadHistoryItem) {
+  async function openContentsItem(item: ReadingContentsItem) {
     setHistoryError(null)
     setHistoryLoadingId(item.id)
     try {
@@ -283,6 +326,36 @@ export default function App() {
         item.psalmNumber ? await loadPsalm(item.psalmNumber) : null
       )
       if (!reading) throw new Error('Unable to load this reading.')
+
+      if (item.isCurrent) {
+        openEntry(reading)
+        return
+      }
+
+      const currentIndex =
+        progress.streams[item.streamId].assignmentIndex
+      const shouldMakeCurrent = (
+        !item.isCompleted
+        || item.assignmentIndex > currentIndex
+      )
+
+      if (shouldMakeCurrent) {
+        setProgress((current) => selectStreamAssignment(
+          current,
+          item.streamId,
+          item.assignmentIndex,
+        ))
+        if (item.streamId === 'psalm') setPsalmReading(reading)
+        pendingScroll.current = { kind: 'top' }
+        setActiveEntry(reading)
+        setReviewEntry(null)
+        setCurrentVerseIndex(0)
+        setReaderMenuOpen(false)
+        setReadHistoryOpen(false)
+        setView('reader')
+        return
+      }
+
       pendingScroll.current = { kind: 'top' }
       setReviewEntry(reading)
       setReviewVerseIndex(0)
@@ -295,12 +368,16 @@ export default function App() {
       setHistoryLoadingId(null)
     }
   }
-  async function undoHistoryItem(item: ReadHistoryItem) {
+  async function undoHistoryItem(item: ReadingContentsItem) {
     const stream = progress.streams[item.streamId]
 
     if (
       stream.assignmentIndex < 1
       || stream.completedAssignmentIds.at(-1) !== item.id
+      || assignmentIdForStreamIndex(
+        item.streamId,
+        stream.assignmentIndex - 1,
+      ) !== item.id
     ) {
       setHistoryError('Only the latest completed reading can be restored.')
       return
@@ -362,7 +439,28 @@ export default function App() {
     setReadHistoryOpen(false)
     setView('office')
   }
-  function completeActiveEntry(){ if(!activeEntry)return; if(activeStream){if(activeStream==='psalm')setPsalmReading(null);setProgress(c=>markDailySection(completeStreamAssignment(c,activeStream,activeEntry.id),officeDate.iso,activeStream))} else if(activeEntry.kind==='prayer'&&!activeEntry.id.startsWith('meal:'))setProgress(c=>markDailySection(c,officeDate.iso,activeEntry.id)) }
+  function completeActiveEntry(){
+    if(!activeEntry)return
+    if(activeStream){
+      const expectedAssignmentIndex=progress.streams[activeStream].assignmentIndex
+      if(activeStream==='psalm')setPsalmReading(null)
+      setProgress((current)=>{
+        if(
+          current.streams[activeStream].assignmentIndex
+          !== expectedAssignmentIndex
+        ){
+          return current
+        }
+        return markDailySection(
+          completeStreamAssignment(current,activeStream,activeEntry.id),
+          officeDate.iso,
+          activeStream,
+        )
+      })
+    } else if(activeEntry.kind==='prayer'&&!activeEntry.id.startsWith('meal:')){
+      setProgress(c=>markDailySection(c,officeDate.iso,activeEntry.id))
+    }
+  }
   function proceed(){ if(!activeStream)return; const next=activeStream==='progressive'?resolveProgressiveReading(progress.streams.progressive.assignmentIndex):activeStream==='challenge'?resolveChallengeReading(progress.streams.challenge.assignmentIndex):psalmReading; if(next)openEntry(next) }
   const markedToday=(id:string)=>isDailySectionMarked(progress,officeDate.iso,id)
 
@@ -375,7 +473,9 @@ export default function App() {
   if(!activeEntry || !displayedEntry)return null
   const isWeekdayPrayer=displayedEntry.kind==='prayer'&&displayedEntry.id.startsWith('weekday-prayer:')
   const isMealPrayer=displayedEntry.id.startsWith('meal:')
-  const isMarked=activeStream?markedToday(activeStream):markedToday(activeEntry.id)
+  const isMarked=activeStream
+    ? activeEntry.id !== currentAssignmentId
+    : markedToday(activeEntry.id)
   const readerBannerKind: ReaderBannerKind | null = activeStream === 'psalm'
     ? 'psalm'
     : displayedEntry.id === 'meal:after'
@@ -436,7 +536,9 @@ export default function App() {
         </header>
         <button className="reader-menu-item" type="button" onClick={()=>{setReaderMenuOpen(false);setReadHistoryOpen(true)}}>
           <VoiceText term={UI.readHistory} showGloss={options.showGloss}/>
-          <span className="reader-menu-count">{historyItems.length}</span>
+          <span className="reader-menu-count">
+            {contentsItems.findIndex(item=>item.isCurrent)+1} / {contentsItems.length}
+          </span>
         </button>
       </section>
     </div>}
@@ -446,9 +548,9 @@ export default function App() {
           <h2 id="read-history-title"><VoiceText term={UI.readHistory} showGloss={options.showGloss}/></h2>
           <button className="options-close" type="button" onClick={()=>setReadHistoryOpen(false)}>×</button>
         </header>
-        {historyItems.length
-          ? <div className="read-history-list">{historyItems.map((item,index)=><div className="read-history-row" key={item.id}><button className="read-history-item" type="button" disabled={historyLoadingId!==null||historyUndoingId!==null} onClick={()=>void openHistoryItem(item)}><span>{item.titleGreek}</span><small>{historyLoadingId===item.id?'Ἀνοίγεται…':item.reference}</small></button>{index===0&&item.id===latestCompletedId&&<button className="read-history-undo" type="button" disabled={historyLoadingId!==null||historyUndoingId!==null} onClick={()=>void undoHistoryItem(item)}><span>{historyUndoingId===item.id?'Ἀνακαλεῖται…':'Ἀνακάλεσον'}</span>{options.showGloss&&<small>{historyUndoingId===item.id?'Restoring…':'Undo completion'}</small>}</button>}</div>)}</div>
-          : <p className="read-history-empty"><span>Οὔπω ἀνάγνωσμα πεπλήρωται.</span>{options.showGloss&&<small>No completed readings yet.</small>}</p>}
+        {contentsItems.length
+          ? <div className="read-history-list">{contentsItems.map((item)=><div className={['read-history-row',item.isCurrent?'is-current':'',item.isCompleted?'is-completed':''].filter(Boolean).join(' ')} key={`${item.streamId}:${item.assignmentIndex}:${item.id}`} ref={item.isCurrent?currentContentsItem:undefined}><button className="read-history-item" type="button" aria-current={item.isCurrent?'page':undefined} disabled={historyLoadingId!==null||historyUndoingId!==null} onClick={()=>void openContentsItem(item)}><span>{item.titleGreek}</span><small>{historyLoadingId===item.id?'Ἀνοίγεται…':item.reference}</small><em>{item.isCurrent?'Νῦν':item.isCompleted?'Ἀνεγνώσθη':'Οὔπω'}{options.showGloss&&<small>{item.isCurrent?'Current':item.isCompleted?'Read':'Unread'}</small>}</em></button>{canUndoLatestCompletion&&item.id===latestCompletedId&&!item.isCurrent&&<button className="read-history-undo" type="button" disabled={historyLoadingId!==null||historyUndoingId!==null} onClick={()=>void undoHistoryItem(item)}><span>{historyUndoingId===item.id?'Ἀνακαλεῖται…':'Ἀνακάλεσον'}</span>{options.showGloss&&<small>{historyUndoingId===item.id?'Restoring…':'Undo completion'}</small>}</button>}</div>)}</div>
+          : <p className="read-history-empty"><span>Οὐκ εἰσὶν ἀναγνώσματα.</span>{options.showGloss&&<small>No readings are available.</small>}</p>}
         {historyError&&<p className="read-history-error" role="alert">{historyError}</p>}
       </section>
     </div>}

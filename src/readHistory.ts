@@ -10,9 +10,21 @@ export type ReadHistoryItem = {
   psalmNumber?: number
 }
 
+export type ReadingContentsItem = ReadHistoryItem & {
+  assignmentIndex: number
+  isCompleted: boolean
+  isCurrent: boolean
+}
+
 export type ReadHistoryCandidates = {
   progressive: ScriptureReading[]
   challenge: ScriptureReading[]
+}
+
+const PSALM_COUNT = 150
+
+function positiveModulo(value: number, divisor: number) {
+  return ((value % divisor) + divisor) % divisor
 }
 
 function resolveCompletedReading(
@@ -75,4 +87,43 @@ export function readHistoryItems(
       resolveCompletedReading(streamId, assignmentId, candidates),
     )
     .filter((item): item is ReadHistoryItem => item !== null)
+}
+
+export function readingContentsItems(
+  streamId: ReadingStreamId,
+  currentAssignmentIndex: number,
+  completedAssignmentIds: string[],
+  candidates: ReadHistoryCandidates,
+): ReadingContentsItem[] {
+  const readings: ReadHistoryItem[] = streamId === 'psalm'
+    ? Array.from({ length: PSALM_COUNT }, (_, index) => ({
+        id: `psalm:${index + 1}`,
+        streamId,
+        titleGreek: `Ψαλμὸς ${index + 1}`,
+        reference: `Psalm ${index + 1}`,
+        psalmNumber: index + 1,
+      }))
+    : candidates[streamId].map((reading) => ({
+        id: reading.id,
+        streamId,
+        titleGreek: reading.titleGreek,
+        reference: reading.reference,
+        reading,
+      }))
+
+  if (readings.length === 0) return []
+
+  const currentCycleIndex = positiveModulo(
+    currentAssignmentIndex,
+    readings.length,
+  )
+  const cycleStart = currentAssignmentIndex - currentCycleIndex
+  const completedIds = new Set(completedAssignmentIds)
+
+  return readings.map((reading, index) => ({
+    ...reading,
+    assignmentIndex: cycleStart + index,
+    isCompleted: completedIds.has(reading.id),
+    isCurrent: index === currentCycleIndex,
+  }))
 }
