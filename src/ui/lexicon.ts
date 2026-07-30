@@ -28,10 +28,6 @@ export const UI = {
     greek: 'Ἀγγλικὰ βοηθήματα',
     english: 'English aids',
   },
-  darkMode: {
-    greek: 'Σκοτεινὴ ὄψις',
-    english: 'Dark mode',
-  },
   progressiveReading: {
     greek: 'Πρόοδος',
     english: 'Progressive reading',

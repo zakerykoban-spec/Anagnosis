@@ -27,41 +27,13 @@
   padding: 0 48px 32px;
   border: 1px solid var(--page-edge);
   border-radius: 11px 14px 13px 9px;
-  background:
-    var(--parchment-image) center top / 100% auto repeat-y,
-    var(--paper);
+  background: var(--paper);
   box-shadow:
     6px 5px 0 -1px var(--sheet-two),
     11px 10px 0 -2px var(--sheet-three),
     0 30px 76px var(--shadow),
     inset 0 0 0 2px rgba(255, 249, 226, 0.28),
     inset 0 0 32px rgba(98, 62, 27, 0.1);
-}
-
-.office-card::before,
-.office-card::after {
-  position: absolute;
-  z-index: 2;
-  pointer-events: none;
-  content: '';
-}
-
-.office-card::before {
-  inset: 9px;
-  border: 1px solid color-mix(in srgb, var(--page-edge) 65%, transparent);
-  border-radius: 7px 9px 8px 6px;
-  box-shadow: inset 0 0 0 2px rgba(255, 248, 222, 0.14);
-}
-
-.office-card::after {
-  top: 10px;
-  right: 10px;
-  width: 34px;
-  height: 34px;
-  border-top: 1px solid var(--page-edge);
-  border-right: 1px solid var(--page-edge);
-  border-radius: 0 8px 0 0;
-  background: linear-gradient(225deg, rgba(118, 80, 36, 0.15), transparent 55%);
 }
 
 .office-toolbar {
@@ -453,14 +425,13 @@
 
 .reader-shell {
   position: relative;
+  isolation: isolate;
   width: min(100%, 920px);
   min-height: 100vh;
   min-height: 100dvh;
   margin: 0 auto;
   border-inline: 1px solid var(--page-edge);
-  background:
-    var(--parchment-image) center top / 100% auto repeat-y,
-    var(--paper);
+  background: var(--paper);
   box-shadow:
     7px 0 0 var(--sheet-two),
     12px 0 0 var(--sheet-three),
@@ -922,15 +893,6 @@
       inset 0 0 0 1px var(--inner-rule),
       inset 12px 0 20px -14px rgba(72, 43, 22, 0.32),
       inset -12px 0 20px -14px rgba(72, 43, 22, 0.28);
-  }
-
-  .office-card::before {
-    inset: 8px 7px;
-  }
-
-  .office-card::after {
-    top: 9px;
-    right: 8px;
   }
 
   .office-toolbar {

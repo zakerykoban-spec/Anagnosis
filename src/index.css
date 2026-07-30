@@ -35,7 +35,10 @@
   --leather-warm: #513727;
   --binding: #5d402d;
   --binding-dark: #2e1d16;
-  --parchment-image: url('./assets/backgrounds/parchment.webp');
+  --parchment-folio-image: url('./assets/backgrounds/parchment-folio.png');
+  --parchment-center-image: url('./assets/backgrounds/parchment-center.png');
+  --manuscript-cap-height: clamp(72px, 10vw, 116px);
+  --reader-navigation-height: calc(82px + env(safe-area-inset-bottom));
 }
 
 

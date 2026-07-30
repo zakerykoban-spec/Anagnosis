@@ -202,11 +202,11 @@
 }
 
 .reader-shell {
-  padding-bottom: calc(68px + env(safe-area-inset-bottom));
+  padding-bottom: var(--reader-navigation-height);
 }
 
 .completion-actions {
-  margin-bottom: calc(6.5rem + 68px + env(safe-area-inset-bottom));
+  margin-bottom: clamp(3rem, 7vh, 5rem);
 }
 
 @media (max-width: 720px) {
@@ -244,6 +244,6 @@
   }
 
   .completion-actions {
-    margin-bottom: calc(4rem + 68px + env(safe-area-inset-bottom));
+    margin-bottom: clamp(2.5rem, 6vh, 4rem);
   }
 }
