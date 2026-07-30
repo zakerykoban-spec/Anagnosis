@@ -5,18 +5,18 @@
 .office-card,
 .reader-shell {
   background:
-    var(--parchment-folio-image) center top / 100% auto no-repeat,
     var(--parchment-center-image) center top / 100% auto repeat-y,
     var(--paper);
 }
 
 /*
- * The complete folio provides the visible upper manuscript and the center
- * texture remains hidden beneath it until content truly overflows. One masked
- * end cap closes the manuscript after the final content without stretching
- * either source image or exposing a false second page.
+ * A manuscript surface has one top edge, a repeatable middle, and one bottom
+ * edge. The soft masks blend the cap artwork into the center texture without
+ * stretching either source image or exposing a false second page.
  */
+.office-card::before,
 .office-card::after,
+.reader-shell::before,
 .reader-shell::after {
   position: absolute;
   z-index: -1;
@@ -28,6 +28,14 @@
   background-repeat: no-repeat;
   background-size: 100% auto;
   content: '';
+}
+
+.office-card::before,
+.reader-shell::before {
+  top: 0;
+  background-position: center top;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0 68%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0 68%, transparent 100%);
 }
 
 .office-card::after,
@@ -64,12 +72,6 @@
   -webkit-backdrop-filter: none;
 }
 
-.scripture,
-.prayer-reader {
-  position: relative;
-  z-index: 1;
-}
-
 .verse,
 .long-form-verse {
   scroll-margin-block-start: 92px;
@@ -83,6 +85,20 @@
 
 .reader-navigation {
   min-height: var(--reader-navigation-height);
+}
+
+/*
+ * Keep artwork in the same compositing group as the parchment painted by its
+ * manuscript shell. Positioned z-index layers here isolate mix-blend-mode from
+ * that backdrop, leaving the pale export matte visible even though the images
+ * themselves still compute to `multiply`.
+ */
+.office-list,
+.meal-prayers,
+.scripture,
+.prayer-reader {
+  z-index: auto;
+  isolation: auto;
 }
 
 .canonical-icon,
