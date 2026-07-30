@@ -7,6 +7,7 @@ import {
   markDailySection,
   updateStreamPosition,
 } from '../src/readingProgress.ts'
+import { readHistoryItems } from '../src/readHistory.ts'
 
 test('daily prayer marks are calendar-scoped', () => {
   const july26 = '2026-07-26'
@@ -71,4 +72,52 @@ test('each reading stream progresses independently', () => {
   assert.equal(progressiveComplete.streams.progressive.assignmentIndex, 1)
   assert.equal(progressiveComplete.streams.challenge.assignmentIndex, 0)
   assert.equal(progressiveComplete.streams.psalm.assignmentIndex, 0)
+})
+
+test('read history shows completed assignments newest first', () => {
+  const candidates = {
+    progressive: [
+      {
+        id: 'progressive:mark:chapters-1-2',
+        kind: 'scripture' as const,
+        sectionGreek: 'Πρόοδος',
+        sectionEnglish: 'Progressive Reading',
+        titleGreek: 'ΚΑΤΑ ΜΑΡΚΟΝ',
+        reference: 'Mark 1–2',
+        verses: [],
+      },
+      {
+        id: 'progressive:mark:chapters-3-4',
+        kind: 'scripture' as const,
+        sectionGreek: 'Πρόοδος',
+        sectionEnglish: 'Progressive Reading',
+        titleGreek: 'ΚΑΤΑ ΜΑΡΚΟΝ',
+        reference: 'Mark 3–4',
+        verses: [],
+      },
+    ],
+    challenge: [],
+  }
+  const items = readHistoryItems('progressive', [
+    'progressive:mark:chapters-1-2',
+    'progressive:mark:chapters-3-4',
+  ], candidates)
+
+  assert.deepEqual(
+    items.map((item) => item.reference),
+    ['Mark 3–4', 'Mark 1–2'],
+  )
+})
+
+test('read history resolves Psalms and ignores invalid saved IDs', () => {
+  const items = readHistoryItems('psalm', [
+    'psalm:1',
+    'legacy:unknown',
+    'psalm:150',
+  ], { progressive: [], challenge: [] })
+
+  assert.deepEqual(
+    items.map((item) => item.psalmNumber),
+    [150, 1],
+  )
 })

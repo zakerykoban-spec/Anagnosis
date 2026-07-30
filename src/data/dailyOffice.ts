@@ -105,6 +105,10 @@ const challengeRanges: PassageRange[] = [
   { startChapter: 2, startVerse: 41, endChapter: 2, endVerse: 52 },
 ]
 
+export function challengeAssignmentCount() {
+  return challengeRanges.length
+}
+
 function localDateValue(date: Date) {
   return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
 }
@@ -362,6 +366,21 @@ function selectedPassage(
   }
 }
 
+export function resolveChallengeReading(
+  assignmentIndex: number,
+): ScriptureReading {
+  const index =
+    ((assignmentIndex % challengeRanges.length) + challengeRanges.length) %
+    challengeRanges.length
+
+  return selectedPassage(
+    lukeData as ScriptureBookData,
+    'Luke',
+    challengeRanges[index],
+    index,
+  )
+}
+
 function progressiveReadingFor(dayNumber: number) {
   const cycleLength = progressiveBooks.reduce(
     (total, book) => total + book.days,
@@ -387,19 +406,13 @@ function progressiveReadingFor(dayNumber: number) {
 
 export function resolveDailyOffice(date = new Date()): DailyOffice {
   const dayNumber = dayNumberFor(date)
-  const challengeIndex = dayNumber % challengeRanges.length
 
   return {
     dayNumber,
     psalmNumber: (dayNumber % PSALM_COUNT) + 1,
     openingPrayer: weeklyPrayerCycle[date.getDay()],
     progressiveReading: progressiveReadingFor(dayNumber),
-    challengeReading: selectedPassage(
-      lukeData as ScriptureBookData,
-      'Luke',
-      challengeRanges[challengeIndex],
-      challengeIndex,
-    ),
+    challengeReading: resolveChallengeReading(dayNumber),
     closingPrayer: {
       id: 'prayer:closing',
       kind: 'prayer',

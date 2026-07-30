@@ -510,6 +510,169 @@
   font-variant-numeric: tabular-nums;
 }
 
+.reader-header-actions {
+  display: flex;
+  min-width: 72px;
+  gap: 5px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.reader-menu-trigger.icon-button {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+}
+
+.reader-menu-trigger.icon-button svg {
+  width: 21px;
+  height: 21px;
+}
+
+.reader-overlay {
+  z-index: 40;
+}
+
+.reader-options-menu,
+.read-history-menu {
+  transform: none;
+  animation-name: reader-menu-in;
+}
+
+.reader-menu-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  width: 100%;
+  min-height: 66px;
+  padding: 10px 20px;
+  border: 0;
+  color: var(--ink);
+  text-align: left;
+  background: transparent;
+  cursor: pointer;
+}
+
+.reader-menu-item:hover,
+.reader-menu-item:focus-visible {
+  background: var(--hover);
+}
+
+.reader-menu-item .voice-text {
+  align-items: flex-start;
+}
+
+.reader-menu-count {
+  display: grid;
+  min-width: 28px;
+  height: 28px;
+  place-items: center;
+  padding-inline: 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.read-history-menu {
+  width: min(100%, 440px);
+  max-height: min(70dvh, 660px);
+}
+
+.read-history-list {
+  max-height: calc(min(70dvh, 660px) - 59px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.read-history-item {
+  display: grid;
+  width: 100%;
+  min-height: 68px;
+  gap: 4px;
+  align-content: center;
+  padding: 11px 20px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+  text-align: left;
+  background: transparent;
+  cursor: pointer;
+}
+
+.read-history-item:last-child {
+  border-bottom: 0;
+}
+
+.read-history-item:hover,
+.read-history-item:focus-visible {
+  background: var(--hover);
+}
+
+.read-history-item:disabled {
+  cursor: wait;
+  opacity: 0.68;
+}
+
+.read-history-item span {
+  font-family:
+    "Iowan Old Style",
+    "Palatino Linotype",
+    "Book Antiqua",
+    "Times New Roman",
+    serif;
+  font-size: 1rem;
+}
+
+.read-history-item small {
+  color: var(--muted);
+  font-size: 0.67rem;
+}
+
+.read-history-empty {
+  display: grid;
+  gap: 5px;
+  justify-items: center;
+  margin: 0;
+  padding: 36px 20px 40px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.read-history-empty small {
+  font-size: 0.65rem;
+}
+
+.read-history-error {
+  margin: 0;
+  padding: 10px 20px 14px;
+  color: var(--accent);
+  font-size: 0.7rem;
+}
+
+.history-review-label {
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  margin: 0 0 15px;
+  color: var(--accent);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.history-review-label small {
+  color: var(--muted);
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.56rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+}
+
 .scripture,
 .prayer-reader {
   max-width: 720px;
@@ -850,6 +1013,13 @@
   }
 }
 
+@keyframes reader-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.985);
+  }
+}
+
 @media (hover: hover) {
   .icon-button:hover,
   .options-close:hover,
@@ -953,7 +1123,7 @@
   }
 
   .reader-header {
-    grid-template-columns: 74px minmax(0, 1fr) 54px;
+    grid-template-columns: 74px minmax(0, 1fr) 74px;
     min-height: 64px;
     padding-right: max(15px, env(safe-area-inset-right));
     padding-left: max(15px, env(safe-area-inset-left));
