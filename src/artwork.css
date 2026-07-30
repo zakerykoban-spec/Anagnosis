@@ -1,0 +1,568 @@
+:root {
+  --artwork-filter: none;
+}
+
+.office-card,
+.reader-shell {
+  background:
+    var(--parchment-image) center top / 100% auto repeat-y,
+    var(--paper);
+}
+
+.canonical-icon,
+.manuscript-art,
+.navigation-art,
+.home-art {
+  mix-blend-mode: multiply;
+  filter: var(--artwork-filter);
+}
+
+.office-brand .app-name {
+  font-size: 1.3rem;
+}
+
+.office-heading .voice-text-greek {
+  font-size: clamp(1.58rem, 4.5vw, 2rem);
+}
+
+.office-toolbar > .icon-button:first-child,
+.office-toolbar > .icon-button:last-child {
+  grid-column: 1;
+  grid-row: 1 / 3;
+}
+
+.office-reading {
+  grid-template-columns: 62px minmax(0, 1fr) 52px;
+  gap: 13px;
+  min-height: 90px;
+}
+
+.office-icon,
+.office-icon img {
+  width: 58px;
+  height: 58px;
+}
+
+.office-reading-title {
+  font-size: 1.25rem;
+}
+
+.completion-seal {
+  width: 48px;
+  height: 48px;
+  opacity: 0.72;
+}
+
+.completion-seal.is-complete {
+  opacity: 1;
+}
+
+.meal-prayers {
+  position: relative;
+  z-index: 4;
+  margin-top: 20px;
+  padding: 19px 0 8px;
+  border-top: 1px solid var(--line-strong);
+}
+
+.meal-prayers-heading {
+  display: grid;
+  gap: 3px;
+  margin-bottom: 10px;
+  color: var(--accent);
+  font-family:
+    "Iowan Old Style",
+    "Palatino Linotype",
+    "Book Antiqua",
+    "Times New Roman",
+    serif;
+  font-size: 1.08rem;
+  text-align: center;
+}
+
+.meal-prayers-heading small {
+  color: var(--muted);
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.6rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.meal-prayer-dock {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: min(100%, 500px);
+  gap: 8px;
+  margin: 0 auto;
+}
+
+.meal-prayer-button {
+  display: grid;
+  grid-template-rows: auto auto;
+  min-width: 0;
+  min-height: 130px;
+  gap: 3px;
+  place-items: center;
+  padding: 6px 3px;
+  border: 0;
+  border-radius: 0;
+  color: var(--ink);
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.meal-prayer-button:hover,
+.meal-prayer-button:focus-visible {
+  background: var(--hover);
+}
+
+.meal-icon,
+.meal-icon img {
+  display: block;
+  width: 92px;
+  height: 92px;
+  object-fit: contain;
+}
+
+.meal-prayer-label {
+  display: grid;
+  gap: 2px;
+  text-align: center;
+}
+
+.meal-prayer-label > span {
+  font-size: 0.82rem;
+}
+
+.meal-prayer-label small {
+  color: var(--muted);
+  font-size: 0.56rem;
+}
+
+.reader-banner,
+.reader-banner-altar,
+.reader-banner-meal,
+.reader-banner-after-meal,
+.reader-banner-psalm {
+  width: min(100%, 680px);
+  mix-blend-mode: multiply;
+}
+
+.reader-navigation {
+  grid-template-columns: repeat(2, minmax(0, 190px));
+  justify-content: center;
+  gap: clamp(8px, 3vw, 20px);
+  min-height: 76px;
+  padding:
+    7px
+    max(10px, env(safe-area-inset-right))
+    calc(7px + env(safe-area-inset-bottom))
+    max(10px, env(safe-area-inset-left));
+  border-top: 0;
+  background:
+    linear-gradient(
+      to top,
+      color-mix(in srgb, var(--paper) 96%, transparent),
+      color-mix(in srgb, var(--paper) 82%, transparent)
+    );
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.navigation-button {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  min-height: 62px;
+  place-items: center;
+  padding: 0;
+  isolation: isolate;
+}
+
+.navigation-button + .navigation-button {
+  border-left: 0;
+}
+
+.navigation-button > * {
+  grid-area: 1 / 1;
+}
+
+.navigation-art {
+  z-index: 0;
+  width: min(100%, 178px);
+  height: 60px;
+  object-fit: contain;
+}
+
+.navigation-button > span:not(.navigation-arrow) {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 0;
+  pointer-events: none;
+}
+
+.navigation-button strong {
+  font-size: 0.94rem;
+}
+
+.navigation-button small {
+  font-size: 0.58rem;
+}
+
+.navigation-button:disabled .navigation-art {
+  opacity: 0.32;
+}
+
+.navigation-button:disabled > span {
+  opacity: 0.48;
+}
+
+.home-button {
+  flex: 0 0 78px;
+  min-width: 70px;
+  min-height: 74px;
+  flex-direction: column;
+  gap: 0;
+  padding: 2px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.home-button:hover,
+.home-button:focus-visible {
+  background: var(--hover);
+}
+
+.home-art {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+}
+
+.home-button > span {
+  color: var(--accent);
+  font-size: 0.78rem;
+}
+
+@media (max-width: 640px) {
+  .office-reading {
+    grid-template-columns: 56px minmax(0, 1fr) 46px;
+    gap: 9px;
+    min-height: 84px;
+  }
+
+  .office-icon,
+  .office-icon img {
+    width: 52px;
+    height: 52px;
+  }
+
+  .completion-seal {
+    width: 44px;
+    height: 44px;
+  }
+
+  .meal-prayer-button {
+    min-height: 118px;
+  }
+
+  .meal-icon,
+  .meal-icon img {
+    width: 80px;
+    height: 80px;
+  }
+
+  .reader-navigation {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .navigation-art {
+    width: min(100%, 168px);
+    height: 56px;
+  }
+
+  .completion-actions .home-button {
+    flex: 0 0 74px;
+  }
+}
+/* Final light-theme control polish */
+
+/* Match the office artwork to the table-prayer icon scale. */
+.office-reading {
+  grid-template-columns: 96px minmax(0, 1fr) 52px;
+  min-height: 126px;
+}
+
+.office-icon,
+.office-icon img {
+  width: 92px;
+  height: 92px;
+}
+
+/* Remove the redundant rules after the final reading and around the table dock. */
+.office-list .office-reading:last-child {
+  border-bottom: 0;
+}
+
+.meal-prayers,
+.source-note {
+  border-top: 0;
+  border-bottom: 0;
+}
+
+/* Give prayer headings and altar artwork more presence. */
+.reader-title p {
+  font-size: 1.08rem;
+}
+
+.prayer-name {
+  font-size: clamp(1.3rem, 3.8vw, 1.7rem);
+}
+
+.reader-banner-altar {
+  width: min(92%, 420px);
+}
+
+/* Make the plaques the visible and clickable navigation surfaces. */
+.reader-navigation {
+  grid-template-columns: repeat(2, minmax(0, 230px));
+  min-height: 90px;
+}
+
+.navigation-button {
+  min-height: 80px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.navigation-button:hover:not(:disabled),
+.navigation-button:focus-visible,
+.navigation-button:active:not(:disabled) {
+  background: transparent;
+  box-shadow: none;
+}
+
+.navigation-art {
+  width: min(100%, 220px);
+  height: 78px;
+}
+
+.navigation-button strong {
+  font-size: 1.02rem;
+}
+
+.navigation-button small {
+  font-size: 0.6rem;
+}
+
+/* Replace modern pills with three manuscript-aligned positions. */
+.completion-actions {
+  display: grid;
+  grid-template-columns: minmax(78px, 1fr) minmax(110px, 1fr) minmax(78px, 1fr);
+  gap: 10px;
+  align-items: center;
+  width: min(100% - 2rem, 40rem);
+}
+
+.completion-button,
+.proceed-button,
+.completion-confirmed {
+  min-width: 0;
+  min-height: 74px;
+  padding: 5px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.completion-button {
+  grid-column: 2;
+  justify-self: center;
+}
+
+.completion-confirmed {
+  grid-column: 1;
+  justify-self: center;
+}
+
+.proceed-button {
+  grid-column: 2;
+  justify-self: center;
+  color: var(--accent);
+}
+
+.home-button {
+  grid-column: 3;
+  justify-self: center;
+}
+
+.completion-button:hover,
+.completion-button:focus-visible,
+.proceed-button:hover,
+.proceed-button:focus-visible {
+  background: var(--hover);
+  box-shadow: none;
+}
+
+@media (max-width: 640px) {
+  .office-reading {
+    grid-template-columns: 84px minmax(0, 1fr) 46px;
+    gap: 10px;
+    min-height: 114px;
+  }
+
+  .office-icon,
+  .office-icon img {
+    width: 80px;
+    height: 80px;
+  }
+
+  .reader-title p {
+    font-size: 1rem;
+  }
+
+  .reader-banner-altar {
+    width: min(94%, 390px);
+  }
+
+  .reader-navigation {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-height: 84px;
+  }
+
+  .navigation-art {
+    width: min(100%, 205px);
+    height: 74px;
+  }
+
+  .completion-actions {
+    grid-template-columns: minmax(72px, 1fr) minmax(104px, 1fr) minmax(72px, 1fr);
+    padding-inline: 0;
+  }
+
+  .completion-button,
+  .proceed-button,
+  .completion-confirmed {
+    min-height: 70px;
+  }
+}
+/* Single-sheet Home and About cleanup */
+
+/* Home is one parchment; reader repetition remains until true pagination. */
+.office-card {
+  background:
+    var(--parchment-image) center top / 100% auto no-repeat,
+    var(--paper);
+}
+
+/* Keep one deliberate division before the table prayers. */
+.meal-prayers {
+  margin-top: 12px;
+  padding: 16px 0 14px;
+  border-top: 1px solid var(--line-strong);
+  border-bottom: 0;
+}
+
+.meal-prayer-dock {
+  align-items: start;
+}
+
+.meal-prayer-button {
+  min-height: 110px;
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+
+/* Source information now lives inside the menu. */
+.about-panel {
+  padding: 15px 18px 18px;
+  border-top: 1px solid var(--line);
+}
+
+.about-panel h3 {
+  display: grid;
+  gap: 2px;
+  margin: 0 0 10px;
+  color: var(--accent);
+  font-family:
+    "Iowan Old Style",
+    "Palatino Linotype",
+    "Book Antiqua",
+    "Times New Roman",
+    serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.about-panel h3 small {
+  color: var(--muted);
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.58rem;
+  font-weight: 400;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.about-sources {
+  display: grid;
+  gap: 5px;
+}
+
+.about-sources p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.64rem;
+  line-height: 1.45;
+}
+
+/* Give the two navigation plaques equal space and balanced margins. */
+.reader-navigation {
+  grid-template-columns: repeat(2, minmax(0, 210px));
+  justify-content: center;
+  gap: 10px;
+  padding-right: max(14px, env(safe-area-inset-right));
+  padding-left: max(14px, env(safe-area-inset-left));
+}
+
+.navigation-button {
+  width: 100%;
+  justify-self: stretch;
+}
+
+.navigation-art {
+  width: min(100%, 200px);
+}
+
+@media (max-width: 640px) {
+  .meal-prayers {
+    margin-top: 9px;
+    padding-top: 14px;
+    padding-bottom: 10px;
+  }
+
+  .meal-prayer-button {
+    min-height: 102px;
+  }
+
+  .reader-navigation {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    padding-right: max(14px, env(safe-area-inset-right));
+    padding-left: max(14px, env(safe-area-inset-left));
+  }
+
+  .navigation-art {
+    width: min(100%, 190px);
+  }
+}

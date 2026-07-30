@@ -35,42 +35,9 @@
   --leather-warm: #513727;
   --binding: #5d402d;
   --binding-dark: #2e1d16;
-  --parchment-image: url('./assets/backgrounds/parchment_light.png');
+  --parchment-image: url('./assets/backgrounds/parchment.webp');
 }
 
-:root[data-theme='dark'] {
-  color: #eee9dd;
-  background: #141311;
-  color-scheme: dark;
-  --page: #15120f;
-  --paper: #211d18;
-  --paper-light: #29231c;
-  --ink: #eee4d3;
-  --muted: #aaa08f;
-  --line: #41392e;
-  --line-strong: #584b3b;
-  --accent: #d29482;
-  --accent-dark: #b97d69;
-  --antique-gold: #c2a063;
-  --surface-translucent: rgba(33, 29, 24, 0.95);
-  --hover: rgba(210, 148, 130, 0.08);
-  --current: rgba(210, 148, 130, 0.13);
-  --shadow: rgba(0, 0, 0, 0.42);
-  --disabled: #6f685f;
-  --focus: rgba(211, 154, 134, 0.38);
-  --shell-top: #2b211b;
-  --shell-highlight: rgba(194, 160, 99, 0.09);
-  --page-edge: #4b4034;
-  --inner-rule: rgba(194, 160, 99, 0.08);
-  --sheet-two: #29231d;
-  --sheet-three: #17130f;
-  --paper-fleck: rgba(210, 184, 139, 0.025);
-  --leather-deep: #0c0907;
-  --leather-warm: #211711;
-  --binding: #2b1e17;
-  --binding-dark: #100b08;
-  --parchment-image: url('./assets/backgrounds/parchment_dark.png');
-}
 
 * {
   box-sizing: border-box;
