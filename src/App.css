@@ -727,16 +727,19 @@
 .reader-banner-altar {
   width: min(72%, 330px);
   margin-block: 22px 26px;
+  aspect-ratio: 20 / 13;
 }
 
 .reader-banner-psalm {
   width: min(100%, 680px);
   margin-top: 25px;
+  aspect-ratio: 1600 / 813;
 }
 
 .reader-banner-meal,
 .reader-banner-after-meal {
   width: min(100%, 640px);
+  aspect-ratio: 1600 / 740;
 }
 
 .verse-list {

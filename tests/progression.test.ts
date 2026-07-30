@@ -8,6 +8,10 @@ import {
   updateStreamPosition,
 } from '../src/readingProgress.ts'
 import { readHistoryItems } from '../src/readHistory.ts'
+import {
+  remembersVersePosition,
+  restoredVerseIndex,
+} from '../src/readingNavigation.ts'
 
 test('daily prayer marks are calendar-scoped', () => {
   const july26 = '2026-07-26'
@@ -119,5 +123,36 @@ test('read history resolves Psalms and ignores invalid saved IDs', () => {
   assert.deepEqual(
     items.map((item) => item.psalmNumber),
     [150, 1],
+  )
+})
+
+test('only long-form reading streams restore a saved verse', () => {
+  const verseIds = ['mark.1.1', 'mark.1.2', 'mark.1.3']
+
+  assert.equal(remembersVersePosition('progressive'), true)
+  assert.equal(remembersVersePosition('challenge'), true)
+  assert.equal(remembersVersePosition('psalm'), false)
+  assert.equal(
+    restoredVerseIndex('progressive', 'mark.1.2', verseIds),
+    1,
+  )
+  assert.equal(
+    restoredVerseIndex('challenge', 'mark.1.3', verseIds),
+    2,
+  )
+  assert.equal(
+    restoredVerseIndex('psalm', 'mark.1.3', verseIds),
+    0,
+  )
+})
+
+test('a missing saved verse falls back to the reading top', () => {
+  assert.equal(
+    restoredVerseIndex(
+      'progressive',
+      'mark.9.99',
+      ['mark.1.1', 'mark.1.2'],
+    ),
+    0,
   )
 })

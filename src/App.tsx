@@ -22,6 +22,10 @@ import {
   type ReadHistoryItem,
 } from './readHistory'
 import {
+  remembersVersePosition,
+  restoredVerseIndex,
+} from './readingNavigation'
+import {
   completeStreamAssignment,
   isDailySectionMarked,
   loadProgress,
@@ -221,13 +225,17 @@ export default function App() {
 
   function openEntry(entry: OfficeEntry){
     const stream=streamForEntry(entry)
-    let nextIndex=0
-    let rememberedVerseId:string|null=null
-    if(entry.kind==='scripture'&&(stream==='progressive'||stream==='challenge')){
-      const saved=progress.streams[stream].lastVerseId
-      const savedIndex=saved?entry.verses.findIndex(verse=>verse.id===saved):-1
-      nextIndex=savedIndex>=0?savedIndex:0
-      rememberedVerseId=savedIndex>=0?entry.verses[nextIndex].id:null
+    const nextIndex=entry.kind==='scripture'&&stream
+      ? restoredVerseIndex(
+          stream,
+          progress.streams[stream].lastVerseId,
+          entry.verses.map(verse=>verse.id),
+        )
+      : 0
+    const rememberedVerseId=nextIndex>0&&entry.kind==='scripture'
+      ? entry.verses[nextIndex].id
+      : null
+    if(entry.kind==='scripture'&&remembersVersePosition(stream)){
       setProgress(c=>updateStreamPosition(c,stream,entry.verses[nextIndex].id))
     }
     pendingScroll.current=rememberedVerseId
@@ -244,12 +252,20 @@ export default function App() {
   function moveToVerse(index:number){
     if(!scriptureReading)return
     const nextIndex=Math.min(Math.max(index,0),scriptureReading.verses.length-1)
-    pendingScroll.current={kind:'verse',verseId:scriptureReading.verses[nextIndex].id}
+    const nextVerse=scriptureReading.verses[nextIndex]
+    if(nextIndex===displayedVerseIndex){
+      verseElements.current[nextVerse.id]?.scrollIntoView({
+        behavior:'auto',
+        block:'center',
+      })
+      return
+    }
+    pendingScroll.current={kind:'verse',verseId:nextVerse.id}
     if(reviewEntry)setReviewVerseIndex(nextIndex)
     else {
       setCurrentVerseIndex(nextIndex)
-      if(activeStream==='progressive'||activeStream==='challenge'){
-        setProgress(c=>updateStreamPosition(c,activeStream,scriptureReading.verses[nextIndex].id))
+      if(remembersVersePosition(activeStream)){
+        setProgress(c=>updateStreamPosition(c,activeStream,nextVerse.id))
       }
     }
   }
@@ -273,7 +289,23 @@ export default function App() {
       setHistoryLoadingId(null)
     }
   }
-  function leaveReader(){ if(reviewEntry){setReviewEntry(null);setReadHistoryOpen(true);return} pendingScroll.current={kind:'top'};setReaderMenuOpen(false);setReadHistoryOpen(false);setView('office') }
+  function leaveReader(){
+    if(reviewEntry){
+      const activeVerse=activeEntry?.kind==='scripture'
+        ? activeEntry.verses[currentVerseIndex]
+        : null
+      pendingScroll.current=remembersVersePosition(activeStream)&&activeVerse
+        ? {kind:'verse',verseId:activeVerse.id}
+        : {kind:'top'}
+      setReviewEntry(null)
+      setReadHistoryOpen(true)
+      return
+    }
+    pendingScroll.current={kind:'top'}
+    setReaderMenuOpen(false)
+    setReadHistoryOpen(false)
+    setView('office')
+  }
   function completeActiveEntry(){ if(!activeEntry)return; if(activeStream){if(activeStream==='psalm')setPsalmReading(null);setProgress(c=>markDailySection(completeStreamAssignment(c,activeStream,activeEntry.id),officeDate.iso,activeStream))} else if(activeEntry.kind==='prayer'&&!activeEntry.id.startsWith('meal:'))setProgress(c=>markDailySection(c,officeDate.iso,activeEntry.id)) }
   function proceed(){ if(!activeStream)return; const next=activeStream==='progressive'?resolveProgressiveReading(progress.streams.progressive.assignmentIndex):activeStream==='challenge'?resolveChallengeReading(progress.streams.challenge.assignmentIndex):psalmReading; if(next)openEntry(next) }
   const markedToday=(id:string)=>isDailySectionMarked(progress,officeDate.iso,id)
