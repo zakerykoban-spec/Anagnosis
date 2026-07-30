@@ -126,12 +126,12 @@ test('read history resolves Psalms and ignores invalid saved IDs', () => {
   )
 })
 
-test('only long-form reading streams restore a saved verse', () => {
+test('current Scripture streams restore a saved verse', () => {
   const verseIds = ['mark.1.1', 'mark.1.2', 'mark.1.3']
 
   assert.equal(remembersVersePosition('progressive'), true)
   assert.equal(remembersVersePosition('challenge'), true)
-  assert.equal(remembersVersePosition('psalm'), false)
+  assert.equal(remembersVersePosition('psalm'), true)
   assert.equal(
     restoredVerseIndex('progressive', 'mark.1.2', verseIds),
     1,
@@ -142,6 +142,27 @@ test('only long-form reading streams restore a saved verse', () => {
   )
   assert.equal(
     restoredVerseIndex('psalm', 'mark.1.3', verseIds),
+    2,
+  )
+})
+
+test('completing a Psalm clears its saved verse for the next assignment', () => {
+  const started = updateStreamPosition(
+    createDefaultProgress(),
+    'psalm',
+    'psalms.1.4',
+  )
+
+  const completed = completeStreamAssignment(started, 'psalm', 'psalm:1')
+
+  assert.equal(completed.streams.psalm.assignmentIndex, 1)
+  assert.equal(completed.streams.psalm.lastVerseId, null)
+  assert.equal(
+    restoredVerseIndex(
+      'psalm',
+      completed.streams.psalm.lastVerseId,
+      ['psalms.2.1', 'psalms.2.2'],
+    ),
     0,
   )
 })

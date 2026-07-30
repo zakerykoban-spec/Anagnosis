@@ -2,8 +2,12 @@ import type { ReadingStreamId } from './readingProgress'
 
 export function remembersVersePosition(
   streamId: ReadingStreamId | null,
-): streamId is 'progressive' | 'challenge' {
-  return streamId === 'progressive' || streamId === 'challenge'
+): streamId is ReadingStreamId {
+  return (
+    streamId === 'progressive'
+    || streamId === 'challenge'
+    || streamId === 'psalm'
+  )
 }
 
 export function restoredVerseIndex(
