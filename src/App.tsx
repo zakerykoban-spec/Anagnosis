@@ -31,6 +31,8 @@ import {
   loadProgress,
   markDailySection,
   saveProgress,
+  undoLastStreamCompletion,
+  unmarkDailySection,
   updateStreamPosition,
   type ReadingProgressState,
   type ReadingStreamId,
@@ -176,6 +178,7 @@ export default function App() {
   const [reviewEntry,setReviewEntry] = useState<ScriptureReading|null>(null)
   const [reviewVerseIndex,setReviewVerseIndex] = useState(0)
   const [historyLoadingId,setHistoryLoadingId] = useState<string|null>(null)
+  const [historyUndoingId,setHistoryUndoingId] = useState<string|null>(null)
   const [historyError,setHistoryError] = useState<string|null>(null)
   const [selectedWeekday,setSelectedWeekday] = useState(today.getDay())
   const verseElements = useRef<Record<string,HTMLElement|null>>({})
@@ -198,6 +201,9 @@ export default function App() {
       : [],
     [activeStream,progress],
   )
+  const latestCompletedId = activeStream
+    ? progress.streams[activeStream].completedAssignmentIds.at(-1) ?? null
+    : null
   const displayedEntry = reviewEntry ?? activeEntry
   const scriptureReading = displayedEntry?.kind === 'scripture' ? displayedEntry : null
   const displayedVerseIndex = reviewEntry ? reviewVerseIndex : currentVerseIndex
@@ -287,6 +293,56 @@ export default function App() {
       )
     } finally {
       setHistoryLoadingId(null)
+    }
+  }
+  async function undoHistoryItem(item: ReadHistoryItem) {
+    const stream = progress.streams[item.streamId]
+
+    if (
+      stream.assignmentIndex < 1
+      || stream.completedAssignmentIds.at(-1) !== item.id
+    ) {
+      setHistoryError('Only the latest completed reading can be restored.')
+      return
+    }
+
+    setHistoryError(null)
+    setHistoryUndoingId(item.id)
+    try {
+      const reading = item.reading ?? (
+        item.psalmNumber ? await loadPsalm(item.psalmNumber) : null
+      )
+      if (!reading) throw new Error('Unable to restore this reading.')
+
+      setProgress((current) => {
+        const undone = undoLastStreamCompletion(
+          current,
+          item.streamId,
+          item.id,
+        )
+
+        return undone === current
+          ? current
+          : unmarkDailySection(
+              undone,
+              officeDate.iso,
+              item.streamId,
+            )
+      })
+      if (item.streamId === 'psalm') setPsalmReading(reading)
+      pendingScroll.current = { kind: 'top' }
+      setActiveEntry(reading)
+      setReviewEntry(null)
+      setCurrentVerseIndex(0)
+      setReaderMenuOpen(false)
+      setReadHistoryOpen(false)
+      setView('reader')
+    } catch (error) {
+      setHistoryError(
+        error instanceof Error ? error.message : 'Unable to restore this reading.',
+      )
+    } finally {
+      setHistoryUndoingId(null)
     }
   }
   function leaveReader(){
@@ -391,7 +447,7 @@ export default function App() {
           <button className="options-close" type="button" onClick={()=>setReadHistoryOpen(false)}>×</button>
         </header>
         {historyItems.length
-          ? <div className="read-history-list">{historyItems.map(item=><button className="read-history-item" type="button" key={item.id} disabled={historyLoadingId!==null} onClick={()=>void openHistoryItem(item)}><span>{item.titleGreek}</span><small>{historyLoadingId===item.id?'Ἀνοίγεται…':item.reference}</small></button>)}</div>
+          ? <div className="read-history-list">{historyItems.map((item,index)=><div className="read-history-row" key={item.id}><button className="read-history-item" type="button" disabled={historyLoadingId!==null||historyUndoingId!==null} onClick={()=>void openHistoryItem(item)}><span>{item.titleGreek}</span><small>{historyLoadingId===item.id?'Ἀνοίγεται…':item.reference}</small></button>{index===0&&item.id===latestCompletedId&&<button className="read-history-undo" type="button" disabled={historyLoadingId!==null||historyUndoingId!==null} onClick={()=>void undoHistoryItem(item)}><span>{historyUndoingId===item.id?'Ἀνακαλεῖται…':'Ἀνακάλεσον'}</span>{options.showGloss&&<small>{historyUndoingId===item.id?'Restoring…':'Undo completion'}</small>}</button>}</div>)}</div>
           : <p className="read-history-empty"><span>Οὔπω ἀνάγνωσμα πεπλήρωται.</span>{options.showGloss&&<small>No completed readings yet.</small>}</p>}
         {historyError&&<p className="read-history-error" role="alert">{historyError}</p>}
       </section>

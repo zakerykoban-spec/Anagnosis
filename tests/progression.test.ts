@@ -5,6 +5,8 @@ import {
   createDefaultProgress,
   isDailySectionMarked,
   markDailySection,
+  undoLastStreamCompletion,
+  unmarkDailySection,
   updateStreamPosition,
 } from '../src/readingProgress.ts'
 import { readHistoryItems } from '../src/readHistory.ts'
@@ -76,6 +78,63 @@ test('each reading stream progresses independently', () => {
   assert.equal(progressiveComplete.streams.progressive.assignmentIndex, 1)
   assert.equal(progressiveComplete.streams.challenge.assignmentIndex, 0)
   assert.equal(progressiveComplete.streams.psalm.assignmentIndex, 0)
+})
+
+test('only the latest completion in a stream can be undone', () => {
+  const firstComplete = completeStreamAssignment(
+    createDefaultProgress(),
+    'progressive',
+    'progressive:mark:chapters-1-2',
+  )
+  const secondComplete = completeStreamAssignment(
+    firstComplete,
+    'progressive',
+    'progressive:mark:chapters-3-4',
+  )
+
+  const refusedOlderUndo = undoLastStreamCompletion(
+    secondComplete,
+    'progressive',
+    'progressive:mark:chapters-1-2',
+  )
+
+  assert.equal(refusedOlderUndo, secondComplete)
+
+  const undone = undoLastStreamCompletion(
+    secondComplete,
+    'progressive',
+    'progressive:mark:chapters-3-4',
+  )
+
+  assert.equal(undone.streams.progressive.assignmentIndex, 1)
+  assert.equal(undone.streams.progressive.lastVerseId, null)
+  assert.equal(undone.streams.progressive.status, 'not-started')
+  assert.deepEqual(undone.streams.progressive.completedAssignmentIds, [
+    'progressive:mark:chapters-1-2',
+  ])
+  assert.equal(undone.streams.challenge.assignmentIndex, 0)
+  assert.equal(undone.streams.psalm.assignmentIndex, 0)
+})
+
+test('undo can remove today’s completion mark without disturbing other marks', () => {
+  const dateIso = '2026-07-30'
+  const marked = markDailySection(
+    markDailySection(
+      createDefaultProgress(),
+      dateIso,
+      'weekday-prayer:4',
+    ),
+    dateIso,
+    'psalm',
+  )
+
+  const unmarked = unmarkDailySection(marked, dateIso, 'psalm')
+
+  assert.equal(isDailySectionMarked(unmarked, dateIso, 'psalm'), false)
+  assert.equal(
+    isDailySectionMarked(unmarked, dateIso, 'weekday-prayer:4'),
+    true,
+  )
 })
 
 test('read history shows completed assignments newest first', () => {

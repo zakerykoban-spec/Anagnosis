@@ -112,6 +112,32 @@ export function completeStreamAssignment(
   }
 }
 
+export function undoLastStreamCompletion(
+  progress: ReadingProgressState,
+  streamId: ReadingStreamId,
+  assignmentId: string,
+): ReadingProgressState {
+  const stream = progress.streams[streamId]
+  const latestCompletedId = stream.completedAssignmentIds.at(-1)
+
+  if (stream.assignmentIndex < 1 || latestCompletedId !== assignmentId) {
+    return progress
+  }
+
+  return {
+    ...progress,
+    streams: {
+      ...progress.streams,
+      [streamId]: {
+        assignmentIndex: stream.assignmentIndex - 1,
+        lastVerseId: null,
+        status: 'not-started',
+        completedAssignmentIds: stream.completedAssignmentIds.slice(0, -1),
+      },
+    },
+  }
+}
+
 export function markDailySection(
   progress: ReadingProgressState,
   dateIso: string,
@@ -129,6 +155,32 @@ export function markDailySection(
       ...progress.dailyMarks,
       [dateIso]: [...current, sectionId],
     },
+  }
+}
+
+export function unmarkDailySection(
+  progress: ReadingProgressState,
+  dateIso: string,
+  sectionId: string,
+): ReadingProgressState {
+  const current = progress.dailyMarks[dateIso] ?? []
+
+  if (!current.includes(sectionId)) {
+    return progress
+  }
+
+  const remaining = current.filter((id) => id !== sectionId)
+  const dailyMarks = { ...progress.dailyMarks }
+
+  if (remaining.length > 0) {
+    dailyMarks[dateIso] = remaining
+  } else {
+    delete dailyMarks[dateIso]
+  }
+
+  return {
+    ...progress,
+    dailyMarks,
   }
 }
 
