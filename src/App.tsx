@@ -45,7 +45,11 @@ import {
   type ScriptureBookOption,
   type ScriptureCorpusId,
 } from './scriptureCatalog'
-import { loadSblgntChapter } from './scriptureLibrary'
+import {
+  loadLxxChapter,
+  loadSblgntChapter,
+} from './scriptureLibrary'
+import type { ScriptureReferencePart } from './models/scripture'
 import { UI } from './ui/lexicon'
 import altarBanner from './assets/banners/banner-altar.webp'
 import afterMealBanner from './assets/banners/banner-meal-after.webp'
@@ -146,9 +150,8 @@ function streamForEntry(entry: OfficeEntry | null): ReadingStreamId | null {
 }
 
 function corpusForReading(reading: ScriptureReading): ScriptureCorpusId {
-  return reading.verses[0]?.id.startsWith('psalms.')
-    ? 'lxx'
-    : 'sblgnt'
+  const bookId = bookIdForReading(reading)
+  return bookForCorpus('lxx', bookId) ? 'lxx' : 'sblgnt'
 }
 
 function bookIdForReading(reading: ScriptureReading) {
@@ -173,7 +176,10 @@ function assignmentIdForStreamIndex(
 }
 
 function groupVersesByChapter(verses: ScriptureVerse[]) {
-  const groups: Array<{ chapter: number; verses: ScriptureVerse[] }> = []
+  const groups: Array<{
+    chapter: ScriptureReferencePart
+    verses: ScriptureVerse[]
+  }> = []
   verses.forEach((verse) => {
     const last = groups[groups.length - 1]
     if (!last || last.chapter !== verse.chapter) groups.push({ chapter: verse.chapter, verses: [verse] })
@@ -187,6 +193,7 @@ function OfficeIcon({ kind }: { kind: OfficeIconKind }) {
 }
 function Seal({ complete }: { complete: boolean }) { return <span className={`completion-seal${complete ? ' is-complete' : ''}`} aria-label={complete ? 'Πεπλήρωται' : 'Οὔπω πεπλήρωται'}><img className="canonical-icon" src={complete ? waxSealIcon : sealMarkIcon} alt=""/></span> }
 function MenuIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg> }
+function BookIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 5.5c2.9-.8 5.7-.2 8.5 1.8v11.2c-2.8-2-5.6-2.6-8.5-1.8V5.5ZM20.5 5.5c-2.9-.8-5.7-.2-8.5 1.8v11.2c2.8-2 5.6-2.6 8.5-1.8V5.5Z"/></svg> }
 
 function MealIcon({ kind }: { kind: MealIconKind }) { return <span className="meal-icon" aria-hidden="true"><img className="canonical-icon" src={MEAL_ICONS[kind]} alt=""/></span> }
 function ReaderBanner({ kind }: { kind: ReaderBannerKind }) { return <img className={`reader-banner reader-banner-${kind} manuscript-art`} src={READER_BANNERS[kind]} alt="" aria-hidden="true"/> }
@@ -287,11 +294,10 @@ export default function App() {
     ? bookIdForReading(scriptureReading)
     : null
   const displayedBook = bookForCorpus(displayedCorpus, displayedBookId)
-  const isDisplayedPsalm = displayedCorpus === 'lxx'
+  const isDisplayedPsalm = displayedBookId === 'psalms'
   const isLongForm = freeReadingEntry
     ? !isDisplayedPsalm
     : activeStream === 'progressive' || activeStream === 'challenge'
-  const psalmOnlyBrowser = activeStream === 'psalm'
   const scriptureBrowserBooks = booksForCorpus(scriptureBrowserCorpus)
   const scriptureBrowserBook = bookForCorpus(
     scriptureBrowserCorpus,
@@ -481,15 +487,18 @@ export default function App() {
     }
   }
   function openScriptureBrowser() {
-    const corpus = psalmOnlyBrowser ? 'lxx' : displayedCorpus
-    setScriptureBrowserCorpus(corpus)
-    setScriptureBrowserBookId(
-      psalmOnlyBrowser ? 'psalms' : null,
-    )
-    setScriptureBrowserView(
-      psalmOnlyBrowser ? 'chapters' : 'books',
-    )
+    setScriptureBrowserCorpus(displayedCorpus)
+    setScriptureBrowserBookId(null)
+    setScriptureBrowserView('books')
     setScriptureBrowserError(null)
+    setReaderMenuOpen(false)
+    setScriptureBrowserOpen(true)
+  }
+  function openFreeReadingBrowser() {
+    setScriptureBrowserBookId(null)
+    setScriptureBrowserView('books')
+    setScriptureBrowserError(null)
+    setMenuOpen(false)
     setReaderMenuOpen(false)
     setScriptureBrowserOpen(true)
   }
@@ -506,7 +515,7 @@ export default function App() {
   }
   async function openLibraryChapter(
     book: ScriptureBookOption,
-    chapterNumber: number,
+    chapterNumber: ScriptureReferencePart,
   ) {
     const loadingKey =
       `${scriptureBrowserCorpus}:${book.id}:${chapterNumber}`
@@ -515,12 +524,7 @@ export default function App() {
 
     try {
       const reading = scriptureBrowserCorpus === 'lxx'
-        ? {
-            ...await loadPsalm(chapterNumber),
-            id: `library:lxx:psalms:${chapterNumber}`,
-            sectionGreek: 'Ἑβδομήκοντα',
-            sectionEnglish: 'Septuagint · Psalms',
-          }
+        ? await loadLxxChapter(book.id, chapterNumber)
         : await loadSblgntChapter(book.id, chapterNumber)
 
       pendingScroll.current = { kind: 'top' }
@@ -551,6 +555,7 @@ export default function App() {
         : {kind:'top'}
       setFreeReadingEntry(null)
       setScriptureBrowserOpen(false)
+      if(!activeEntry)setView('office')
       return
     }
     if(reviewEntry){
@@ -593,19 +598,40 @@ export default function App() {
   }
   function proceed(){ if(!activeStream)return; const next=activeStream==='progressive'?resolveProgressiveReading(progress.streams.progressive.assignmentIndex):activeStream==='challenge'?resolveChallengeReading(progress.streams.challenge.assignmentIndex):psalmReading; if(next)openEntry(next) }
   const markedToday=(id:string)=>isDailySectionMarked(progress,officeDate.iso,id)
+  const scriptureBrowserDialog = scriptureBrowserOpen&&<div className="options-backdrop reader-overlay" role="presentation" onPointerDown={e=>{if(e.target===e.currentTarget)setScriptureBrowserOpen(false)}}>
+    <section className="options-menu scripture-browser-menu" role="dialog" aria-modal="true" aria-labelledby="scripture-browser-title">
+      <header className="options-menu-header">
+        <h2 id="scripture-browser-title"><VoiceText term={{greek:'Γραφαί',english:'Free reading'}} showGloss={options.showGloss}/></h2>
+        <button className="options-close" type="button" onClick={()=>setScriptureBrowserOpen(false)}>×</button>
+      </header>
+      <nav className="scripture-corpus-tabs" aria-label="Scripture corpus">
+        <button className={scriptureBrowserCorpus==='sblgnt'?'is-selected':''} type="button" onClick={()=>selectScriptureBrowserCorpus('sblgnt')}><span>SBLGNT</span>{options.showGloss&&<small>New Testament</small>}</button>
+        <button className={scriptureBrowserCorpus==='lxx'?'is-selected':''} type="button" onClick={()=>selectScriptureBrowserCorpus('lxx')}><span>Ἑβδομήκοντα</span>{options.showGloss&&<small>Septuagint</small>}</button>
+      </nav>
+      <div className="scripture-browser-body">
+        {scriptureBrowserView==='books'
+          ? <><div className="scripture-browser-heading"><span>{scriptureBrowserCorpus==='sblgnt'?'Καινὴ Διαθήκη':'Ἑβδομήκοντα'}</span>{options.showGloss&&<small>{scriptureBrowserCorpus==='sblgnt'?'Choose a book':'Choose a Septuagint book'}</small>}</div><div className="scripture-book-grid">{scriptureBrowserBooks.map((book)=><button className="scripture-book-choice" type="button" key={`${scriptureBrowserCorpus}:${book.id}`} onClick={()=>selectScriptureBrowserBook(book)}><span>{book.titleGreek}</span><small>{options.showGloss&&book.titleEnglish?`${book.titleEnglish} · `:''}{book.code} · {book.chapterNumbers.length}</small></button>)}</div></>
+          : scriptureBrowserBook&&<><div className="scripture-browser-heading scripture-chapter-heading"><button className="scripture-browser-back" type="button" onClick={()=>{setScriptureBrowserBookId(null);setScriptureBrowserView('books');setScriptureBrowserError(null)}} aria-label="Back to books">‹</button><span>{scriptureBrowserBook.titleGreek}</span>{options.showGloss&&<small>{scriptureBrowserBook.code} · Choose a chapter</small>}</div><div className="scripture-chapter-grid">{chapterNumbers(scriptureBrowserBook).map((chapterNumber)=>{const loadingKey=`${scriptureBrowserCorpus}:${scriptureBrowserBook.id}:${String(chapterNumber)}`;return <button className="scripture-chapter-choice" type="button" key={loadingKey} disabled={scriptureBrowserLoadingKey!==null} onClick={()=>void openLibraryChapter(scriptureBrowserBook,chapterNumber)}>{scriptureBrowserLoadingKey===loadingKey?'…':chapterNumber}</button>})}</div></>}
+      </div>
+      {scriptureBrowserError&&<p className="read-history-error" role="alert">{scriptureBrowserError}</p>}
+    </section>
+  </div>
 
   if(view==='office') return <main className="office-shell"><section className="office-card" aria-labelledby="office-title">
-    <header className="office-toolbar"><button className="icon-button" type="button" ref={menuTrigger} aria-label="Ἐπιλογαί" onClick={()=>setMenuOpen(true)}><MenuIcon/></button><div className="office-brand"><p className="app-name">Ἀνάγνωσις</p>{options.showGloss&&<span className="app-name-gloss">Reading</span>}</div><time className="calendar-mark" dateTime={officeDate.iso}><span className="calendar-day">{officeDate.day}</span><span className="calendar-copy"><strong>{officeDate.weekdayGreek}</strong><span>{officeDate.monthGreek} {officeDate.year}</span>{options.showGloss&&<small>{officeDate.english}</small>}</span></time></header>
+    <header className="office-toolbar"><button className="icon-button" type="button" ref={menuTrigger} aria-label="Ἐπιλογαί" onClick={()=>setMenuOpen(true)}><MenuIcon/></button><div className="office-brand"><p className="app-name">Ἀνάγνωσις</p>{options.showGloss&&<span className="app-name-gloss">Reading</span>}</div><time className="calendar-mark" dateTime={officeDate.iso}><span className="calendar-day">{officeDate.day}</span><span className="calendar-copy"><strong>{officeDate.weekdayGreek}</strong><span>{officeDate.monthGreek} {officeDate.year}</span>{options.showGloss&&<small>{officeDate.english}</small>}</span></time><button className="icon-button free-reading-trigger" type="button" aria-label="Ἐλευθέρα ἀνάγνωσις · Free reading" title="Free reading" onClick={openFreeReadingBrowser}><BookIcon/></button></header>
     <header className="office-heading" id="office-title"><VoiceText term={UI.todaysReading} showGloss={options.showGloss}/></header><div className="office-list"><OfficeReadingButton entry={calendarOffice.openingPrayer} icon="prayer" showGloss={options.showGloss} complete={markedToday(calendarOffice.openingPrayer.id)} onOpen={openEntry}/>{options.showProgressive&&<OfficeReadingButton entry={progressiveReading} icon="codex" showGloss={options.showGloss} complete={markedToday('progressive')} onOpen={openEntry}/>} {options.showChallenge&&<OfficeReadingButton entry={challengeReading} icon="lamp" showGloss={options.showGloss} complete={markedToday('challenge')} onOpen={openEntry}/>} {options.showPsalm&&(psalmReading?<OfficeReadingButton entry={psalmReading} icon="lyre" showGloss={options.showGloss} complete={markedToday('psalm')} onOpen={openEntry}/>:<div className="office-reading office-reading-status">{psalmError??`Ψαλμὸς ${psalmNumber}…`}</div>)}<OfficeReadingButton entry={calendarOffice.closingPrayer} icon="lampstand" showGloss={options.showGloss} complete={markedToday(calendarOffice.closingPrayer.id)} onOpen={openEntry}/></div><MealPrayerDock showGloss={options.showGloss} onOpen={openEntry}/>
     {menuOpen&&<div className="options-backdrop" role="presentation" onPointerDown={e=>{if(e.target===e.currentTarget)setMenuOpen(false)}}><section className="options-menu" role="dialog" aria-modal="true"><header className="options-menu-header"><h2><VoiceText term={UI.options} showGloss={options.showGloss}/></h2><button className="options-close" type="button" onClick={()=>setMenuOpen(false)}>×</button></header><div className="options-list">{([{key:'showGloss',term:UI.englishAids},{key:'showProgressive',term:UI.progressiveReading},{key:'showChallenge',term:UI.challengeReading},{key:'showPsalm',term:UI.psalm}] as const).map(({key,term})=><label className="option-switch" key={key}><VoiceText term={term} showGloss={options.showGloss}/><input type="checkbox" checked={options[key]} onChange={(e:ChangeEvent<HTMLInputElement>)=>setOptions(c=>({...c,[key]:e.target.checked}))}/><span className="switch-track" aria-hidden="true"/></label>)}</div><section className="about-panel" aria-labelledby="about-title"><h3 id="about-title"><span>Περί</span>{options.showGloss&&<small>About</small>}</h3><div className="about-sources"><p>SBLGNT 1.2 · CC BY 4.0</p><p>LXX Swete / First1KGreek · CC BY-SA 4.0</p><p>Διδαχὴ 9–10 and traditional Greek prayers · public domain</p></div></section></section></div>}
+    {scriptureBrowserDialog}
   </section></main>
 
-  if(!activeEntry || !displayedEntry)return null
+  if(!displayedEntry)return null
   const isWeekdayPrayer=displayedEntry.kind==='prayer'&&displayedEntry.id.startsWith('weekday-prayer:')
   const isMealPrayer=displayedEntry.id.startsWith('meal:')
   const isMarked=activeStream
-    ? activeEntry.id !== currentAssignmentId
-    : markedToday(activeEntry.id)
+    ? activeEntry?.id !== currentAssignmentId
+    : activeEntry
+      ? markedToday(activeEntry.id)
+      : false
   const readerBannerKind: ReaderBannerKind | null = isDisplayedPsalm
     ? 'psalm'
     : displayedEntry.id === 'meal:after'
@@ -626,7 +652,7 @@ export default function App() {
       </div>
       <div className="reader-header-actions">
         {scriptureReading&&<p className="reader-progress">{displayedVerseIndex+1} / {scriptureReading.verses.length}</p>}
-        {activeStream&&<button className="reader-menu-trigger icon-button" type="button" aria-label="Ἐπιλογαὶ ἀναγνώσεως" onClick={()=>setReaderMenuOpen(true)}><MenuIcon/></button>}
+        {activeStream?<button className="reader-menu-trigger icon-button" type="button" aria-label="Ἐπιλογαὶ ἀναγνώσεως" onClick={()=>setReaderMenuOpen(true)}><MenuIcon/></button>:freeReadingEntry&&<button className="reader-menu-trigger icon-button" type="button" aria-label="Γραφαί · Free reading contents" onClick={openFreeReadingBrowser}><BookIcon/></button>}
       </div>
     </header>
     {displayedEntry.kind==='prayer'
@@ -692,23 +718,6 @@ export default function App() {
         {historyError&&<p className="read-history-error" role="alert">{historyError}</p>}
       </section>
     </div>}
-    {scriptureBrowserOpen&&<div className="options-backdrop reader-overlay" role="presentation" onPointerDown={e=>{if(e.target===e.currentTarget)setScriptureBrowserOpen(false)}}>
-      <section className="options-menu scripture-browser-menu" role="dialog" aria-modal="true" aria-labelledby="scripture-browser-title">
-        <header className="options-menu-header">
-          <h2 id="scripture-browser-title"><VoiceText term={{greek:'Γραφαί',english:'Scripture'}} showGloss={options.showGloss}/></h2>
-          <button className="options-close" type="button" onClick={()=>setScriptureBrowserOpen(false)}>×</button>
-        </header>
-        {!psalmOnlyBrowser&&<nav className="scripture-corpus-tabs" aria-label="Scripture corpus">
-          <button className={scriptureBrowserCorpus==='sblgnt'?'is-selected':''} type="button" onClick={()=>selectScriptureBrowserCorpus('sblgnt')}><span>SBLGNT</span>{options.showGloss&&<small>New Testament</small>}</button>
-          <button className={scriptureBrowserCorpus==='lxx'?'is-selected':''} type="button" onClick={()=>selectScriptureBrowserCorpus('lxx')}><span>Ἑβδομήκοντα</span>{options.showGloss&&<small>Septuagint</small>}</button>
-        </nav>}
-        <div className="scripture-browser-body">
-          {scriptureBrowserView==='books'
-            ? <><div className="scripture-browser-heading"><span>{scriptureBrowserCorpus==='sblgnt'?'Καινὴ Διαθήκη':'Ἑβδομήκοντα'}</span>{options.showGloss&&<small>{scriptureBrowserCorpus==='sblgnt'?'Choose a book':'Available Septuagint books'}</small>}</div><div className="scripture-book-grid">{scriptureBrowserBooks.map((book)=><button className="scripture-book-choice" type="button" key={`${scriptureBrowserCorpus}:${book.id}`} onClick={()=>selectScriptureBrowserBook(book)}><span>{book.titleGreek}</span><small>{book.code} · {book.chapters}</small></button>)}</div></>
-            : scriptureBrowserBook&&<><div className="scripture-browser-heading scripture-chapter-heading">{!psalmOnlyBrowser&&<button className="scripture-browser-back" type="button" onClick={()=>{setScriptureBrowserBookId(null);setScriptureBrowserView('books');setScriptureBrowserError(null)}} aria-label="Back to books">‹</button>}<span>{scriptureBrowserBook.titleGreek}</span>{options.showGloss&&<small>{scriptureBrowserBook.code} · Choose a chapter</small>}</div><div className="scripture-chapter-grid">{chapterNumbers(scriptureBrowserBook).map((chapterNumber)=>{const loadingKey=`${scriptureBrowserCorpus}:${scriptureBrowserBook.id}:${chapterNumber}`;return <button className="scripture-chapter-choice" type="button" key={loadingKey} disabled={scriptureBrowserLoadingKey!==null} onClick={()=>void openLibraryChapter(scriptureBrowserBook,chapterNumber)}>{scriptureBrowserLoadingKey===loadingKey?'…':chapterNumber}</button>})}</div></>}
-        </div>
-        {scriptureBrowserError&&<p className="read-history-error" role="alert">{scriptureBrowserError}</p>}
-      </section>
-    </div>}
+    {scriptureBrowserDialog}
   </main>
 }

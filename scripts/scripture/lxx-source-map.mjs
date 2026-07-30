@@ -1,5 +1,14 @@
+export const LXX_SOURCE_REPOSITORY =
+  "imports/scripture/first1k-lxx";
+
 export const LXX_SOURCE_ROOT =
-  "imports/scripture/first1k-lxx/data/tlg0527";
+  `${LXX_SOURCE_REPOSITORY}/data/tlg0527`;
+
+export const LXX_SOURCE_COMMIT =
+  "4c9c843d80ee94b4371f52add5f7d68bbfe7ba4c";
+
+export const LXX_SOURCE_URL =
+  "https://github.com/OpenGreekAndLatin/First1KGreek";
 
 export const LXX_SOURCE_OVERRIDES = Object.freeze({
   /**

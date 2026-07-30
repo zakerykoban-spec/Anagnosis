@@ -1,75 +1,46 @@
-# React + TypeScript + Vite
+# Ἀνάγνωσις
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Ἀνάγνωσις is an offline-first Greek Scripture reader and daily devotional
+office. It combines completion-based reading journeys, a calendar-based prayer
+cycle, table prayers, reading history, and non-mutating free reading.
 
-Currently, two official plugins are available:
+## Scripture
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- SBLGNT 1.2: 27 New Testament books, licensed CC BY 4.0.
+- OpenGreekAndLatin First1KGreek: 55 Septuagint and related Greek Old
+  Testament works, licensed CC BY-SA 4.0.
+- Ecclesiastes is the one documented LXX omission because the frozen upstream
+  revision contains metadata but no corresponding Greek text XML.
 
-## React Compiler
+Both corpora are normalized into deterministic, chapter-addressable JSON and
+bundled into the PWA for offline use. See
+`docs/07_SCRIPTURE_SOURCES.md` for provenance, editorial choices, and
+attribution.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Commands
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```text
+npm install
+npm run dev
+npm test
+npm run lint
+npm run build
+npm run scripture:validate
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Rebuilding the generated LXX data additionally requires the frozen
+First1KGreek source checkout:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```text
+git clone --depth 1 --filter=blob:none --sparse \
+  https://github.com/OpenGreekAndLatin/First1KGreek.git \
+  imports/scripture/first1k-lxx
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+git -C imports/scripture/first1k-lxx \
+  sparse-checkout set data/tlg0527
 
+npm run scripture:import:lxx
 ```
+
+The importer refuses to run unless the source checkout is at the revision
+recorded in `scripts/scripture/lxx-source-map.mjs`.

@@ -9,8 +9,10 @@
     "lint": "eslint .",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
     "preview": "vite preview",
-    "scripture:import": "node scripts/import-sblgnt.mjs",
-    "scripture:validate": "node scripts/validate-sblgnt.mjs"
+    "scripture:import": "node scripts/import-sblgnt.mjs && node scripts/import-lxx.mjs",
+    "scripture:import:lxx": "node scripts/import-lxx.mjs",
+    "scripture:validate": "node scripts/validate-sblgnt.mjs && node scripts/validate-lxx.mjs",
+    "scripture:validate:lxx": "node scripts/validate-lxx.mjs"
   },
   "dependencies": {
     "react": "^19.2.7",
@@ -27,6 +29,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.3",
     "globals": "^17.7.0",
+    "saxes": "^6.0.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.62.0",
     "vite": "^8.1.1"

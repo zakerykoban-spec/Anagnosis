@@ -29,9 +29,17 @@ The Scripture layer contains normalized data generated from preserved upstream s
 
 For the Greek New Testament, the canonical source is SBLGNT version 1.2.
 
+For the Septuagint and related Greek Old Testament works, the canonical
+collection is the frozen First1KGreek `tlg0527` revision documented in
+`07_SCRIPTURE_SOURCES.md`.
+
 Generated Scripture data is written beneath:
 
 `src/data/scripture/generated/sblgnt/`
+
+and:
+
+`src/data/scripture/generated/lxx/`
 
 Generated Scripture files must never be edited manually.
 
@@ -50,8 +58,12 @@ Examples:
 - `mark.1.1`
 - `luke.2.1`
 - `john.1.14`
+- `genesis.1.1`
+- `esther.prologue.1a`
 
-The identifier is an internal application address.
+The identifier is an internal application address. Chapter and verse parts are
+numeric where the adopted source is numeric, but source labels such as
+`prologue`, `iva`, and `35a` are retained when present.
 
 It does not replace the structured book, chapter, and verse fields.
 
@@ -302,4 +314,7 @@ Generated data therefore must not contain:
 7. Render the Today view.
 8. Render assigned passages in the reading view.
 9. Persist completion locally.
-10. Add the Septuagint only after its source and versification are frozen.
+10. Freeze the Septuagint source, edition choices, and versification.
+11. Generate and validate the complete available LXX corpus.
+12. Expose both corpora through non-mutating free reading while leaving the
+    authored devotional journeys independent.

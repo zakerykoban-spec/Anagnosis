@@ -371,15 +371,24 @@ test('the readings menu combines canonical contents with progress state', () => 
   )
 })
 
-test('the Scripture browser exposes the complete SBLGNT and only approved LXX books', () => {
+test('the Scripture browser exposes the complete SBLGNT and approved LXX corpus', () => {
   assert.equal(booksForCorpus('sblgnt').length, 27)
-  assert.deepEqual(
-    booksForCorpus('lxx').map((book) => book.id),
-    ['psalms'],
+  assert.equal(booksForCorpus('lxx').length, 55)
+  assert.equal(booksForCorpus('lxx').at(0)?.id, 'genesis')
+  assert.equal(
+    booksForCorpus('lxx').at(-1)?.id,
+    'bel-and-the-dragon-theodotion',
   )
-  assert.equal(bookForCorpus('sblgnt', 'mark')?.chapters, 16)
-  assert.equal(bookForCorpus('lxx', 'psalms')?.chapters, 150)
-  assert.equal(bookForCorpus('lxx', 'genesis'), null)
+  assert.equal(
+    bookForCorpus('sblgnt', 'mark')?.chapterNumbers.length,
+    16,
+  )
+  assert.equal(
+    bookForCorpus('lxx', 'psalms')?.chapterNumbers.length,
+    151,
+  )
+  assert.equal(bookForCorpus('lxx', 'genesis')?.titleGreek, 'Γένεσις')
+  assert.equal(bookForCorpus('lxx', 'ecclesiastes'), null)
 })
 
 test('the Scripture browser derives selectable chapters from catalog metadata', () => {
@@ -390,8 +399,27 @@ test('the Scripture browser derives selectable chapters from catalog metadata', 
     1, 2, 3, 4, 5, 6, 7, 8,
     9, 10, 11, 12, 13, 14, 15, 16,
   ])
-  assert.equal(chapterNumbers(psalms).at(-1), 150)
+  assert.equal(chapterNumbers(psalms).at(-1), 151)
   assert.deepEqual(chapterNumbers(null), [])
+})
+
+test('the LXX catalog preserves source chapter labels and textual variants', () => {
+  assert.equal(
+    chapterNumbers(bookForCorpus('lxx', 'esther')).at(0),
+    'prologue',
+  )
+  assert.deepEqual(
+    chapterNumbers(bookForCorpus('lxx', 'odes')).slice(3, 5),
+    ['iva', 'ivb'],
+  )
+  assert.equal(
+    bookForCorpus('lxx', 'daniel-old-greek')?.titleGreek,
+    'Δανιήλ (Οʹ)',
+  )
+  assert.equal(
+    bookForCorpus('lxx', 'daniel-theodotion')?.titleGreek,
+    'Δανιήλ (Θʹ)',
+  )
 })
 
 test('current Scripture streams restore a saved verse', () => {

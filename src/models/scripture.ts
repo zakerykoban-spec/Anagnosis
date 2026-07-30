@@ -1,4 +1,6 @@
-export type ScriptureSourceId = "sblgnt";
+export type ScriptureSourceId = "sblgnt" | "lxx";
+
+export type ScriptureReferencePart = number | string;
 
 export interface ScriptureSourceMetadata {
   id: ScriptureSourceId;
@@ -11,14 +13,14 @@ export interface ScriptureSourceMetadata {
 
 export interface ScriptureVerse {
   id: string;
-  chapter: number;
-  number: number;
+  chapter: ScriptureReferencePart;
+  number: ScriptureReferencePart;
   sourceText: string;
   displayText: string;
 }
 
 export interface ScriptureChapter {
-  number: number;
+  number: ScriptureReferencePart;
   verses: ScriptureVerse[];
 }
 
@@ -43,6 +45,7 @@ export interface ScriptureManifestBook {
   order: number;
   titleGreek: string;
   filename: string;
+  chapterNumbers?: ScriptureReferencePart[];
   chapters: number;
   verses: number;
 }

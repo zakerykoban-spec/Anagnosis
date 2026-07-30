@@ -1,13 +1,17 @@
+import lxxManifestData from './data/scripture/generated/lxx/manifest.json' with { type: 'json' }
+import type { ScriptureReferencePart } from './models/scripture'
+
 export type ScriptureCorpusId = 'sblgnt' | 'lxx'
 
 export type ScriptureBookOption = {
   id: string
   code: string
   titleGreek: string
-  chapters: number
+  titleEnglish?: string
+  chapterNumbers: ScriptureReferencePart[]
 }
 
-export const SBLGNT_BOOKS: ScriptureBookOption[] = [
+const SBLGNT_BOOK_COUNTS = [
   { id: 'matthew', code: 'Matt', titleGreek: 'Κατὰ Ματθαῖον', chapters: 28 },
   { id: 'mark', code: 'Mark', titleGreek: 'Κατὰ Μᾶρκον', chapters: 16 },
   { id: 'luke', code: 'Luke', titleGreek: 'Κατὰ Λουκᾶν', chapters: 24 },
@@ -37,9 +41,35 @@ export const SBLGNT_BOOKS: ScriptureBookOption[] = [
   { id: 'revelation', code: 'Rev', titleGreek: 'Ἀποκάλυψις Ἰωάννου', chapters: 22 },
 ]
 
-export const LXX_BOOKS: ScriptureBookOption[] = [
-  { id: 'psalms', code: 'Ps', titleGreek: 'Ψαλμοί', chapters: 150 },
-]
+export const SBLGNT_BOOKS: ScriptureBookOption[] =
+  SBLGNT_BOOK_COUNTS.map(({ chapters, ...book }) => ({
+    ...book,
+    chapterNumbers: Array.from(
+      { length: chapters },
+      (_, index) => index + 1,
+    ),
+  }))
+
+type LxxManifest = {
+  books: Array<{
+    id: string
+    code: string
+    titleGreek: string
+    titleEnglish: string
+    chapterNumbers: ScriptureReferencePart[]
+  }>
+}
+
+const lxxManifest = lxxManifestData as LxxManifest
+
+export const LXX_BOOKS: ScriptureBookOption[] =
+  lxxManifest.books.map((book) => ({
+    id: book.id,
+    code: book.code,
+    titleGreek: book.titleGreek,
+    titleEnglish: book.titleEnglish,
+    chapterNumbers: book.chapterNumbers,
+  }))
 
 export function booksForCorpus(corpus: ScriptureCorpusId) {
   return corpus === 'sblgnt' ? SBLGNT_BOOKS : LXX_BOOKS
@@ -55,5 +85,5 @@ export function bookForCorpus(
 
 export function chapterNumbers(book: ScriptureBookOption | null) {
   if (!book) return []
-  return Array.from({ length: book.chapters }, (_, index) => index + 1)
+  return book.chapterNumbers
 }

@@ -123,9 +123,13 @@
   font-size: clamp(1.58rem, 4.5vw, 2rem);
 }
 
-.office-toolbar > .icon-button:first-child,
-.office-toolbar > .icon-button:last-child {
+.office-toolbar > .icon-button:first-child {
   grid-column: 1;
+  grid-row: 1 / 3;
+}
+
+.office-toolbar > .icon-button:last-child {
+  grid-column: 3;
   grid-row: 1 / 3;
 }
 

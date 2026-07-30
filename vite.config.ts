@@ -47,23 +47,6 @@ export default defineConfig({
         globPatterns: [
           '**/*.{js,css,html,ico,png,svg,webp,webmanifest}',
         ],
-        runtimeCaching: [
-          {
-            urlPattern:
-              /^https:\/\/cdn\.jsdelivr\.net\/gh\/OpenGreekAndLatin\/First1KGreek\//,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'anagnosis-psalms-v1',
-              cacheableResponse: {
-                statuses: [0, 200],
-              },
-              expiration: {
-                maxEntries: 1,
-                maxAgeSeconds: 60 * 60 * 24 * 365,
-              },
-            },
-          },
-        ],
       },
     }),
   ],

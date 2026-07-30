@@ -3,11 +3,13 @@ import johnData from './scripture/generated/sblgnt/john.json'
 import lukeData from './scripture/generated/sblgnt/luke.json'
 import markData from './scripture/generated/sblgnt/mark.json'
 import matthewData from './scripture/generated/sblgnt/matthew.json'
+import { loadLxxChapter } from '../scriptureLibrary'
+import type { ScriptureReferencePart } from '../models/scripture'
 
 export type ScriptureVerse = {
   id: string
-  chapter: number
-  number: number
+  chapter: ScriptureReferencePart
+  number: ScriptureReferencePart
   sourceText: string
   displayText: string
 }
@@ -71,13 +73,6 @@ type PassageRange = {
 const OFFICE_START = Date.UTC(2026, 6, 25)
 const DAY_IN_MS = 24 * 60 * 60 * 1000
 const PSALM_COUNT = 150
-const TEI_NAMESPACE = 'http://www.tei-c.org/ns/1.0'
-
-const PSALMS_SOURCE_URL =
-  'https://cdn.jsdelivr.net/gh/OpenGreekAndLatin/First1KGreek@4c9c843d80ee94b4371f52add5f7d68bbfe7ba4c/data/tlg0527/tlg027/tlg0527.tlg027.1st1K-grc1.xml'
-
-let psalmsDocumentPromise: Promise<Document> | null = null
-
 const progressiveBooks = [
   { data: markData as ScriptureBookData, english: 'Mark', days: 3 },
   { data: johnData as ScriptureBookData, english: 'John', days: 4 },
@@ -428,105 +423,15 @@ export function resolveDailyOffice(date = new Date()): DailyOffice {
   }
 }
 
-function textFromVerseElement(verseElement: Element) {
-  const cleanElement = verseElement.cloneNode(true) as Element
-
-  for (const note of Array.from(
-    cleanElement.getElementsByTagNameNS(TEI_NAMESPACE, 'note'),
-  )) {
-    note.remove()
-  }
-
-  for (const pageBreak of Array.from(
-    cleanElement.getElementsByTagNameNS(TEI_NAMESPACE, 'pb'),
-  )) {
-    pageBreak.remove()
-  }
-
-  return (cleanElement.textContent ?? '')
-    .replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]/gu, '')
-    .replace(/\s+/gu, ' ')
-    .replace(/\s+([,.;··!?])/gu, '$1')
-    .trim()
-}
-
-async function loadPsalmsDocument() {
-  if (!psalmsDocumentPromise) {
-    psalmsDocumentPromise = fetch(PSALMS_SOURCE_URL)
-      .then(async (response) => {
-        if (!response.ok) {
-          throw new Error(`Unable to load Psalms (${response.status}).`)
-        }
-
-        const source = await response.text()
-        const document = new DOMParser().parseFromString(
-          source,
-          'application/xml',
-        )
-
-        if (document.getElementsByTagName('parsererror').length > 0) {
-          throw new Error('Unable to parse the Psalms source.')
-        }
-
-        return document
-      })
-      .catch((error: unknown) => {
-        psalmsDocumentPromise = null
-        throw error
-      })
-  }
-
-  return psalmsDocumentPromise
-}
-
 export async function loadPsalm(psalmNumber: number): Promise<ScriptureReading> {
-  const document = await loadPsalmsDocument()
-
-  const chapter = Array.from(
-    document.getElementsByTagNameNS(TEI_NAMESPACE, 'div'),
-  ).find(
-    (element) =>
-      element.getAttribute('subtype') === 'chapter' &&
-      element.getAttribute('n') === String(psalmNumber),
-  )
-
-  if (!chapter) {
-    throw new Error(`Psalm ${psalmNumber} is missing from the source.`)
-  }
-
-  const verseElements = Array.from(chapter.children).filter(
-    (element) =>
-      element.localName === 'div' &&
-      element.getAttribute('subtype') === 'verse',
-  )
-
-  const verses = verseElements.map((element, index) => {
-    const verseNumber = Number.parseInt(
-      element.getAttribute('n') ?? String(index + 1),
-      10,
-    )
-    const text = textFromVerseElement(element)
-
-    return {
-      id: `psalms.${psalmNumber}.${verseNumber}`,
-      chapter: psalmNumber,
-      number: verseNumber,
-      sourceText: text,
-      displayText: text,
-    }
-  })
-
-  if (verses.length === 0) {
-    throw new Error(`Psalm ${psalmNumber} contains no verses.`)
-  }
+  const reading = await loadLxxChapter('psalms', psalmNumber)
 
   return {
+    ...reading,
     id: `psalm:${psalmNumber}`,
-    kind: 'scripture',
     sectionGreek: 'Ψαλμός',
     sectionEnglish: 'Psalm',
     titleGreek: `Ψαλμὸς ${psalmNumber}`,
     reference: `Psalm ${psalmNumber}`,
-    verses,
   }
 }
