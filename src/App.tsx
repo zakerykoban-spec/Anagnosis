@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { ChangeEvent, MouseEvent } from 'react'
 import { VoiceText } from './components/VoiceText'
 import {
@@ -176,6 +176,9 @@ export default function App() {
   const [selectedWeekday,setSelectedWeekday] = useState(today.getDay())
   const verseElements = useRef<Record<string,HTMLElement|null>>({})
   const menuTrigger = useRef<HTMLButtonElement|null>(null)
+  const pendingScroll = useRef<
+    { kind: 'top' } | { kind: 'verse'; verseId: string } | null
+  >(null)
 
   const progressiveReading = useMemo(()=>resolveProgressiveReading(progress.streams.progressive.assignmentIndex),[progress.streams.progressive.assignmentIndex])
   const challengeReading = useMemo(()=>resolveChallengeReading(progress.streams.challenge.assignmentIndex),[progress.streams.challenge.assignmentIndex])
@@ -200,10 +203,56 @@ export default function App() {
   useEffect(()=>{ localStorage.setItem(OPTIONS_KEY,JSON.stringify(options)) },[options])
   useEffect(()=>saveProgress(progress),[progress])
   useEffect(()=>{ if(!options.showPsalm)return; let cancelled=false; loadPsalm(psalmNumber).then(r=>{if(!cancelled){setPsalmReading(r);setPsalmError(null)}}).catch((e:unknown)=>{if(!cancelled)setPsalmError(e instanceof Error?e.message:'Unable to load the Psalm.')}); return()=>{cancelled=true} },[options.showPsalm,psalmNumber])
-  useEffect(()=>{ if(view!=='reader'||!scriptureReading)return; const verse=scriptureReading.verses[displayedVerseIndex]; requestAnimationFrame(()=>verseElements.current[verse.id]?.scrollIntoView({behavior:'smooth',block:'center'})) },[displayedVerseIndex,scriptureReading,view])
+  useLayoutEffect(() => {
+    const request = pendingScroll.current
+    if (!request) return
 
-  function openEntry(entry: OfficeEntry){ const stream=streamForEntry(entry); setReviewEntry(null); setReaderMenuOpen(false); setReadHistoryOpen(false); if(entry.kind==='scripture'&&stream){const saved=progress.streams[stream].lastVerseId;const nextIndex=Math.max(0,entry.verses.findIndex(v=>v.id===saved));setCurrentVerseIndex(nextIndex);setProgress(c=>updateStreamPosition(c,stream,entry.verses[nextIndex].id))}else setCurrentVerseIndex(0); if(entry.id.startsWith('weekday-prayer:'))setSelectedWeekday(today.getDay());setActiveEntry(entry);setView('reader') }
-  function moveToVerse(index:number){ if(!scriptureReading)return; const nextIndex=Math.min(Math.max(index,0),scriptureReading.verses.length-1); if(reviewEntry)setReviewVerseIndex(nextIndex); else {setCurrentVerseIndex(nextIndex);if(activeStream)setProgress(c=>updateStreamPosition(c,activeStream,scriptureReading.verses[nextIndex].id))} }
+    pendingScroll.current = null
+    if (request.kind === 'top') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+      return
+    }
+
+    verseElements.current[request.verseId]?.scrollIntoView({
+      behavior: 'auto',
+      block: 'center',
+    })
+  }, [displayedEntry, displayedVerseIndex, view])
+
+  function openEntry(entry: OfficeEntry){
+    const stream=streamForEntry(entry)
+    let nextIndex=0
+    let rememberedVerseId:string|null=null
+    if(entry.kind==='scripture'&&(stream==='progressive'||stream==='challenge')){
+      const saved=progress.streams[stream].lastVerseId
+      const savedIndex=saved?entry.verses.findIndex(verse=>verse.id===saved):-1
+      nextIndex=savedIndex>=0?savedIndex:0
+      rememberedVerseId=savedIndex>=0?entry.verses[nextIndex].id:null
+      setProgress(c=>updateStreamPosition(c,stream,entry.verses[nextIndex].id))
+    }
+    pendingScroll.current=rememberedVerseId
+      ? {kind:'verse',verseId:rememberedVerseId}
+      : {kind:'top'}
+    setReviewEntry(null)
+    setReaderMenuOpen(false)
+    setReadHistoryOpen(false)
+    setCurrentVerseIndex(nextIndex)
+    if(entry.id.startsWith('weekday-prayer:'))setSelectedWeekday(today.getDay())
+    setActiveEntry(entry)
+    setView('reader')
+  }
+  function moveToVerse(index:number){
+    if(!scriptureReading)return
+    const nextIndex=Math.min(Math.max(index,0),scriptureReading.verses.length-1)
+    pendingScroll.current={kind:'verse',verseId:scriptureReading.verses[nextIndex].id}
+    if(reviewEntry)setReviewVerseIndex(nextIndex)
+    else {
+      setCurrentVerseIndex(nextIndex)
+      if(activeStream==='progressive'||activeStream==='challenge'){
+        setProgress(c=>updateStreamPosition(c,activeStream,scriptureReading.verses[nextIndex].id))
+      }
+    }
+  }
   async function openHistoryItem(item: ReadHistoryItem) {
     setHistoryError(null)
     setHistoryLoadingId(item.id)
@@ -212,6 +261,7 @@ export default function App() {
         item.psalmNumber ? await loadPsalm(item.psalmNumber) : null
       )
       if (!reading) throw new Error('Unable to load this reading.')
+      pendingScroll.current = { kind: 'top' }
       setReviewEntry(reading)
       setReviewVerseIndex(0)
       setReadHistoryOpen(false)
@@ -223,7 +273,7 @@ export default function App() {
       setHistoryLoadingId(null)
     }
   }
-  function leaveReader(){ if(reviewEntry){setReviewEntry(null);setReadHistoryOpen(true);return} setReaderMenuOpen(false);setReadHistoryOpen(false);setView('office') }
+  function leaveReader(){ if(reviewEntry){setReviewEntry(null);setReadHistoryOpen(true);return} pendingScroll.current={kind:'top'};setReaderMenuOpen(false);setReadHistoryOpen(false);setView('office') }
   function completeActiveEntry(){ if(!activeEntry)return; if(activeStream){if(activeStream==='psalm')setPsalmReading(null);setProgress(c=>markDailySection(completeStreamAssignment(c,activeStream,activeEntry.id),officeDate.iso,activeStream))} else if(activeEntry.kind==='prayer'&&!activeEntry.id.startsWith('meal:'))setProgress(c=>markDailySection(c,officeDate.iso,activeEntry.id)) }
   function proceed(){ if(!activeStream)return; const next=activeStream==='progressive'?resolveProgressiveReading(progress.streams.progressive.assignmentIndex):activeStream==='challenge'?resolveChallengeReading(progress.streams.challenge.assignmentIndex):psalmReading; if(next)openEntry(next) }
   const markedToday=(id:string)=>isDailySectionMarked(progress,officeDate.iso,id)
@@ -264,7 +314,7 @@ export default function App() {
     {displayedEntry.kind==='prayer'
       ? <article className="prayer-reader" lang="grc">
           <p className="prayer-section">{displayedEntry.sectionGreek}</p>
-          {isWeekdayPrayer&&<nav className="weekday-tabs">{weekdayTabs.map((day,index)=><button className={['weekday-tab',index===selectedWeekday?'is-selected':'',index===today.getDay()?'is-today':''].filter(Boolean).join(' ')} type="button" key={day.short} onClick={()=>{setSelectedWeekday(index);setActiveEntry(weeklyPrayerCycle[index])}}>{day.short}</button>)}</nav>}
+          {isWeekdayPrayer&&<nav className="weekday-tabs">{weekdayTabs.map((day,index)=><button className={['weekday-tab',index===selectedWeekday?'is-selected':'',index===today.getDay()?'is-today':''].filter(Boolean).join(' ')} type="button" key={day.short} onClick={()=>{pendingScroll.current={kind:'top'};setSelectedWeekday(index);setActiveEntry(weeklyPrayerCycle[index])}}>{day.short}</button>)}</nav>}
           <div className="prayer-meta">
             {displayedEntry.weekdayGreek&&<p className="prayer-weekday">{displayedEntry.weekdayGreek}</p>}
             <h1 className="prayer-name">{displayedEntry.titleGreek}</h1>
@@ -289,7 +339,7 @@ export default function App() {
       <button className="navigation-button navigation-button-back" type="button" disabled={displayedVerseIndex===0} onClick={()=>moveToVerse(displayedVerseIndex-1)}><span className="navigation-chevron" aria-hidden="true">‹</span><span className="control-copy"><strong>Ὀπίσω</strong>{options.showGloss&&<small>Previous verse</small>}</span></button>
       <button className="navigation-button navigation-button-next" type="button" disabled={displayedVerseIndex===scriptureReading.verses.length-1} onClick={()=>moveToVerse(displayedVerseIndex+1)}><span className="control-copy"><strong>Ἔμπροσθεν</strong>{options.showGloss&&<small>Next verse</small>}</span><span className="navigation-chevron" aria-hidden="true">›</span></button>
     </nav>}
-    {!reviewEntry&&!isMealPrayer&&<footer className={`completion-actions${isMarked?' is-complete':''}`}>{!isMarked?<button className="completion-button" type="button" onClick={completeActiveEntry}><span className="control-copy"><strong>Σφράγισον</strong>{options.showGloss&&<small>Mark complete</small>}</span></button>:<div className="completion-confirmed" role="status"><span className="completion-check" aria-hidden="true">✓</span><span className="control-copy"><strong>Πεπλήρωται</strong>{options.showGloss&&<small>Completed</small>}</span></div>}{isMarked&&activeStream&&<button className="proceed-button" type="button" onClick={proceed}><span className="control-copy"><strong>Πρόβαινε</strong>{options.showGloss&&<small>Continue</small>}</span><span className="action-chevron" aria-hidden="true">›</span></button>}{isMarked&&<button className="home-button" type="button" onClick={()=>setView('office')}><span className="control-copy"><strong>Οἶκος</strong>{options.showGloss&&<small>Home</small>}</span></button>}</footer>}
+    {!reviewEntry&&!isMealPrayer&&<footer className={`completion-actions${isMarked?' is-complete':''}`}>{!isMarked?<button className="completion-button" type="button" onClick={completeActiveEntry}><span className="control-copy"><strong>Σφράγισον</strong>{options.showGloss&&<small>Mark complete</small>}</span></button>:<div className="completion-confirmed" role="status"><span className="completion-check" aria-hidden="true">✓</span><span className="control-copy"><strong>Πεπλήρωται</strong>{options.showGloss&&<small>Completed</small>}</span></div>}{isMarked&&activeStream&&<button className="proceed-button" type="button" onClick={proceed}><span className="control-copy"><strong>Πρόβαινε</strong>{options.showGloss&&<small>Continue</small>}</span><span className="action-chevron" aria-hidden="true">›</span></button>}{isMarked&&<button className="home-button" type="button" onClick={()=>{pendingScroll.current={kind:'top'};setView('office')}}><span className="control-copy"><strong>Οἶκος</strong>{options.showGloss&&<small>Home</small>}</span></button>}</footer>}
     {readerMenuOpen&&<div className="options-backdrop reader-overlay" role="presentation" onPointerDown={e=>{if(e.target===e.currentTarget)setReaderMenuOpen(false)}}>
       <section className="options-menu reader-options-menu" role="dialog" aria-modal="true" aria-labelledby="reader-options-title">
         <header className="options-menu-header">

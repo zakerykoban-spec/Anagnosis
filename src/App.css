@@ -506,8 +506,10 @@
 }
 
 .reader-progress {
+  flex: 0 0 auto;
   justify-self: end;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .reader-header-actions {
@@ -1123,7 +1125,7 @@
   }
 
   .reader-header {
-    grid-template-columns: 74px minmax(0, 1fr) 74px;
+    grid-template-columns: 82px minmax(0, 1fr) 82px;
     min-height: 64px;
     padding-right: max(15px, env(safe-area-inset-right));
     padding-left: max(15px, env(safe-area-inset-left));
