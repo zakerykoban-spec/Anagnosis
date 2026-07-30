@@ -38,6 +38,14 @@ import {
   type ReadingProgressState,
   type ReadingStreamId,
 } from './readingProgress'
+import {
+  bookForCorpus,
+  booksForCorpus,
+  chapterNumbers,
+  type ScriptureBookOption,
+  type ScriptureCorpusId,
+} from './scriptureCatalog'
+import { loadSblgntChapter } from './scriptureLibrary'
 import { UI } from './ui/lexicon'
 import altarBanner from './assets/banners/banner-altar.webp'
 import afterMealBanner from './assets/banners/banner-meal-after.webp'
@@ -65,6 +73,7 @@ type MealIconKind = 'cup' | 'bread' | 'table'
 type OfficeIconKind = 'prayer' | 'codex' | 'lamp' | 'lyre' | 'lampstand'
 type OfficeDate = { iso: string; day: number; monthGreek: string; year: number; english: string; weekdayGreek: string }
 type ReaderBannerKind = 'altar' | 'meal' | 'after-meal' | 'psalm'
+type ScriptureBrowserView = 'books' | 'chapters'
 
 const OPTIONS_KEY = 'anagnosis.options.v1'
 const PSALM_COUNT = 150
@@ -136,6 +145,16 @@ function streamForEntry(entry: OfficeEntry | null): ReadingStreamId | null {
   return null
 }
 
+function corpusForReading(reading: ScriptureReading): ScriptureCorpusId {
+  return reading.verses[0]?.id.startsWith('psalms.')
+    ? 'lxx'
+    : 'sblgnt'
+}
+
+function bookIdForReading(reading: ScriptureReading) {
+  return reading.verses[0]?.id.split('.')[0] ?? null
+}
+
 function assignmentIdForStreamIndex(
   streamId: ReadingStreamId,
   assignmentIndex: number,
@@ -196,6 +215,19 @@ export default function App() {
   const [readHistoryOpen,setReadHistoryOpen] = useState(false)
   const [reviewEntry,setReviewEntry] = useState<ScriptureReading|null>(null)
   const [reviewVerseIndex,setReviewVerseIndex] = useState(0)
+  const [freeReadingEntry,setFreeReadingEntry] = useState<ScriptureReading|null>(null)
+  const [freeReadingVerseIndex,setFreeReadingVerseIndex] = useState(0)
+  const [scriptureBrowserOpen,setScriptureBrowserOpen] = useState(false)
+  const [scriptureBrowserCorpus,setScriptureBrowserCorpus] =
+    useState<ScriptureCorpusId>('sblgnt')
+  const [scriptureBrowserView,setScriptureBrowserView] =
+    useState<ScriptureBrowserView>('books')
+  const [scriptureBrowserBookId,setScriptureBrowserBookId] =
+    useState<string|null>(null)
+  const [scriptureBrowserLoadingKey,setScriptureBrowserLoadingKey] =
+    useState<string|null>(null)
+  const [scriptureBrowserError,setScriptureBrowserError] =
+    useState<string|null>(null)
   const [historyLoadingId,setHistoryLoadingId] = useState<string|null>(null)
   const [historyUndoingId,setHistoryUndoingId] = useState<string|null>(null)
   const [historyError,setHistoryError] = useState<string|null>(null)
@@ -240,10 +272,31 @@ export default function App() {
     latestCompletedId !== null
     && latestCompletedId === previousAssignmentId
   )
-  const displayedEntry = reviewEntry ?? activeEntry
+  const displayedEntry = freeReadingEntry ?? reviewEntry ?? activeEntry
   const scriptureReading = displayedEntry?.kind === 'scripture' ? displayedEntry : null
-  const displayedVerseIndex = reviewEntry ? reviewVerseIndex : currentVerseIndex
-  const isLongForm = activeStream === 'progressive' || activeStream === 'challenge'
+  const displayedVerseIndex = freeReadingEntry
+    ? freeReadingVerseIndex
+    : reviewEntry
+      ? reviewVerseIndex
+      : currentVerseIndex
+  const displayedCorpus = scriptureReading
+    ? corpusForReading(scriptureReading)
+    : 'sblgnt'
+  const displayedVerse = scriptureReading?.verses[displayedVerseIndex] ?? null
+  const displayedBookId = scriptureReading
+    ? bookIdForReading(scriptureReading)
+    : null
+  const displayedBook = bookForCorpus(displayedCorpus, displayedBookId)
+  const isDisplayedPsalm = displayedCorpus === 'lxx'
+  const isLongForm = freeReadingEntry
+    ? !isDisplayedPsalm
+    : activeStream === 'progressive' || activeStream === 'challenge'
+  const psalmOnlyBrowser = activeStream === 'psalm'
+  const scriptureBrowserBooks = booksForCorpus(scriptureBrowserCorpus)
+  const scriptureBrowserBook = bookForCorpus(
+    scriptureBrowserCorpus,
+    scriptureBrowserBookId,
+  )
   const chapterGroups = useMemo(()=>scriptureReading ? groupVersesByChapter(scriptureReading.verses) : [],[scriptureReading])
 
   useEffect(()=>{ localStorage.setItem(OPTIONS_KEY,JSON.stringify(options)) },[options])
@@ -290,9 +343,11 @@ export default function App() {
     pendingScroll.current=rememberedVerseId
       ? {kind:'verse',verseId:rememberedVerseId}
       : {kind:'top'}
+    setFreeReadingEntry(null)
     setReviewEntry(null)
     setReaderMenuOpen(false)
     setReadHistoryOpen(false)
+    setScriptureBrowserOpen(false)
     setCurrentVerseIndex(nextIndex)
     if(entry.id.startsWith('weekday-prayer:'))setSelectedWeekday(today.getDay())
     setActiveEntry(entry)
@@ -310,7 +365,8 @@ export default function App() {
       return
     }
     pendingScroll.current={kind:'verse',verseId:nextVerse.id}
-    if(reviewEntry)setReviewVerseIndex(nextIndex)
+    if(freeReadingEntry)setFreeReadingVerseIndex(nextIndex)
+    else if(reviewEntry)setReviewVerseIndex(nextIndex)
     else {
       setCurrentVerseIndex(nextIndex)
       if(remembersVersePosition(activeStream)){
@@ -328,6 +384,7 @@ export default function App() {
       if (!reading) throw new Error('Unable to load this reading.')
 
       if (item.isCurrent) {
+        setFreeReadingEntry(null)
         openEntry(reading)
         return
       }
@@ -347,6 +404,7 @@ export default function App() {
         ))
         if (item.streamId === 'psalm') setPsalmReading(reading)
         pendingScroll.current = { kind: 'top' }
+        setFreeReadingEntry(null)
         setActiveEntry(reading)
         setReviewEntry(null)
         setCurrentVerseIndex(0)
@@ -357,6 +415,7 @@ export default function App() {
       }
 
       pendingScroll.current = { kind: 'top' }
+      setFreeReadingEntry(null)
       setReviewEntry(reading)
       setReviewVerseIndex(0)
       setReadHistoryOpen(false)
@@ -408,11 +467,10 @@ export default function App() {
       })
       if (item.streamId === 'psalm') setPsalmReading(reading)
       pendingScroll.current = { kind: 'top' }
+      setFreeReadingEntry(null)
       setActiveEntry(reading)
       setReviewEntry(null)
       setCurrentVerseIndex(0)
-      setReaderMenuOpen(false)
-      setReadHistoryOpen(false)
       setView('reader')
     } catch (error) {
       setHistoryError(
@@ -422,7 +480,79 @@ export default function App() {
       setHistoryUndoingId(null)
     }
   }
+  function openScriptureBrowser() {
+    const corpus = psalmOnlyBrowser ? 'lxx' : displayedCorpus
+    setScriptureBrowserCorpus(corpus)
+    setScriptureBrowserBookId(
+      psalmOnlyBrowser ? 'psalms' : null,
+    )
+    setScriptureBrowserView(
+      psalmOnlyBrowser ? 'chapters' : 'books',
+    )
+    setScriptureBrowserError(null)
+    setReaderMenuOpen(false)
+    setScriptureBrowserOpen(true)
+  }
+  function selectScriptureBrowserCorpus(corpus: ScriptureCorpusId) {
+    setScriptureBrowserCorpus(corpus)
+    setScriptureBrowserBookId(null)
+    setScriptureBrowserView('books')
+    setScriptureBrowserError(null)
+  }
+  function selectScriptureBrowserBook(book: ScriptureBookOption) {
+    setScriptureBrowserBookId(book.id)
+    setScriptureBrowserView('chapters')
+    setScriptureBrowserError(null)
+  }
+  async function openLibraryChapter(
+    book: ScriptureBookOption,
+    chapterNumber: number,
+  ) {
+    const loadingKey =
+      `${scriptureBrowserCorpus}:${book.id}:${chapterNumber}`
+    setScriptureBrowserLoadingKey(loadingKey)
+    setScriptureBrowserError(null)
+
+    try {
+      const reading = scriptureBrowserCorpus === 'lxx'
+        ? {
+            ...await loadPsalm(chapterNumber),
+            id: `library:lxx:psalms:${chapterNumber}`,
+            sectionGreek: 'Ἑβδομήκοντα',
+            sectionEnglish: 'Septuagint · Psalms',
+          }
+        : await loadSblgntChapter(book.id, chapterNumber)
+
+      pendingScroll.current = { kind: 'top' }
+      setFreeReadingEntry(reading)
+      setFreeReadingVerseIndex(0)
+      setReviewEntry(null)
+      setScriptureBrowserOpen(false)
+      setReaderMenuOpen(false)
+      setReadHistoryOpen(false)
+      setView('reader')
+    } catch (error) {
+      setScriptureBrowserError(
+        error instanceof Error
+          ? error.message
+          : 'Unable to open this chapter.',
+      )
+    } finally {
+      setScriptureBrowserLoadingKey(null)
+    }
+  }
   function leaveReader(){
+    if(freeReadingEntry){
+      const activeVerse=activeEntry?.kind==='scripture'
+        ? activeEntry.verses[currentVerseIndex]
+        : null
+      pendingScroll.current=remembersVersePosition(activeStream)&&activeVerse
+        ? {kind:'verse',verseId:activeVerse.id}
+        : {kind:'top'}
+      setFreeReadingEntry(null)
+      setScriptureBrowserOpen(false)
+      return
+    }
     if(reviewEntry){
       const activeVerse=activeEntry?.kind==='scripture'
         ? activeEntry.verses[currentVerseIndex]
@@ -476,7 +606,7 @@ export default function App() {
   const isMarked=activeStream
     ? activeEntry.id !== currentAssignmentId
     : markedToday(activeEntry.id)
-  const readerBannerKind: ReaderBannerKind | null = activeStream === 'psalm'
+  const readerBannerKind: ReaderBannerKind | null = isDisplayedPsalm
     ? 'psalm'
     : displayedEntry.id === 'meal:after'
       ? 'after-meal'
@@ -516,6 +646,7 @@ export default function App() {
       : <article className={`scripture${isLongForm?' scripture-long-form':''}`} lang="grc">
           <p className="reading-section">{displayedEntry.sectionGreek}</p>
           {reviewEntry&&<p className="history-review-label"><span>Ἀνεγνωσμένον</span>{options.showGloss&&<small>Previously read</small>}</p>}
+          {freeReadingEntry&&<p className="history-review-label free-reading-label"><span>Ἐλευθέρα ἀνάγνωσις</span>{options.showGloss&&<small>Free reading · devotional progress unchanged</small>}</p>}
           <h1>{displayedEntry.titleGreek}</h1>
           {options.showGloss&&<p className="reader-reference">{displayedEntry.reference}</p>}
           {readerBannerKind&&<ReaderBanner kind={readerBannerKind}/>}
@@ -527,13 +658,20 @@ export default function App() {
       <button className="navigation-button navigation-button-back" type="button" disabled={displayedVerseIndex===0} onClick={()=>moveToVerse(displayedVerseIndex-1)}><span className="navigation-chevron" aria-hidden="true">‹</span><span className="control-copy"><strong>Ὀπίσω</strong>{options.showGloss&&<small>Previous verse</small>}</span></button>
       <button className="navigation-button navigation-button-next" type="button" disabled={displayedVerseIndex===scriptureReading.verses.length-1} onClick={()=>moveToVerse(displayedVerseIndex+1)}><span className="control-copy"><strong>Ἔμπροσθεν</strong>{options.showGloss&&<small>Next verse</small>}</span><span className="navigation-chevron" aria-hidden="true">›</span></button>
     </nav>}
-    {!reviewEntry&&!isMealPrayer&&<footer className={`completion-actions${isMarked?' is-complete':''}`}>{!isMarked?<button className="completion-button" type="button" onClick={completeActiveEntry}><span className="control-copy"><strong>Σφράγισον</strong>{options.showGloss&&<small>Mark complete</small>}</span></button>:<div className="completion-confirmed" role="status"><span className="completion-check" aria-hidden="true">✓</span><span className="control-copy"><strong>Πεπλήρωται</strong>{options.showGloss&&<small>Completed</small>}</span></div>}{isMarked&&activeStream&&<button className="proceed-button" type="button" onClick={proceed}><span className="control-copy"><strong>Πρόβαινε</strong>{options.showGloss&&<small>Continue</small>}</span><span className="action-chevron" aria-hidden="true">›</span></button>}{isMarked&&<button className="home-button" type="button" onClick={()=>{pendingScroll.current={kind:'top'};setView('office')}}><span className="control-copy"><strong>Οἶκος</strong>{options.showGloss&&<small>Home</small>}</span></button>}</footer>}
+    {!reviewEntry&&!freeReadingEntry&&!isMealPrayer&&<footer className={`completion-actions${isMarked?' is-complete':''}`}>{!isMarked?<button className="completion-button" type="button" onClick={completeActiveEntry}><span className="control-copy"><strong>Σφράγισον</strong>{options.showGloss&&<small>Mark complete</small>}</span></button>:<div className="completion-confirmed" role="status"><span className="completion-check" aria-hidden="true">✓</span><span className="control-copy"><strong>Πεπλήρωται</strong>{options.showGloss&&<small>Completed</small>}</span></div>}{isMarked&&activeStream&&<button className="proceed-button" type="button" onClick={proceed}><span className="control-copy"><strong>Πρόβαινε</strong>{options.showGloss&&<small>Continue</small>}</span><span className="action-chevron" aria-hidden="true">›</span></button>}{isMarked&&<button className="home-button" type="button" onClick={()=>{pendingScroll.current={kind:'top'};setView('office')}}><span className="control-copy"><strong>Οἶκος</strong>{options.showGloss&&<small>Home</small>}</span></button>}</footer>}
     {readerMenuOpen&&<div className="options-backdrop reader-overlay" role="presentation" onPointerDown={e=>{if(e.target===e.currentTarget)setReaderMenuOpen(false)}}>
       <section className="options-menu reader-options-menu" role="dialog" aria-modal="true" aria-labelledby="reader-options-title">
         <header className="options-menu-header">
           <h2 id="reader-options-title"><VoiceText term={UI.options} showGloss={options.showGloss}/></h2>
           <button className="options-close" type="button" onClick={()=>setReaderMenuOpen(false)}>×</button>
         </header>
+        {scriptureReading&&displayedVerse&&<button className="reader-location-item" type="button" onClick={openScriptureBrowser}>
+          <span className="reader-location-copy">
+            <strong>{displayedEntry.titleGreek} {displayedVerse.chapter}:{displayedVerse.number}</strong>
+            <small>{displayedBook?.code ?? displayedEntry.reference} · {displayedCorpus==='lxx'?'Septuagint':'SBLGNT'}</small>
+          </span>
+          <span className="reader-location-chevron" aria-hidden="true">›</span>
+        </button>}
         <button className="reader-menu-item" type="button" onClick={()=>{setReaderMenuOpen(false);setReadHistoryOpen(true)}}>
           <VoiceText term={UI.readHistory} showGloss={options.showGloss}/>
           <span className="reader-menu-count">
@@ -552,6 +690,24 @@ export default function App() {
           ? <div className="read-history-list">{contentsItems.map((item)=><div className={['read-history-row',item.isCurrent?'is-current':'',item.isCompleted?'is-completed':''].filter(Boolean).join(' ')} key={`${item.streamId}:${item.assignmentIndex}:${item.id}`} ref={item.isCurrent?currentContentsItem:undefined}><button className="read-history-item" type="button" aria-current={item.isCurrent?'page':undefined} disabled={historyLoadingId!==null||historyUndoingId!==null} onClick={()=>void openContentsItem(item)}><span>{item.titleGreek}</span><small>{historyLoadingId===item.id?'Ἀνοίγεται…':item.reference}</small><em>{item.isCurrent?'Νῦν':item.isCompleted?'Ἀνεγνώσθη':'Οὔπω'}{options.showGloss&&<small>{item.isCurrent?'Current':item.isCompleted?'Read':'Unread'}</small>}</em></button>{canUndoLatestCompletion&&item.id===latestCompletedId&&!item.isCurrent&&<button className="read-history-undo" type="button" disabled={historyLoadingId!==null||historyUndoingId!==null} onClick={()=>void undoHistoryItem(item)}><span>{historyUndoingId===item.id?'Ἀνακαλεῖται…':'Ἀνακάλεσον'}</span>{options.showGloss&&<small>{historyUndoingId===item.id?'Restoring…':'Undo completion'}</small>}</button>}</div>)}</div>
           : <p className="read-history-empty"><span>Οὐκ εἰσὶν ἀναγνώσματα.</span>{options.showGloss&&<small>No readings are available.</small>}</p>}
         {historyError&&<p className="read-history-error" role="alert">{historyError}</p>}
+      </section>
+    </div>}
+    {scriptureBrowserOpen&&<div className="options-backdrop reader-overlay" role="presentation" onPointerDown={e=>{if(e.target===e.currentTarget)setScriptureBrowserOpen(false)}}>
+      <section className="options-menu scripture-browser-menu" role="dialog" aria-modal="true" aria-labelledby="scripture-browser-title">
+        <header className="options-menu-header">
+          <h2 id="scripture-browser-title"><VoiceText term={{greek:'Γραφαί',english:'Scripture'}} showGloss={options.showGloss}/></h2>
+          <button className="options-close" type="button" onClick={()=>setScriptureBrowserOpen(false)}>×</button>
+        </header>
+        {!psalmOnlyBrowser&&<nav className="scripture-corpus-tabs" aria-label="Scripture corpus">
+          <button className={scriptureBrowserCorpus==='sblgnt'?'is-selected':''} type="button" onClick={()=>selectScriptureBrowserCorpus('sblgnt')}><span>SBLGNT</span>{options.showGloss&&<small>New Testament</small>}</button>
+          <button className={scriptureBrowserCorpus==='lxx'?'is-selected':''} type="button" onClick={()=>selectScriptureBrowserCorpus('lxx')}><span>Ἑβδομήκοντα</span>{options.showGloss&&<small>Septuagint</small>}</button>
+        </nav>}
+        <div className="scripture-browser-body">
+          {scriptureBrowserView==='books'
+            ? <><div className="scripture-browser-heading"><span>{scriptureBrowserCorpus==='sblgnt'?'Καινὴ Διαθήκη':'Ἑβδομήκοντα'}</span>{options.showGloss&&<small>{scriptureBrowserCorpus==='sblgnt'?'Choose a book':'Available Septuagint books'}</small>}</div><div className="scripture-book-grid">{scriptureBrowserBooks.map((book)=><button className="scripture-book-choice" type="button" key={`${scriptureBrowserCorpus}:${book.id}`} onClick={()=>selectScriptureBrowserBook(book)}><span>{book.titleGreek}</span><small>{book.code} · {book.chapters}</small></button>)}</div></>
+            : scriptureBrowserBook&&<><div className="scripture-browser-heading scripture-chapter-heading">{!psalmOnlyBrowser&&<button className="scripture-browser-back" type="button" onClick={()=>{setScriptureBrowserBookId(null);setScriptureBrowserView('books');setScriptureBrowserError(null)}} aria-label="Back to books">‹</button>}<span>{scriptureBrowserBook.titleGreek}</span>{options.showGloss&&<small>{scriptureBrowserBook.code} · Choose a chapter</small>}</div><div className="scripture-chapter-grid">{chapterNumbers(scriptureBrowserBook).map((chapterNumber)=>{const loadingKey=`${scriptureBrowserCorpus}:${scriptureBrowserBook.id}:${chapterNumber}`;return <button className="scripture-chapter-choice" type="button" key={loadingKey} disabled={scriptureBrowserLoadingKey!==null} onClick={()=>void openLibraryChapter(scriptureBrowserBook,chapterNumber)}>{scriptureBrowserLoadingKey===loadingKey?'…':chapterNumber}</button>})}</div></>}
+        </div>
+        {scriptureBrowserError&&<p className="read-history-error" role="alert">{scriptureBrowserError}</p>}
       </section>
     </div>}
   </main>

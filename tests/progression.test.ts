@@ -19,6 +19,11 @@ import {
   remembersVersePosition,
   restoredVerseIndex,
 } from '../src/readingNavigation.ts'
+import {
+  bookForCorpus,
+  booksForCorpus,
+  chapterNumbers,
+} from '../src/scriptureCatalog.ts'
 
 test('daily prayer marks are calendar-scoped', () => {
   const july26 = '2026-07-26'
@@ -364,6 +369,29 @@ test('the readings menu combines canonical contents with progress state', () => 
       },
     ],
   )
+})
+
+test('the Scripture browser exposes the complete SBLGNT and only approved LXX books', () => {
+  assert.equal(booksForCorpus('sblgnt').length, 27)
+  assert.deepEqual(
+    booksForCorpus('lxx').map((book) => book.id),
+    ['psalms'],
+  )
+  assert.equal(bookForCorpus('sblgnt', 'mark')?.chapters, 16)
+  assert.equal(bookForCorpus('lxx', 'psalms')?.chapters, 150)
+  assert.equal(bookForCorpus('lxx', 'genesis'), null)
+})
+
+test('the Scripture browser derives selectable chapters from catalog metadata', () => {
+  const mark = bookForCorpus('sblgnt', 'mark')
+  const psalms = bookForCorpus('lxx', 'psalms')
+
+  assert.deepEqual(chapterNumbers(mark), [
+    1, 2, 3, 4, 5, 6, 7, 8,
+    9, 10, 11, 12, 13, 14, 15, 16,
+  ])
+  assert.equal(chapterNumbers(psalms).at(-1), 150)
+  assert.deepEqual(chapterNumbers(null), [])
 })
 
 test('current Scripture streams restore a saved verse', () => {
