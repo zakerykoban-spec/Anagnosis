@@ -6,11 +6,18 @@ import {
   isLatestStreamAssignmentCompleted,
   isDailySectionMarked,
   markDailySection,
+  migrateLegacyProgress,
+  restartReadingPlan,
   selectStreamAssignment,
+  switchReadingPlan,
   undoLastStreamCompletion,
   unmarkDailySection,
   updateStreamPosition,
 } from '../src/readingProgress.ts'
+import {
+  buildChallengePlan,
+  buildProgressivePlan,
+} from '../src/readingPlans.ts'
 import {
   readHistoryItems,
   readingContentsItems,
@@ -24,6 +31,9 @@ import {
   booksForCorpus,
   chapterNumbers,
 } from '../src/scriptureCatalog.ts'
+import genesisData from '../src/data/scripture/generated/lxx/genesis.json' with { type: 'json' }
+import lukeData from '../src/data/scripture/generated/sblgnt/luke.json' with { type: 'json' }
+import type { ScriptureBook } from '../src/models/scripture.ts'
 
 test('daily prayer marks are calendar-scoped', () => {
   const july26 = '2026-07-26'
@@ -135,7 +145,7 @@ test('several assignments can be completed in one reading session', () => {
   )
 })
 
-test('repeated readings remain completable after a plan cycle wraps', () => {
+test('stream completions remain ordered until the plan UI reaches book end', () => {
   const firstId = 'challenge:luke:1'
   const secondId = 'challenge:luke:2'
   const firstCycle = completeStreamAssignment(
@@ -336,7 +346,7 @@ test('the readings menu combines canonical contents with progress state', () => 
   ]
   const items = readingContentsItems(
     'progressive',
-    4,
+    1,
     ['progressive:mark:chapters-1-2'],
     { progressive: readings, challenge: [] },
   )
@@ -351,23 +361,190 @@ test('the readings menu combines canonical contents with progress state', () => 
     [
       {
         id: 'progressive:mark:chapters-1-2',
-        assignmentIndex: 3,
+        assignmentIndex: 0,
         isCompleted: true,
         isCurrent: false,
       },
       {
         id: 'progressive:mark:chapters-3-4',
-        assignmentIndex: 4,
+        assignmentIndex: 1,
         isCompleted: false,
         isCurrent: true,
       },
       {
         id: 'progressive:mark:chapters-5-6',
-        assignmentIndex: 5,
+        assignmentIndex: 2,
         isCompleted: false,
         isCurrent: false,
       },
     ],
+  )
+})
+
+test('a completed finite book has no silently wrapped current assignment', () => {
+  const readings = [
+    {
+      id: 'progressive:mark:chapters-1-2',
+      kind: 'scripture' as const,
+      sectionGreek: 'Πρόοδος',
+      sectionEnglish: 'Progressive Reading',
+      titleGreek: 'Κατὰ Μᾶρκον',
+      reference: 'Mark 1–2',
+      verses: [],
+    },
+  ]
+  const items = readingContentsItems(
+    'progressive',
+    readings.length,
+    [readings[0].id],
+    { progressive: readings, challenge: [] },
+  )
+
+  assert.equal(items[0].isCompleted, true)
+  assert.equal(items[0].isCurrent, false)
+  assert.equal(items[0].assignmentIndex, 0)
+})
+
+test('new users default to Mark and Luke plans', () => {
+  const progress = createDefaultProgress()
+
+  assert.deepEqual(progress.planSelections.progressive, {
+    corpus: 'sblgnt',
+    bookId: 'mark',
+  })
+  assert.deepEqual(progress.planSelections.challenge, {
+    corpus: 'sblgnt',
+    bookId: 'luke',
+  })
+})
+
+test('switching plan books preserves independent progress and verse position', () => {
+  const markStarted = updateStreamPosition(
+    completeStreamAssignment(
+      createDefaultProgress(),
+      'progressive',
+      'progressive:mark:chapters-1-2',
+    ),
+    'progressive',
+    'mark.3.8',
+  )
+  const genesisSelected = switchReadingPlan(
+    markStarted,
+    'progressive',
+    { corpus: 'lxx', bookId: 'genesis' },
+  )
+  const genesisStarted = updateStreamPosition(
+    genesisSelected,
+    'progressive',
+    'genesis.1.5',
+  )
+  const markRestored = switchReadingPlan(
+    genesisStarted,
+    'progressive',
+    { corpus: 'sblgnt', bookId: 'mark' },
+  )
+  const genesisRestored = switchReadingPlan(
+    markRestored,
+    'progressive',
+    { corpus: 'lxx', bookId: 'genesis' },
+  )
+
+  assert.equal(markRestored.streams.progressive.assignmentIndex, 1)
+  assert.equal(markRestored.streams.progressive.lastVerseId, 'mark.3.8')
+  assert.deepEqual(
+    markRestored.streams.progressive.completedAssignmentIds,
+    ['progressive:mark:chapters-1-2'],
+  )
+  assert.equal(genesisRestored.streams.progressive.assignmentIndex, 0)
+  assert.equal(genesisRestored.streams.progressive.lastVerseId, 'genesis.1.5')
+})
+
+test('read again returns a completed book to its first assignment', () => {
+  const completed = completeStreamAssignment(
+    createDefaultProgress(),
+    'progressive',
+    'progressive:mark:chapters-15-16',
+  )
+  const selectedEnd = selectStreamAssignment(completed, 'progressive', 8)
+  const restarted = restartReadingPlan(selectedEnd, 'progressive')
+
+  assert.equal(restarted.streams.progressive.assignmentIndex, 0)
+  assert.equal(restarted.streams.progressive.lastVerseId, null)
+  assert.deepEqual(
+    restarted.streams.progressive.completedAssignmentIds,
+    ['progressive:mark:chapters-15-16'],
+  )
+})
+
+test('legacy Progressive state migrates to its actual current book', () => {
+  const migrated = migrateLegacyProgress({
+    version: 2,
+    streams: {
+      progressive: {
+        assignmentIndex: 9,
+        lastVerseId: 'john.3.4',
+        status: 'in-progress',
+        completedAssignmentIds: [
+          'progressive:mark:chapters-1-2',
+          'progressive:john:chapters-1-2',
+        ],
+      },
+    },
+    dailyMarks: { '2026-07-31': ['progressive'] },
+  })
+
+  assert.deepEqual(migrated.planSelections.progressive, {
+    corpus: 'sblgnt',
+    bookId: 'john',
+  })
+  assert.equal(migrated.streams.progressive.assignmentIndex, 1)
+  assert.equal(migrated.streams.progressive.lastVerseId, 'john.3.4')
+  assert.deepEqual(
+    migrated.savedPlanProgress.progressive['sblgnt:mark']
+      .completedAssignmentIds,
+    ['progressive:mark:chapters-1-2'],
+  )
+  assert.deepEqual(migrated.dailyMarks, {
+    '2026-07-31': ['progressive'],
+  })
+})
+
+test('Progressive plans cover one selected book in two-chapter assignments', () => {
+  const genesis = bookForCorpus('lxx', 'genesis')
+  assert.ok(genesis)
+
+  const plan = buildProgressivePlan(
+    'lxx',
+    genesis,
+    genesisData as ScriptureBook,
+  )
+
+  assert.equal(plan.length, 25)
+  assert.equal(plan[0].reference, 'Genesis 1–2')
+  assert.equal(plan.at(-1)?.reference, 'Genesis 49–50')
+})
+
+test('Challenge keeps Luke history then continues through the whole book', () => {
+  const luke = bookForCorpus('sblgnt', 'luke')
+  assert.ok(luke)
+
+  const plan = buildChallengePlan(
+    'sblgnt',
+    luke,
+    lukeData as ScriptureBook,
+  )
+
+  assert.deepEqual(
+    plan.slice(0, 8).map((reading) => reading.id),
+    Array.from({ length: 8 }, (_, index) => `challenge:luke:${index + 1}`),
+  )
+  assert.equal(plan[0].reference, 'Luke 1:1–4')
+  assert.equal(plan.at(-1)?.verses.at(-1)?.chapter, 24)
+  assert.ok(
+    plan.slice(8).every((reading) => (
+      reading.verses.length <= 25
+      && new Set(reading.verses.map((verse) => verse.chapter)).size === 1
+    )),
   )
 })
 

@@ -1,7 +1,3 @@
-import actsData from './scripture/generated/sblgnt/acts.json'
-import johnData from './scripture/generated/sblgnt/john.json'
-import lukeData from './scripture/generated/sblgnt/luke.json'
-import markData from './scripture/generated/sblgnt/mark.json'
 import matthewData from './scripture/generated/sblgnt/matthew.json'
 import { loadLxxChapter } from '../scriptureLibrary'
 import type { ScriptureReferencePart } from '../models/scripture'
@@ -55,29 +51,9 @@ export type PrayerReading = OfficeEntryBase & {
 export type OfficeEntry = ScriptureReading | PrayerReading
 
 export type DailyOffice = {
-  dayNumber: number
-  psalmNumber: number
   openingPrayer: PrayerReading
-  progressiveReading: ScriptureReading
-  challengeReading: ScriptureReading
   closingPrayer: PrayerReading
 }
-
-type PassageRange = {
-  startChapter: number
-  startVerse: number
-  endChapter: number
-  endVerse: number
-}
-
-const OFFICE_START = Date.UTC(2026, 6, 25)
-const DAY_IN_MS = 24 * 60 * 60 * 1000
-const PSALM_COUNT = 150
-const progressiveBooks = [
-  { data: markData as ScriptureBookData, english: 'Mark', days: 3 },
-  { data: johnData as ScriptureBookData, english: 'John', days: 4 },
-  { data: actsData as ScriptureBookData, english: 'Acts', days: 7 },
-] as const
 
 export const weekdayTabs = [
   { short: 'ΚΥΡ', greek: 'Κυριακή', english: 'Sunday' },
@@ -89,31 +65,6 @@ export const weekdayTabs = [
   { short: 'ΣΑΒ', greek: 'Σάββατον', english: 'Saturday' },
 ] as const
 
-const challengeRanges: PassageRange[] = [
-  { startChapter: 1, startVerse: 1, endChapter: 1, endVerse: 4 },
-  { startChapter: 1, startVerse: 5, endChapter: 1, endVerse: 25 },
-  { startChapter: 1, startVerse: 26, endChapter: 1, endVerse: 38 },
-  { startChapter: 1, startVerse: 39, endChapter: 1, endVerse: 56 },
-  { startChapter: 1, startVerse: 57, endChapter: 1, endVerse: 80 },
-  { startChapter: 2, startVerse: 1, endChapter: 2, endVerse: 20 },
-  { startChapter: 2, startVerse: 21, endChapter: 2, endVerse: 40 },
-  { startChapter: 2, startVerse: 41, endChapter: 2, endVerse: 52 },
-]
-
-export function challengeAssignmentCount() {
-  return challengeRanges.length
-}
-
-function localDateValue(date: Date) {
-  return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
-}
-
-function dayNumberFor(date: Date) {
-  return Math.max(
-    0,
-    Math.floor((localDateValue(date) - OFFICE_START) / DAY_IN_MS),
-  )
-}
 
 function flattenBook(book: ScriptureBookData) {
   return book.chapters.flatMap((chapter) => chapter.verses)
@@ -292,122 +243,9 @@ export const weeklyPrayerCycle: PrayerReading[] = [
   }),
 ]
 
-function formatReference(
-  bookName: string,
-  firstVerse: ScriptureVerse,
-  lastVerse: ScriptureVerse,
-) {
-  if (firstVerse.chapter === lastVerse.chapter) {
-    return `${bookName} ${firstVerse.chapter}:${firstVerse.number}–${lastVerse.number}`
-  }
-
-  return `${bookName} ${firstVerse.chapter}:${firstVerse.number}–${lastVerse.chapter}:${lastVerse.number}`
-}
-
-function splitBookReading(
-  book: ScriptureBookData,
-  bookEnglish: string,
-  partIndex: number,
-  partCount: number,
-): ScriptureReading {
-  const verses = flattenBook(book)
-  const startIndex = Math.floor((verses.length * partIndex) / partCount)
-  const endIndex = Math.floor((verses.length * (partIndex + 1)) / partCount)
-  const selectedVerses = verses.slice(startIndex, endIndex)
-  const firstVerse = selectedVerses[0]
-  const lastVerse = selectedVerses[selectedVerses.length - 1]
-
-  return {
-    id: `progressive:${book.book.id}:${partIndex + 1}-of-${partCount}`,
-    kind: 'scripture',
-    sectionGreek: 'Πρόοδος',
-    sectionEnglish: 'Progressive Reading',
-    titleGreek: book.book.titleGreek,
-    reference: formatReference(bookEnglish, firstVerse, lastVerse),
-    verses: selectedVerses,
-  }
-}
-
-function selectedPassage(
-  book: ScriptureBookData,
-  bookEnglish: string,
-  range: PassageRange,
-  index: number,
-): ScriptureReading {
-  const verses = flattenBook(book)
-  const startId = `${book.book.id}.${range.startChapter}.${range.startVerse}`
-  const endId = `${book.book.id}.${range.endChapter}.${range.endVerse}`
-  const startIndex = verses.findIndex((verse) => verse.id === startId)
-  const endIndex = verses.findIndex((verse) => verse.id === endId)
-
-  if (startIndex < 0 || endIndex < startIndex) {
-    throw new Error(`Invalid configured passage: ${startId}–${endId}`)
-  }
-
-  const selectedVerses = verses.slice(startIndex, endIndex + 1)
-
-  return {
-    id: `challenge:${book.book.id}:${index + 1}`,
-    kind: 'scripture',
-    sectionGreek: 'Ἄσκησις',
-    sectionEnglish: 'Challenge Reading',
-    titleGreek: book.book.titleGreek,
-    reference: formatReference(
-      bookEnglish,
-      selectedVerses[0],
-      selectedVerses[selectedVerses.length - 1],
-    ),
-    verses: selectedVerses,
-  }
-}
-
-export function resolveChallengeReading(
-  assignmentIndex: number,
-): ScriptureReading {
-  const index =
-    ((assignmentIndex % challengeRanges.length) + challengeRanges.length) %
-    challengeRanges.length
-
-  return selectedPassage(
-    lukeData as ScriptureBookData,
-    'Luke',
-    challengeRanges[index],
-    index,
-  )
-}
-
-function progressiveReadingFor(dayNumber: number) {
-  const cycleLength = progressiveBooks.reduce(
-    (total, book) => total + book.days,
-    0,
-  )
-  let cycleDay = dayNumber % cycleLength
-
-  for (const book of progressiveBooks) {
-    if (cycleDay < book.days) {
-      return splitBookReading(
-        book.data,
-        book.english,
-        cycleDay,
-        book.days,
-      )
-    }
-
-    cycleDay -= book.days
-  }
-
-  throw new Error('Unable to resolve the progressive reading.')
-}
-
 export function resolveDailyOffice(date = new Date()): DailyOffice {
-  const dayNumber = dayNumberFor(date)
-
   return {
-    dayNumber,
-    psalmNumber: (dayNumber % PSALM_COUNT) + 1,
     openingPrayer: weeklyPrayerCycle[date.getDay()],
-    progressiveReading: progressiveReadingFor(dayNumber),
-    challengeReading: resolveChallengeReading(dayNumber),
     closingPrayer: {
       id: 'prayer:closing',
       kind: 'prayer',

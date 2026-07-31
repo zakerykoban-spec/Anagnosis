@@ -2,9 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { ChangeEvent, MouseEvent } from 'react'
 import { VoiceText } from './components/VoiceText'
 import {
-  challengeAssignmentCount,
   loadPsalm,
-  resolveChallengeReading,
   resolveDailyOffice,
   weekdayTabs,
   weeklyPrayerCycle,
@@ -14,11 +12,8 @@ import {
 } from './data/dailyOffice'
 import { mealPrayers } from './data/mealPrayers'
 import {
-  progressiveAssignmentCount,
-  resolveProgressiveReading,
-} from './data/progressiveReadings'
-import {
   readingContentsItems,
+  type ReadHistoryCandidates,
   type ReadingContentsItem,
 } from './readHistory'
 import {
@@ -30,14 +25,20 @@ import {
   isDailySectionMarked,
   loadProgress,
   markDailySection,
+  readingPlanKey,
+  restartReadingPlan,
   saveProgress,
   selectStreamAssignment,
+  switchReadingPlan,
   undoLastStreamCompletion,
   unmarkDailySection,
   updateStreamPosition,
   type ReadingProgressState,
+  type ReadingPlanSelection,
+  type ReadingPlanStreamId,
   type ReadingStreamId,
 } from './readingProgress'
+import { buildReadingPlan } from './readingPlans'
 import {
   bookForCorpus,
   booksForCorpus,
@@ -48,6 +49,7 @@ import {
 import {
   loadLxxChapter,
   loadSblgntChapter,
+  loadScriptureBook,
 } from './scriptureLibrary'
 import type { ScriptureReferencePart } from './models/scripture'
 import { UI } from './ui/lexicon'
@@ -78,6 +80,12 @@ type OfficeIconKind = 'prayer' | 'codex' | 'lamp' | 'lyre' | 'lampstand'
 type OfficeDate = { iso: string; day: number; monthGreek: string; year: number; english: string; weekdayGreek: string }
 type ReaderBannerKind = 'altar' | 'meal' | 'after-meal' | 'psalm'
 type ScriptureBrowserView = 'books' | 'chapters'
+type LoadedReadingPlan = {
+  key: string
+  readings: ScriptureReading[]
+  loading: boolean
+  error: string | null
+}
 
 const OPTIONS_KEY = 'anagnosis.options.v1'
 const PSALM_COUNT = 150
@@ -102,17 +110,6 @@ const READER_BANNERS: Record<ReaderBannerKind, string> = {
   'after-meal': afterMealBanner,
   psalm: psalmBanner,
 }
-const READ_HISTORY_CANDIDATES = {
-  progressive: Array.from(
-    { length: progressiveAssignmentCount() },
-    (_, index) => resolveProgressiveReading(index),
-  ),
-  challenge: Array.from(
-    { length: challengeAssignmentCount() },
-    (_, index) => resolveChallengeReading(index),
-  ),
-}
-
 function formatOfficeDate(date: Date): OfficeDate {
   const iso = [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-')
   return {
@@ -161,18 +158,74 @@ function bookIdForReading(reading: ScriptureReading) {
 function assignmentIdForStreamIndex(
   streamId: ReadingStreamId,
   assignmentIndex: number,
+  candidates: ReadHistoryCandidates,
 ) {
-  if (streamId === 'progressive') {
-    return resolveProgressiveReading(assignmentIndex).id
-  }
-  if (streamId === 'challenge') {
-    return resolveChallengeReading(assignmentIndex).id
+  if (streamId !== 'psalm') {
+    return candidates[streamId][assignmentIndex]?.id ?? null
   }
 
   const psalmNumber = (
     (assignmentIndex % PSALM_COUNT + PSALM_COUNT) % PSALM_COUNT
   ) + 1
   return `psalm:${psalmNumber}`
+}
+
+function useSelectedReadingPlan(
+  streamId: ReadingPlanStreamId,
+  selection: ReadingPlanSelection,
+): LoadedReadingPlan {
+  const key = readingPlanKey(selection)
+  const [loaded,setLoaded] = useState<LoadedReadingPlan>({
+    key: '',
+    readings: [],
+    loading: true,
+    error: null,
+  })
+
+  useEffect(() => {
+    let cancelled = false
+    const book = bookForCorpus(selection.corpus, selection.bookId)
+
+    Promise.resolve()
+      .then(async () => {
+        if (!book) {
+          throw new Error('That reading-plan book is unavailable.')
+        }
+        const data = await loadScriptureBook(
+          selection.corpus,
+          selection.bookId,
+        )
+        if (cancelled) return
+        setLoaded({
+          key,
+          readings: buildReadingPlan(
+            streamId,
+            selection.corpus,
+            book,
+            data,
+          ),
+          loading: false,
+          error: null,
+        })
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return
+        setLoaded({
+          key,
+          readings: [],
+          loading: false,
+          error: error instanceof Error
+            ? error.message
+            : 'Unable to load this reading plan.',
+        })
+      })
+
+    return () => { cancelled = true }
+  }, [key, selection.bookId, selection.corpus, streamId])
+
+  return loaded.key === key
+    ? loaded
+    : { key, readings: [], loading: true, error: null }
 }
 
 function groupVersesByChapter(verses: ScriptureVerse[]) {
@@ -200,6 +253,13 @@ function ReaderBanner({ kind }: { kind: ReaderBannerKind }) { return <img classN
 
 function OfficeReadingButton({ entry, icon, showGloss, complete, onOpen }: { entry: OfficeEntry; icon: OfficeIconKind; showGloss: boolean; complete: boolean; onOpen: (entry: OfficeEntry) => void }) {
   return <button className="office-reading" type="button" onClick={() => onOpen(entry)}><OfficeIcon kind={icon}/><span className="office-reading-copy"><VoiceText term={{ greek: entry.sectionGreek, english: entry.sectionEnglish }} showGloss={showGloss}/><span className="office-reading-title">{entry.titleGreek}</span><span className="office-reading-reference">{entry.reference}</span></span><Seal complete={complete}/></button>
+}
+function OfficePlanStatus({ streamId, icon, book, showGloss, loading, error, onChoose, onRestart }: { streamId: ReadingPlanStreamId; icon: OfficeIconKind; book: ScriptureBookOption | null; showGloss: boolean; loading: boolean; error: string | null; onChoose: () => void; onRestart: () => void }) {
+  const term = streamId === 'progressive'
+    ? UI.progressiveReading
+    : UI.challengeReading
+
+  return <div className="office-reading office-plan-status"><OfficeIcon kind={icon}/><span className="office-reading-copy"><VoiceText term={term} showGloss={showGloss}/><span className="office-reading-title">{book?.titleGreek ?? 'Γραφαί'}</span><span className="office-reading-reference">{loading ? 'Ἀνοίγεται…' : error ?? (showGloss ? 'Book complete' : 'Τέλος τοῦ βιβλίου')}</span>{!loading&&!error&&<span className="office-plan-actions"><button type="button" onClick={onChoose}><span>Ἑλοῦ βιβλίου</span>{showGloss&&<small>Choose next book</small>}</button><button type="button" onClick={onRestart}><span>Ἀνάγνωθι πάλιν</span>{showGloss&&<small>Read again</small>}</button></span>}</span><Seal complete={!loading&&!error}/></div>
 }
 function MealPrayerDock({ showGloss, onOpen }: { showGloss: boolean; onOpen: (entry: OfficeEntry) => void }) {
   const icons: MealIconKind[] = ['cup','bread','table']; const labels = [{greek:'Ποτήριον',english:'Cup'},{greek:'Κλάσμα',english:'Bread'},{greek:'Μετὰ τροφήν',english:'After food'}]
@@ -235,6 +295,8 @@ export default function App() {
     useState<string|null>(null)
   const [scriptureBrowserError,setScriptureBrowserError] =
     useState<string|null>(null)
+  const [planSelectorStream,setPlanSelectorStream] =
+    useState<ReadingPlanStreamId|null>(null)
   const [historyLoadingId,setHistoryLoadingId] = useState<string|null>(null)
   const [historyUndoingId,setHistoryUndoingId] = useState<string|null>(null)
   const [historyError,setHistoryError] = useState<string|null>(null)
@@ -246,8 +308,32 @@ export default function App() {
     { kind: 'top' } | { kind: 'verse'; verseId: string } | null
   >(null)
 
-  const progressiveReading = useMemo(()=>resolveProgressiveReading(progress.streams.progressive.assignmentIndex),[progress.streams.progressive.assignmentIndex])
-  const challengeReading = useMemo(()=>resolveChallengeReading(progress.streams.challenge.assignmentIndex),[progress.streams.challenge.assignmentIndex])
+  const progressivePlan = useSelectedReadingPlan(
+    'progressive',
+    progress.planSelections.progressive,
+  )
+  const challengePlan = useSelectedReadingPlan(
+    'challenge',
+    progress.planSelections.challenge,
+  )
+  const planCandidates = useMemo<ReadHistoryCandidates>(() => ({
+    progressive: progressivePlan.readings,
+    challenge: challengePlan.readings,
+  }), [challengePlan.readings, progressivePlan.readings])
+  const progressiveReading = progressivePlan.readings[
+    progress.streams.progressive.assignmentIndex
+  ] ?? null
+  const challengeReading = challengePlan.readings[
+    progress.streams.challenge.assignmentIndex
+  ] ?? null
+  const progressiveBook = bookForCorpus(
+    progress.planSelections.progressive.corpus,
+    progress.planSelections.progressive.bookId,
+  )
+  const challengeBook = bookForCorpus(
+    progress.planSelections.challenge.corpus,
+    progress.planSelections.challenge.bookId,
+  )
   const psalmNumber = (progress.streams.psalm.assignmentIndex % PSALM_COUNT) + 1
   const activeStream = streamForEntry(activeEntry)
   const contentsItems = useMemo(
@@ -256,10 +342,10 @@ export default function App() {
           activeStream,
           progress.streams[activeStream].assignmentIndex,
           progress.streams[activeStream].completedAssignmentIds,
-          READ_HISTORY_CANDIDATES,
+          planCandidates,
         )
       : [],
-    [activeStream,progress],
+    [activeStream,planCandidates,progress],
   )
   const latestCompletedId = activeStream
     ? progress.streams[activeStream].completedAssignmentIds.at(-1) ?? null
@@ -268,17 +354,30 @@ export default function App() {
     ? progress.streams[activeStream].assignmentIndex
     : null
   const currentAssignmentId = activeStream && activeAssignmentIndex !== null
-    ? assignmentIdForStreamIndex(activeStream, activeAssignmentIndex)
+    ? assignmentIdForStreamIndex(
+        activeStream,
+        activeAssignmentIndex,
+        planCandidates,
+      )
     : null
   const previousAssignmentId = activeStream
     && activeAssignmentIndex !== null
     && activeAssignmentIndex > 0
-    ? assignmentIdForStreamIndex(activeStream, activeAssignmentIndex - 1)
+    ? assignmentIdForStreamIndex(
+        activeStream,
+        activeAssignmentIndex - 1,
+        planCandidates,
+      )
     : null
   const canUndoLatestCompletion = (
     latestCompletedId !== null
     && latestCompletedId === previousAssignmentId
   )
+  const activePlanComplete = activeStream !== null
+    && activeStream !== 'psalm'
+    && planCandidates[activeStream].length > 0
+    && progress.streams[activeStream].assignmentIndex
+      >= planCandidates[activeStream].length
   const displayedEntry = freeReadingEntry ?? reviewEntry ?? activeEntry
   const scriptureReading = displayedEntry?.kind === 'scripture' ? displayedEntry : null
   const displayedVerseIndex = freeReadingEntry
@@ -442,6 +541,7 @@ export default function App() {
       || assignmentIdForStreamIndex(
         item.streamId,
         stream.assignmentIndex - 1,
+        planCandidates,
       ) !== item.id
     ) {
       setHistoryError('Only the latest completed reading can be restored.')
@@ -487,6 +587,7 @@ export default function App() {
     }
   }
   function openScriptureBrowser() {
+    setPlanSelectorStream(null)
     setScriptureBrowserCorpus(displayedCorpus)
     setScriptureBrowserBookId(null)
     setScriptureBrowserView('books')
@@ -495,6 +596,18 @@ export default function App() {
     setScriptureBrowserOpen(true)
   }
   function openFreeReadingBrowser() {
+    setPlanSelectorStream(null)
+    setScriptureBrowserBookId(null)
+    setScriptureBrowserView('books')
+    setScriptureBrowserError(null)
+    setMenuOpen(false)
+    setReaderMenuOpen(false)
+    setScriptureBrowserOpen(true)
+  }
+  function openPlanSelector(streamId: ReadingPlanStreamId) {
+    const selection = progress.planSelections[streamId]
+    setPlanSelectorStream(streamId)
+    setScriptureBrowserCorpus(selection.corpus)
     setScriptureBrowserBookId(null)
     setScriptureBrowserView('books')
     setScriptureBrowserError(null)
@@ -509,9 +622,37 @@ export default function App() {
     setScriptureBrowserError(null)
   }
   function selectScriptureBrowserBook(book: ScriptureBookOption) {
+    if (planSelectorStream) {
+      setProgress((current) => switchReadingPlan(
+        current,
+        planSelectorStream,
+        { corpus: scriptureBrowserCorpus, bookId: book.id },
+      ))
+      setScriptureBrowserOpen(false)
+      setPlanSelectorStream(null)
+      setActiveEntry(null)
+      setReviewEntry(null)
+      setFreeReadingEntry(null)
+      pendingScroll.current = { kind: 'top' }
+      setView('office')
+      return
+    }
+
     setScriptureBrowserBookId(book.id)
     setScriptureBrowserView('chapters')
     setScriptureBrowserError(null)
+  }
+  function restartPlan(streamId: ReadingPlanStreamId) {
+    setProgress((current) => restartReadingPlan(current, streamId))
+    const firstReading = planCandidates[streamId][0]
+
+    if (view === 'reader' && firstReading) {
+      pendingScroll.current = { kind: 'top' }
+      setFreeReadingEntry(null)
+      setReviewEntry(null)
+      setActiveEntry(firstReading)
+      setCurrentVerseIndex(0)
+    }
   }
   async function openLibraryChapter(
     book: ScriptureBookOption,
@@ -596,12 +737,12 @@ export default function App() {
       setProgress(c=>markDailySection(c,officeDate.iso,activeEntry.id))
     }
   }
-  function proceed(){ if(!activeStream)return; const next=activeStream==='progressive'?resolveProgressiveReading(progress.streams.progressive.assignmentIndex):activeStream==='challenge'?resolveChallengeReading(progress.streams.challenge.assignmentIndex):psalmReading; if(next)openEntry(next) }
+  function proceed(){ if(!activeStream)return; const next=activeStream==='psalm'?psalmReading:planCandidates[activeStream][progress.streams[activeStream].assignmentIndex]; if(next)openEntry(next) }
   const markedToday=(id:string)=>isDailySectionMarked(progress,officeDate.iso,id)
   const scriptureBrowserDialog = scriptureBrowserOpen&&<div className="options-backdrop reader-overlay" role="presentation" onPointerDown={e=>{if(e.target===e.currentTarget)setScriptureBrowserOpen(false)}}>
     <section className="options-menu scripture-browser-menu" role="dialog" aria-modal="true" aria-labelledby="scripture-browser-title">
       <header className="options-menu-header">
-        <h2 id="scripture-browser-title"><VoiceText term={{greek:'Γραφαί',english:'Free reading'}} showGloss={options.showGloss}/></h2>
+        <h2 id="scripture-browser-title"><VoiceText term={planSelectorStream ? {greek:planSelectorStream==='progressive'?'Πρόοδος':'Ἄσκησις',english:planSelectorStream==='progressive'?'Choose Progressive book':'Choose Challenge book'} : {greek:'Γραφαί',english:'Free reading'}} showGloss={options.showGloss}/></h2>
         <button className="options-close" type="button" onClick={()=>setScriptureBrowserOpen(false)}>×</button>
       </header>
       <nav className="scripture-corpus-tabs" aria-label="Scripture corpus">
@@ -610,7 +751,7 @@ export default function App() {
       </nav>
       <div className="scripture-browser-body">
         {scriptureBrowserView==='books'
-          ? <><div className="scripture-browser-heading"><span>{scriptureBrowserCorpus==='sblgnt'?'Καινὴ Διαθήκη':'Ἑβδομήκοντα'}</span>{options.showGloss&&<small>{scriptureBrowserCorpus==='sblgnt'?'Choose a book':'Choose a Septuagint book'}</small>}</div><div className="scripture-book-grid">{scriptureBrowserBooks.map((book)=><button className="scripture-book-choice" type="button" key={`${scriptureBrowserCorpus}:${book.id}`} onClick={()=>selectScriptureBrowserBook(book)}><span>{book.titleGreek}</span><small>{options.showGloss&&book.titleEnglish?`${book.titleEnglish} · `:''}{book.code} · {book.chapterNumbers.length}</small></button>)}</div></>
+          ? <><div className="scripture-browser-heading"><span>{scriptureBrowserCorpus==='sblgnt'?'Καινὴ Διαθήκη':'Ἑβδομήκοντα'}</span>{options.showGloss&&<small>{planSelectorStream?'Choose the book for this reading plan':scriptureBrowserCorpus==='sblgnt'?'Choose a book':'Choose a Septuagint book'}</small>}</div><div className="scripture-book-grid">{scriptureBrowserBooks.map((book)=><button className="scripture-book-choice" type="button" key={`${scriptureBrowserCorpus}:${book.id}`} onClick={()=>selectScriptureBrowserBook(book)}><span>{book.titleGreek}</span><small>{options.showGloss&&book.titleEnglish?`${book.titleEnglish} · `:''}{book.code} · {book.chapterNumbers.length}</small></button>)}</div></>
           : scriptureBrowserBook&&<><div className="scripture-browser-heading scripture-chapter-heading"><button className="scripture-browser-back" type="button" onClick={()=>{setScriptureBrowserBookId(null);setScriptureBrowserView('books');setScriptureBrowserError(null)}} aria-label="Back to books">‹</button><span>{scriptureBrowserBook.titleGreek}</span>{options.showGloss&&<small>{scriptureBrowserBook.code} · Choose a chapter</small>}</div><div className="scripture-chapter-grid">{chapterNumbers(scriptureBrowserBook).map((chapterNumber)=>{const loadingKey=`${scriptureBrowserCorpus}:${scriptureBrowserBook.id}:${String(chapterNumber)}`;return <button className="scripture-chapter-choice" type="button" key={loadingKey} disabled={scriptureBrowserLoadingKey!==null} onClick={()=>void openLibraryChapter(scriptureBrowserBook,chapterNumber)}>{scriptureBrowserLoadingKey===loadingKey?'…':chapterNumber}</button>})}</div></>}
       </div>
       {scriptureBrowserError&&<p className="read-history-error" role="alert">{scriptureBrowserError}</p>}
@@ -619,8 +760,20 @@ export default function App() {
 
   if(view==='office') return <main className="office-shell"><section className="office-card" aria-labelledby="office-title">
     <header className="office-toolbar"><button className="icon-button" type="button" ref={menuTrigger} aria-label="Ἐπιλογαί" onClick={()=>setMenuOpen(true)}><MenuIcon/></button><div className="office-brand"><p className="app-name">Ἀνάγνωσις</p>{options.showGloss&&<span className="app-name-gloss">Reading</span>}</div><time className="calendar-mark" dateTime={officeDate.iso}><span className="calendar-day">{officeDate.day}</span><span className="calendar-copy"><strong>{officeDate.weekdayGreek}</strong><span>{officeDate.monthGreek} {officeDate.year}</span>{options.showGloss&&<small>{officeDate.english}</small>}</span></time><button className="icon-button free-reading-trigger" type="button" aria-label="Ἐλευθέρα ἀνάγνωσις · Free reading" title="Free reading" onClick={openFreeReadingBrowser}><BookIcon/></button></header>
-    <header className="office-heading" id="office-title"><VoiceText term={UI.todaysReading} showGloss={options.showGloss}/></header><div className="office-list"><OfficeReadingButton entry={calendarOffice.openingPrayer} icon="prayer" showGloss={options.showGloss} complete={markedToday(calendarOffice.openingPrayer.id)} onOpen={openEntry}/>{options.showProgressive&&<OfficeReadingButton entry={progressiveReading} icon="codex" showGloss={options.showGloss} complete={markedToday('progressive')} onOpen={openEntry}/>} {options.showChallenge&&<OfficeReadingButton entry={challengeReading} icon="lamp" showGloss={options.showGloss} complete={markedToday('challenge')} onOpen={openEntry}/>} {options.showPsalm&&(psalmReading?<OfficeReadingButton entry={psalmReading} icon="lyre" showGloss={options.showGloss} complete={markedToday('psalm')} onOpen={openEntry}/>:<div className="office-reading office-reading-status">{psalmError??`Ψαλμὸς ${psalmNumber}…`}</div>)}<OfficeReadingButton entry={calendarOffice.closingPrayer} icon="lampstand" showGloss={options.showGloss} complete={markedToday(calendarOffice.closingPrayer.id)} onOpen={openEntry}/></div><MealPrayerDock showGloss={options.showGloss} onOpen={openEntry}/>
-    {menuOpen&&<div className="options-backdrop" role="presentation" onPointerDown={e=>{if(e.target===e.currentTarget)setMenuOpen(false)}}><section className="options-menu" role="dialog" aria-modal="true"><header className="options-menu-header"><h2><VoiceText term={UI.options} showGloss={options.showGloss}/></h2><button className="options-close" type="button" onClick={()=>setMenuOpen(false)}>×</button></header><div className="options-list">{([{key:'showGloss',term:UI.englishAids},{key:'showProgressive',term:UI.progressiveReading},{key:'showChallenge',term:UI.challengeReading},{key:'showPsalm',term:UI.psalm}] as const).map(({key,term})=><label className="option-switch" key={key}><VoiceText term={term} showGloss={options.showGloss}/><input type="checkbox" checked={options[key]} onChange={(e:ChangeEvent<HTMLInputElement>)=>setOptions(c=>({...c,[key]:e.target.checked}))}/><span className="switch-track" aria-hidden="true"/></label>)}</div><section className="about-panel" aria-labelledby="about-title"><h3 id="about-title"><span>Περί</span>{options.showGloss&&<small>About</small>}</h3><div className="about-sources"><p>SBLGNT 1.2 · CC BY 4.0</p><p>LXX Swete / First1KGreek · CC BY-SA 4.0</p><p>Διδαχὴ 9–10 and traditional Greek prayers · public domain</p></div></section></section></div>}
+    <header className="office-heading" id="office-title"><VoiceText term={UI.todaysReading} showGloss={options.showGloss}/></header>
+    <div className="office-list">
+      <OfficeReadingButton entry={calendarOffice.openingPrayer} icon="prayer" showGloss={options.showGloss} complete={markedToday(calendarOffice.openingPrayer.id)} onOpen={openEntry}/>
+      {options.showProgressive&&(progressiveReading
+        ? <OfficeReadingButton entry={progressiveReading} icon="codex" showGloss={options.showGloss} complete={markedToday('progressive')} onOpen={openEntry}/>
+        : <OfficePlanStatus streamId="progressive" icon="codex" book={progressiveBook} showGloss={options.showGloss} loading={progressivePlan.loading} error={progressivePlan.error} onChoose={()=>openPlanSelector('progressive')} onRestart={()=>restartPlan('progressive')}/>)}
+      {options.showChallenge&&(challengeReading
+        ? <OfficeReadingButton entry={challengeReading} icon="lamp" showGloss={options.showGloss} complete={markedToday('challenge')} onOpen={openEntry}/>
+        : <OfficePlanStatus streamId="challenge" icon="lamp" book={challengeBook} showGloss={options.showGloss} loading={challengePlan.loading} error={challengePlan.error} onChoose={()=>openPlanSelector('challenge')} onRestart={()=>restartPlan('challenge')}/>)}
+      {options.showPsalm&&(psalmReading?<OfficeReadingButton entry={psalmReading} icon="lyre" showGloss={options.showGloss} complete={markedToday('psalm')} onOpen={openEntry}/>:<div className="office-reading office-reading-status">{psalmError??`Ψαλμὸς ${psalmNumber}…`}</div>)}
+      <OfficeReadingButton entry={calendarOffice.closingPrayer} icon="lampstand" showGloss={options.showGloss} complete={markedToday(calendarOffice.closingPrayer.id)} onOpen={openEntry}/>
+    </div>
+    <MealPrayerDock showGloss={options.showGloss} onOpen={openEntry}/>
+    {menuOpen&&<div className="options-backdrop" role="presentation" onPointerDown={e=>{if(e.target===e.currentTarget)setMenuOpen(false)}}><section className="options-menu" role="dialog" aria-modal="true"><header className="options-menu-header"><h2><VoiceText term={UI.options} showGloss={options.showGloss}/></h2><button className="options-close" type="button" onClick={()=>setMenuOpen(false)}>×</button></header><div className="options-list">{([{key:'showGloss',term:UI.englishAids},{key:'showProgressive',term:UI.progressiveReading},{key:'showChallenge',term:UI.challengeReading},{key:'showPsalm',term:UI.psalm}] as const).map(({key,term})=><label className="option-switch" key={key}><VoiceText term={term} showGloss={options.showGloss}/><input type="checkbox" checked={options[key]} onChange={(e:ChangeEvent<HTMLInputElement>)=>setOptions(c=>({...c,[key]:e.target.checked}))}/><span className="switch-track" aria-hidden="true"/></label>)}<div className="plan-options" aria-label="Reading plan books"><button className="plan-option" type="button" onClick={()=>openPlanSelector('progressive')}><span><strong>Πρόοδος</strong>{options.showGloss&&<small>Progressive book</small>}</span><span><em>{progressiveBook?.titleGreek ?? 'Γραφαί'}</em><small>{progressiveBook?.code}</small></span><span aria-hidden="true">›</span></button><button className="plan-option" type="button" onClick={()=>openPlanSelector('challenge')}><span><strong>Ἄσκησις</strong>{options.showGloss&&<small>Challenge book</small>}</span><span><em>{challengeBook?.titleGreek ?? 'Γραφαί'}</em><small>{challengeBook?.code}</small></span><span aria-hidden="true">›</span></button></div></div><section className="about-panel" aria-labelledby="about-title"><h3 id="about-title"><span>Περί</span>{options.showGloss&&<small>About</small>}</h3><div className="about-sources"><p>SBLGNT 1.2 · CC BY 4.0</p><p>LXX Swete / First1KGreek · CC BY-SA 4.0</p><p>Διδαχὴ 9–10 and traditional Greek prayers · public domain</p></div></section></section></div>}
     {scriptureBrowserDialog}
   </section></main>
 
@@ -684,7 +837,7 @@ export default function App() {
       <button className="navigation-button navigation-button-back" type="button" disabled={displayedVerseIndex===0} onClick={()=>moveToVerse(displayedVerseIndex-1)}><span className="navigation-chevron" aria-hidden="true">‹</span><span className="control-copy"><strong>Ὀπίσω</strong>{options.showGloss&&<small>Previous verse</small>}</span></button>
       <button className="navigation-button navigation-button-next" type="button" disabled={displayedVerseIndex===scriptureReading.verses.length-1} onClick={()=>moveToVerse(displayedVerseIndex+1)}><span className="control-copy"><strong>Ἔμπροσθεν</strong>{options.showGloss&&<small>Next verse</small>}</span><span className="navigation-chevron" aria-hidden="true">›</span></button>
     </nav>}
-    {!reviewEntry&&!freeReadingEntry&&!isMealPrayer&&<footer className={`completion-actions${isMarked?' is-complete':''}`}>{!isMarked?<button className="completion-button" type="button" onClick={completeActiveEntry}><span className="control-copy"><strong>Σφράγισον</strong>{options.showGloss&&<small>Mark complete</small>}</span></button>:<div className="completion-confirmed" role="status"><span className="completion-check" aria-hidden="true">✓</span><span className="control-copy"><strong>Πεπλήρωται</strong>{options.showGloss&&<small>Completed</small>}</span></div>}{isMarked&&activeStream&&<button className="proceed-button" type="button" onClick={proceed}><span className="control-copy"><strong>Πρόβαινε</strong>{options.showGloss&&<small>Continue</small>}</span><span className="action-chevron" aria-hidden="true">›</span></button>}{isMarked&&<button className="home-button" type="button" onClick={()=>{pendingScroll.current={kind:'top'};setView('office')}}><span className="control-copy"><strong>Οἶκος</strong>{options.showGloss&&<small>Home</small>}</span></button>}</footer>}
+    {!reviewEntry&&!freeReadingEntry&&!isMealPrayer&&<footer className={`completion-actions${isMarked?' is-complete':''}${activePlanComplete?' is-plan-complete':''}`}>{!isMarked?<button className="completion-button" type="button" onClick={completeActiveEntry}><span className="control-copy"><strong>Σφράγισον</strong>{options.showGloss&&<small>Mark complete</small>}</span></button>:<div className="completion-confirmed" role="status"><span className="completion-check" aria-hidden="true">✓</span><span className="control-copy"><strong>Πεπλήρωται</strong>{options.showGloss&&<small>Completed</small>}</span></div>}{isMarked&&activeStream&&activeStream!=='psalm'&&activePlanComplete?<div className="plan-complete-actions"><button className="proceed-button" type="button" onClick={()=>openPlanSelector(activeStream)}><span className="control-copy"><strong>Ἑλοῦ βιβλίου</strong>{options.showGloss&&<small>Choose next book</small>}</span><span className="action-chevron" aria-hidden="true">›</span></button><button className="home-button" type="button" onClick={()=>restartPlan(activeStream)}><span className="control-copy"><strong>Ἀνάγνωθι πάλιν</strong>{options.showGloss&&<small>Read again</small>}</span></button></div>:isMarked&&activeStream&&<button className="proceed-button" type="button" onClick={proceed}><span className="control-copy"><strong>Πρόβαινε</strong>{options.showGloss&&<small>Continue</small>}</span><span className="action-chevron" aria-hidden="true">›</span></button>}{isMarked&&<button className="home-button" type="button" onClick={()=>{pendingScroll.current={kind:'top'};setView('office')}}><span className="control-copy"><strong>Οἶκος</strong>{options.showGloss&&<small>Home</small>}</span></button>}</footer>}
     {readerMenuOpen&&<div className="options-backdrop reader-overlay" role="presentation" onPointerDown={e=>{if(e.target===e.currentTarget)setReaderMenuOpen(false)}}>
       <section className="options-menu reader-options-menu" role="dialog" aria-modal="true" aria-labelledby="reader-options-title">
         <header className="options-menu-header">
@@ -701,7 +854,9 @@ export default function App() {
         <button className="reader-menu-item" type="button" onClick={()=>{setReaderMenuOpen(false);setReadHistoryOpen(true)}}>
           <VoiceText term={UI.readHistory} showGloss={options.showGloss}/>
           <span className="reader-menu-count">
-            {contentsItems.findIndex(item=>item.isCurrent)+1} / {contentsItems.length}
+            {activePlanComplete
+              ? contentsItems.length
+              : contentsItems.findIndex(item=>item.isCurrent)+1} / {contentsItems.length}
           </span>
         </button>
       </section>

@@ -3,7 +3,10 @@ import type {
   ScriptureBook,
   ScriptureReferencePart,
 } from './models/scripture'
-import { bookForCorpus } from './scriptureCatalog'
+import {
+  bookForCorpus,
+  type ScriptureCorpusId,
+} from './scriptureCatalog'
 
 const SBLGNT_MODULES = import.meta.glob<{ default: ScriptureBook }>(
   './data/scripture/generated/sblgnt/*.json',
@@ -12,6 +15,28 @@ const SBLGNT_MODULES = import.meta.glob<{ default: ScriptureBook }>(
 const LXX_MODULES = import.meta.glob<{ default: ScriptureBook }>(
   './data/scripture/generated/lxx/*.json',
 )
+
+export async function loadScriptureBook(
+  corpus: ScriptureCorpusId,
+  bookId: string,
+): Promise<ScriptureBook> {
+  const bookOption = bookForCorpus(corpus, bookId)
+  if (!bookOption) {
+    throw new Error('That Scripture book is not available.')
+  }
+
+  const modules = corpus === 'lxx' ? LXX_MODULES : SBLGNT_MODULES
+  const modulePath = corpus === 'lxx'
+    ? `./data/scripture/generated/lxx/${bookId}.json`
+    : `./data/scripture/generated/sblgnt/${bookId}.json`
+  const loadModule = modules[modulePath]
+  if (!loadModule) {
+    throw new Error(`${bookOption.code} is missing from the reader.`)
+  }
+
+  const { default: book } = await loadModule()
+  return book
+}
 
 export async function loadSblgntChapter(
   bookId: string,
@@ -22,14 +47,7 @@ export async function loadSblgntChapter(
     throw new Error('That SBLGNT book is not available.')
   }
 
-  const modulePath =
-    `./data/scripture/generated/sblgnt/${bookId}.json`
-  const loadModule = SBLGNT_MODULES[modulePath]
-  if (!loadModule) {
-    throw new Error(`${bookOption.code} is missing from the reader.`)
-  }
-
-  const { default: book } = await loadModule()
+  const book = await loadScriptureBook('sblgnt', bookId)
   const chapter = book.chapters.find(
     (candidate) => String(candidate.number) === String(chapterNumber),
   )
@@ -59,14 +77,7 @@ export async function loadLxxChapter(
     throw new Error('That Septuagint book is not available.')
   }
 
-  const modulePath =
-    `./data/scripture/generated/lxx/${bookId}.json`
-  const loadModule = LXX_MODULES[modulePath]
-  if (!loadModule) {
-    throw new Error(`${bookOption.code} is missing from the reader.`)
-  }
-
-  const { default: book } = await loadModule()
+  const book = await loadScriptureBook('lxx', bookId)
   const chapter = book.chapters.find(
     (candidate) => String(candidate.number) === String(chapterNumber),
   )

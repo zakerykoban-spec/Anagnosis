@@ -113,11 +113,12 @@ export function readingContentsItems(
 
   if (readings.length === 0) return []
 
-  const currentCycleIndex = positiveModulo(
-    currentAssignmentIndex,
-    readings.length,
-  )
-  const cycleStart = currentAssignmentIndex - currentCycleIndex
+  const currentCycleIndex = streamId === 'psalm'
+    ? positiveModulo(currentAssignmentIndex, readings.length)
+    : currentAssignmentIndex
+  const cycleStart = streamId === 'psalm'
+    ? currentAssignmentIndex - currentCycleIndex
+    : 0
   const completedIds = new Set(completedAssignmentIds)
 
   return readings.map((reading, index) => ({
