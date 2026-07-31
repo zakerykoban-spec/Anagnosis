@@ -1,0 +1,126 @@
+diff --git a/src/artwork.css b/src/artwork.css
+--- a/src/artwork.css
++++ b/src/artwork.css
+@@ -94,7 +94,15 @@
+ }
+ 
+ .canonical-icon,
+-.manuscript-art {
++.office-icon img,
++.meal-icon img,
++.completion-seal img,
++.manuscript-art,
++.reader-banner,
++.reader-banner-altar,
++.reader-banner-meal,
++.reader-banner-after-meal,
++.reader-banner-psalm {
+   mix-blend-mode: multiply;
+   filter: var(--artwork-filter);
+ }
+@@ -296,7 +304,7 @@
+ }
+ 
+ .reader-banner-altar {
+-  width: min(92%, 420px);
++  width: min(100%, 520px);
+ }
+ 
+ @media (max-width: 640px) {
+@@ -317,7 +325,7 @@
+   }
+ 
+   .reader-banner-altar {
+-    width: min(94%, 390px);
++    width: min(100%, 500px);
+   }
+ 
+ }
+@@ -428,16 +436,18 @@
+ }
+ 
+ .navigation-button {
++  position: relative;
+   display: flex;
+   width: 100%;
+   min-width: 0;
+   min-height: 58px;
+-  gap: 12px;
+   align-items: center;
++  justify-content: center;
+   padding: 8px 16px;
+   border: 1px solid color-mix(in srgb, var(--line-strong) 82%, transparent);
+   border-radius: 12px;
+   color: var(--accent);
++  text-align: center;
+   background: color-mix(in srgb, var(--paper-light) 86%, white);
+   box-shadow:
+     0 2px 5px rgba(63, 42, 24, 0.1),
+@@ -449,13 +459,15 @@
+ }
+ 
+ .navigation-button-back {
+-  justify-content: flex-start;
+-  text-align: left;
++  padding-left: 42px;
+ }
+ 
+ .navigation-button-next {
+-  justify-content: flex-end;
+-  text-align: right;
++  padding-right: 42px;
++}
++
++.navigation-button .control-copy {
++  justify-items: center;
+ }
+ 
+ .control-copy {
+@@ -486,6 +498,20 @@
+   line-height: 0.75;
+ }
+ 
++.navigation-chevron {
++  position: absolute;
++  top: 50%;
++  transform: translateY(-52%);
++}
++
++.navigation-button-back .navigation-chevron {
++  left: 16px;
++}
++
++.navigation-button-next .navigation-chevron {
++  right: 16px;
++}
++
+ .navigation-button:disabled {
+   border-color: color-mix(in srgb, var(--line) 60%, transparent);
+   color: var(--disabled);
+@@ -611,10 +637,25 @@
+ 
+   .navigation-button {
+     min-height: 56px;
+-    gap: 8px;
+     padding-inline: 12px;
+   }
+ 
++  .navigation-button-back {
++    padding-left: 36px;
++  }
++
++  .navigation-button-next {
++    padding-right: 36px;
++  }
++
++  .navigation-button-back .navigation-chevron {
++    left: 12px;
++  }
++
++  .navigation-button-next .navigation-chevron {
++    right: 12px;
++  }
++
+   .completion-actions.is-complete {
+     grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.12fr) minmax(0, 0.82fr);
+     gap: 8px;

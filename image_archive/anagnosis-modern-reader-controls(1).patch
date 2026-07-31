@@ -1,0 +1,574 @@
+diff --git a/src/App.tsx b/src/App.tsx
+index 5b47c33..3966f97 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -37,9 +37,6 @@ import prayerHandsIcon from './assets/icons/icon-prayer.png'
+ import scrollIcon from './assets/icons/icon-scroll.png'
+ import sealMarkIcon from './assets/icons/seal-pending.png'
+ import waxSealIcon from './assets/icons/seal-complete.png'
+-import arrowLeftIcon from './assets/icons/arrow-left.png'
+-import arrowRightIcon from './assets/icons/arrow-right.png'
+-import homeIcon from './assets/icons/icon-home.png'
+ import './App.css'
+ import './pass1.css'
+ import './pass2.css'
+@@ -199,7 +196,7 @@ export default function App() {
+           : null
+   return <main className={`reader-shell reader-shell-${activeEntry.kind}`}><header className="reader-header"><button className="text-button" type="button" onClick={()=>setView('office')}><VoiceText term={UI.back} showGloss={options.showGloss}/></button><div className="reader-title"><p>{activeEntry.titleGreek}</p>{options.showGloss&&<span>{activeEntry.reference}</span>}</div>{scriptureReading?<p className="reader-progress">{currentVerseIndex+1} / {scriptureReading.verses.length}</p>:<span/>}</header>
+     {activeEntry.kind==='prayer'?<article className="prayer-reader" lang="grc"><p className="prayer-section">{activeEntry.sectionGreek}</p>{isWeekdayPrayer&&<nav className="weekday-tabs">{weekdayTabs.map((day,index)=><button className={['weekday-tab',index===selectedWeekday?'is-selected':'',index===today.getDay()?'is-today':''].filter(Boolean).join(' ')} type="button" key={day.short} onClick={()=>{setSelectedWeekday(index);setActiveEntry(weeklyPrayerCycle[index])}}>{day.short}</button>)}</nav>}<div className="prayer-meta">{activeEntry.weekdayGreek&&<p className="prayer-weekday">{activeEntry.weekdayGreek}</p>}<h1 className="prayer-name">{activeEntry.titleGreek}</h1><p className="prayer-reference">{activeEntry.reference}</p></div>{readerBannerKind&&<ReaderBanner kind={readerBannerKind}/>}<p className="prayer-text">{activeEntry.textGreek}</p>{activeEntry.traditionalEnding&&<aside className="traditional-ending"><p className="traditional-ending-label">{activeEntry.traditionalEnding.labelGreek}{options.showGloss&&<span lang="en">{activeEntry.traditionalEnding.labelEnglish}</span>}</p><p>{activeEntry.traditionalEnding.textGreek}</p></aside>}{options.showGloss&&<p className="prayer-gloss" lang="en">{activeEntry.textEnglish}{activeEntry.traditionalEnding&&<><br/>{activeEntry.traditionalEnding.textEnglish}</>}</p>}</article>:<article className={`scripture${isLongForm?' scripture-long-form':''}`} lang="grc"><p className="reading-section">{activeEntry.sectionGreek}</p><h1>{activeEntry.titleGreek}</h1>{options.showGloss&&<p className="reader-reference">{activeEntry.reference}</p>}{readerBannerKind&&<ReaderBanner kind={readerBannerKind}/>} {isLongForm?<div className="long-form-text">{chapterGroups.map(ch=><section className="long-form-chapter" key={ch.chapter}><span className="chapter-marker">{ch.chapter}</span><p>{ch.verses.map(verse=>{const index=activeEntry.verses.findIndex(v=>v.id===verse.id);return <span className={index===currentVerseIndex?'long-form-verse current-verse':'long-form-verse'} id={verse.id} key={verse.id} ref={el=>{verseElements.current[verse.id]=el}} onClick={()=>setCurrentVerseIndex(index)}><button className="verse-number" type="button" onClick={(e:MouseEvent<HTMLButtonElement>)=>{e.stopPropagation();moveToVerse(index)}}>{verse.number}</button><span>{verse.displayText}</span>{' '}</span>})}</p></section>)}</div>:<div className="verse-list">{activeEntry.verses.map((verse,index)=><p className={index===currentVerseIndex?'verse current-verse':'verse'} id={verse.id} key={verse.id} ref={el=>{verseElements.current[verse.id]=el}} onClick={()=>setCurrentVerseIndex(index)}><button className="verse-number" type="button" onClick={(e:MouseEvent<HTMLButtonElement>)=>{e.stopPropagation();moveToVerse(index)}}>{verse.number}</button><span>{verse.displayText}</span></p>)}</div>}</article>}
+-    {scriptureReading&&<nav className="reader-navigation" aria-label="Πλοήγησις στίχων"><button className="navigation-button navigation-button-back" type="button" disabled={currentVerseIndex===0} onClick={()=>moveToVerse(currentVerseIndex-1)}><img className="navigation-art" src={arrowLeftIcon} alt="" aria-hidden="true"/><span><strong>Ὀπίσω</strong>{options.showGloss&&<small>Previous verse</small>}</span></button><button className="navigation-button navigation-button-next" type="button" disabled={currentVerseIndex===scriptureReading.verses.length-1} onClick={()=>moveToVerse(currentVerseIndex+1)}><span><strong>Ἔμπροσθεν</strong>{options.showGloss&&<small>Next verse</small>}</span><img className="navigation-art" src={arrowRightIcon} alt="" aria-hidden="true"/></button></nav>}
+-    {!isMealPrayer&&<footer className="completion-actions">{!isMarked?<button className="completion-button" type="button" onClick={completeActiveEntry}><Seal complete={false}/><span>Σφράγισον</span>{options.showGloss&&<small>Mark complete</small>}</button>:<div className="completion-confirmed"><Seal complete/><span>Πεπλήρωται</span></div>}{isMarked&&activeStream&&<button className="proceed-button" type="button" onClick={proceed}><span>Πρόβαινε</span><span>›</span></button>}{isMarked&&<button className="home-button" type="button" onClick={()=>setView('office')}><img className="home-art" src={homeIcon} alt="" aria-hidden="true"/><span>Οἶκος</span></button>}</footer>}
++    {scriptureReading&&<nav className="reader-navigation" aria-label="Πλοήγησις στίχων"><button className="navigation-button navigation-button-back" type="button" disabled={currentVerseIndex===0} onClick={()=>moveToVerse(currentVerseIndex-1)}><span className="navigation-chevron" aria-hidden="true">‹</span><span className="control-copy"><strong>Ὀπίσω</strong>{options.showGloss&&<small>Previous verse</small>}</span></button><button className="navigation-button navigation-button-next" type="button" disabled={currentVerseIndex===scriptureReading.verses.length-1} onClick={()=>moveToVerse(currentVerseIndex+1)}><span className="control-copy"><strong>Ἔμπροσθεν</strong>{options.showGloss&&<small>Next verse</small>}</span><span className="navigation-chevron" aria-hidden="true">›</span></button></nav>}
++    {!isMealPrayer&&<footer className={`completion-actions${isMarked?' is-complete':''}`}>{!isMarked?<button className="completion-button" type="button" onClick={completeActiveEntry}><span className="control-copy"><strong>Σφράγισον</strong>{options.showGloss&&<small>Mark complete</small>}</span></button>:<div className="completion-confirmed" role="status"><span className="completion-check" aria-hidden="true">✓</span><span className="control-copy"><strong>Πεπλήρωται</strong>{options.showGloss&&<small>Completed</small>}</span></div>}{isMarked&&activeStream&&<button className="proceed-button" type="button" onClick={proceed}><span className="control-copy"><strong>Πρόβαινε</strong>{options.showGloss&&<small>Continue</small>}</span><span className="action-chevron" aria-hidden="true">›</span></button>}{isMarked&&<button className="home-button" type="button" onClick={()=>setView('office')}><span className="control-copy"><strong>Οἶκος</strong>{options.showGloss&&<small>Home</small>}</span></button>}</footer>}
+   </main>
+ }
+diff --git a/src/artwork.css b/src/artwork.css
+index 6d37633..8722aaf 100644
+--- a/src/artwork.css
++++ b/src/artwork.css
+@@ -94,9 +94,7 @@
+ }
+ 
+ .canonical-icon,
+-.manuscript-art,
+-.navigation-art,
+-.home-art {
++.manuscript-art {
+   mix-blend-mode: multiply;
+   filter: var(--artwork-filter);
+ }
+@@ -234,106 +232,6 @@
+   mix-blend-mode: multiply;
+ }
+ 
+-.reader-navigation {
+-  grid-template-columns: repeat(2, minmax(0, 190px));
+-  justify-content: center;
+-  gap: clamp(8px, 3vw, 20px);
+-  min-height: 76px;
+-  padding:
+-    7px
+-    max(10px, env(safe-area-inset-right))
+-    calc(7px + env(safe-area-inset-bottom))
+-    max(10px, env(safe-area-inset-left));
+-  border-top: 0;
+-  background:
+-    linear-gradient(
+-      to top,
+-      color-mix(in srgb, var(--paper) 96%, transparent),
+-      color-mix(in srgb, var(--paper) 82%, transparent)
+-    );
+-  box-shadow: none;
+-  backdrop-filter: none;
+-  -webkit-backdrop-filter: none;
+-}
+-
+-.navigation-button {
+-  position: relative;
+-  display: grid;
+-  min-width: 0;
+-  min-height: 62px;
+-  place-items: center;
+-  padding: 0;
+-  isolation: isolate;
+-}
+-
+-.navigation-button + .navigation-button {
+-  border-left: 0;
+-}
+-
+-.navigation-button > * {
+-  grid-area: 1 / 1;
+-}
+-
+-.navigation-art {
+-  z-index: 0;
+-  width: min(100%, 178px);
+-  height: 60px;
+-  object-fit: contain;
+-}
+-
+-.navigation-button > span:not(.navigation-arrow) {
+-  position: relative;
+-  z-index: 1;
+-  display: grid;
+-  gap: 0;
+-  pointer-events: none;
+-}
+-
+-.navigation-button strong {
+-  font-size: 0.94rem;
+-}
+-
+-.navigation-button small {
+-  font-size: 0.58rem;
+-}
+-
+-.navigation-button:disabled .navigation-art {
+-  opacity: 0.32;
+-}
+-
+-.navigation-button:disabled > span {
+-  opacity: 0.48;
+-}
+-
+-.home-button {
+-  flex: 0 0 78px;
+-  min-width: 70px;
+-  min-height: 74px;
+-  flex-direction: column;
+-  gap: 0;
+-  padding: 2px;
+-  border: 0;
+-  border-radius: 0;
+-  background: transparent;
+-  box-shadow: none;
+-}
+-
+-.home-button:hover,
+-.home-button:focus-visible {
+-  background: var(--hover);
+-}
+-
+-.home-art {
+-  width: 52px;
+-  height: 52px;
+-  object-fit: contain;
+-}
+-
+-.home-button > span {
+-  color: var(--accent);
+-  font-size: 0.78rem;
+-}
+-
+ @media (max-width: 640px) {
+   .office-reading {
+     grid-template-columns: 56px minmax(0, 1fr) 46px;
+@@ -362,19 +260,6 @@
+     height: 80px;
+   }
+ 
+-  .reader-navigation {
+-    grid-template-columns: repeat(2, minmax(0, 1fr));
+-    gap: 6px;
+-  }
+-
+-  .navigation-art {
+-    width: min(100%, 168px);
+-    height: 56px;
+-  }
+-
+-  .completion-actions .home-button {
+-    flex: 0 0 74px;
+-  }
+ }
+ /* Final light-theme control polish */
+ 
+@@ -414,91 +299,6 @@
+   width: min(92%, 420px);
+ }
+ 
+-/* Make the plaques the visible and clickable navigation surfaces. */
+-.reader-navigation {
+-  grid-template-columns: repeat(2, minmax(0, 230px));
+-  min-height: 90px;
+-}
+-
+-.navigation-button {
+-  min-height: 80px;
+-  padding: 0;
+-  border: 0;
+-  border-radius: 0;
+-  background: transparent;
+-  box-shadow: none;
+-}
+-
+-.navigation-button:hover:not(:disabled),
+-.navigation-button:focus-visible,
+-.navigation-button:active:not(:disabled) {
+-  background: transparent;
+-  box-shadow: none;
+-}
+-
+-.navigation-art {
+-  width: min(100%, 220px);
+-  height: 78px;
+-}
+-
+-.navigation-button strong {
+-  font-size: 1.02rem;
+-}
+-
+-.navigation-button small {
+-  font-size: 0.6rem;
+-}
+-
+-/* Replace modern pills with three manuscript-aligned positions. */
+-.completion-actions {
+-  display: grid;
+-  grid-template-columns: minmax(78px, 1fr) minmax(110px, 1fr) minmax(78px, 1fr);
+-  gap: 10px;
+-  align-items: center;
+-  width: min(100% - 2rem, 40rem);
+-}
+-
+-.completion-button,
+-.proceed-button,
+-.completion-confirmed {
+-  min-width: 0;
+-  min-height: 74px;
+-  padding: 5px;
+-  border: 0;
+-  border-radius: 0;
+-  background: transparent;
+-  box-shadow: none;
+-}
+-
+-.completion-button {
+-  grid-column: 2;
+-  justify-self: center;
+-}
+-
+-.completion-confirmed {
+-  grid-column: 1;
+-  justify-self: center;
+-}
+-
+-.proceed-button {
+-  grid-column: 2;
+-  justify-self: center;
+-  color: var(--accent);
+-}
+-
+-.home-button {
+-  grid-column: 3;
+-  justify-self: center;
+-}
+-
+-.completion-button:hover,
+-.completion-button:focus-visible,
+-.proceed-button:hover,
+-.proceed-button:focus-visible {
+-  background: var(--hover);
+-  box-shadow: none;
+-}
+-
+ @media (max-width: 640px) {
+   .office-reading {
+     grid-template-columns: 84px minmax(0, 1fr) 46px;
+@@ -520,26 +320,6 @@
+     width: min(94%, 390px);
+   }
+ 
+-  .reader-navigation {
+-    grid-template-columns: repeat(2, minmax(0, 1fr));
+-    min-height: 84px;
+-  }
+-
+-  .navigation-art {
+-    width: min(100%, 205px);
+-    height: 74px;
+-  }
+-
+-  .completion-actions {
+-    grid-template-columns: minmax(72px, 1fr) minmax(104px, 1fr) minmax(72px, 1fr);
+-    padding-inline: 0;
+-  }
+-
+-  .completion-button,
+-  .proceed-button,
+-  .completion-confirmed {
+-    min-height: 70px;
+-  }
+ }
+ /* Single-sheet Home and About cleanup */
+ 
+@@ -603,24 +383,6 @@
+   line-height: 1.45;
+ }
+ 
+-/* Give the two navigation plaques equal space and balanced margins. */
+-.reader-navigation {
+-  grid-template-columns: repeat(2, minmax(0, 210px));
+-  justify-content: center;
+-  gap: 10px;
+-  padding-right: max(14px, env(safe-area-inset-right));
+-  padding-left: max(14px, env(safe-area-inset-left));
+-}
+-
+-.navigation-button {
+-  width: 100%;
+-  justify-self: stretch;
+-}
+-
+-.navigation-art {
+-  width: min(100%, 200px);
+-}
+-
+ @media (max-width: 640px) {
+   .office-card {
+     min-height: 100dvh;
+@@ -644,23 +406,237 @@
+     min-height: 102px;
+   }
+ 
+-  .reader-navigation {
+-    grid-template-columns: repeat(2, minmax(0, 1fr));
+-    gap: 10px;
+-    padding-right: max(14px, env(safe-area-inset-right));
+-    padding-left: max(14px, env(safe-area-inset-left));
+-  }
+-
+-  .navigation-art {
+-    width: min(100%, 190px);
+-  }
+ }
+ 
+ /*
+- * Authoritative fixed-control dimensions. Keep this last so the reader's
+- * clearance and the actual control surface cannot drift apart.
++ * Reader controls are intentionally modern UI. Artwork belongs to the
++ * manuscript itself; navigation and progression stay legible and predictable.
+  */
+ .reader-navigation {
++  grid-template-columns: repeat(2, minmax(0, 210px));
++  justify-content: center;
++  gap: 10px;
+   min-height: var(--reader-navigation-height);
+-  background: var(--paper);
++  padding:
++    10px
++    max(14px, env(safe-area-inset-right))
++    calc(10px + env(safe-area-inset-bottom))
++    max(14px, env(safe-area-inset-left));
++  border-top: 1px solid color-mix(in srgb, var(--line-strong) 68%, transparent);
++  background: color-mix(in srgb, var(--paper) 97%, white);
++  box-shadow: 0 -8px 24px rgba(45, 27, 16, 0.1);
++}
++
++.navigation-button {
++  display: flex;
++  width: 100%;
++  min-width: 0;
++  min-height: 58px;
++  gap: 12px;
++  align-items: center;
++  padding: 8px 16px;
++  border: 1px solid color-mix(in srgb, var(--line-strong) 82%, transparent);
++  border-radius: 12px;
++  color: var(--accent);
++  background: color-mix(in srgb, var(--paper-light) 86%, white);
++  box-shadow:
++    0 2px 5px rgba(63, 42, 24, 0.1),
++    inset 0 1px rgba(255, 255, 255, 0.45);
++}
++
++.navigation-button + .navigation-button {
++  border-left: 1px solid color-mix(in srgb, var(--line-strong) 82%, transparent);
++}
++
++.navigation-button-back {
++  justify-content: flex-start;
++  text-align: left;
++}
++
++.navigation-button-next {
++  justify-content: flex-end;
++  text-align: right;
++}
++
++.control-copy {
++  display: grid;
++  min-width: 0;
++  gap: 2px;
++  line-height: 1.05;
++}
++
++.control-copy strong {
++  font-size: 0.95rem;
++  font-weight: 650;
++}
++
++.control-copy small {
++  color: var(--muted);
++  font-size: 0.59rem;
++  font-weight: 450;
++  line-height: 1.15;
++}
++
++.navigation-chevron,
++.action-chevron {
++  color: color-mix(in srgb, var(--accent) 86%, var(--ink));
++  font-family: Georgia, "Times New Roman", serif;
++  font-size: 1.75rem;
++  font-weight: 400;
++  line-height: 0.75;
++}
++
++.navigation-button:disabled {
++  border-color: color-mix(in srgb, var(--line) 60%, transparent);
++  color: var(--disabled);
++  background: color-mix(in srgb, var(--paper) 88%, white);
++  box-shadow: none;
++  opacity: 0.58;
++}
++
++.navigation-button:disabled .navigation-chevron,
++.navigation-button:disabled .control-copy small {
++  color: inherit;
++}
++
++.navigation-button:hover:not(:disabled),
++.navigation-button:focus-visible,
++.navigation-button:active:not(:disabled) {
++  background: color-mix(in srgb, var(--paper-light) 72%, white);
++  box-shadow:
++    0 3px 8px rgba(63, 42, 24, 0.14),
++    inset 0 1px rgba(255, 255, 255, 0.55);
++}
++
++.completion-actions {
++  display: grid;
++  grid-template-columns: minmax(0, 1fr);
++  gap: 10px;
++  align-items: stretch;
++  width: min(calc(100% - 2rem), 38rem);
++  margin-top: clamp(2.75rem, 7vh, 4.5rem);
++  padding-inline: 0;
++}
++
++.completion-actions.is-complete {
++  grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr) minmax(0, 1fr);
++}
++
++.completion-actions.is-complete:not(:has(.proceed-button)) {
++  grid-template-columns: repeat(2, minmax(0, 1fr));
++  max-width: 24rem;
++}
++
++.completion-button,
++.proceed-button,
++.home-button,
++.completion-confirmed {
++  display: flex;
++  min-width: 0;
++  min-height: 58px;
++  gap: 8px;
++  align-items: center;
++  justify-content: center;
++  padding: 9px 12px;
++  border: 1px solid color-mix(in srgb, var(--line-strong) 78%, transparent);
++  border-radius: 12px;
++  box-shadow:
++    0 2px 5px rgba(63, 42, 24, 0.09),
++    inset 0 1px rgba(255, 255, 255, 0.42);
++}
++
++.completion-button,
++.proceed-button,
++.home-button {
++  color: var(--accent);
++  background: color-mix(in srgb, var(--paper-light) 84%, white);
++  cursor: pointer;
++}
++
++.completion-button {
++  width: min(100%, 15rem);
++  justify-self: center;
++}
++
++.completion-confirmed {
++  color: color-mix(in srgb, var(--accent) 70%, var(--ink));
++  background: color-mix(in srgb, var(--paper) 86%, white);
++  box-shadow: inset 0 1px rgba(255, 255, 255, 0.35);
++}
++
++.completion-check {
++  display: grid;
++  width: 22px;
++  height: 22px;
++  flex: 0 0 22px;
++  place-items: center;
++  border: 1px solid color-mix(in srgb, var(--accent) 58%, var(--line));
++  border-radius: 50%;
++  font-size: 0.76rem;
++  line-height: 1;
++}
++
++.proceed-button {
++  color: var(--paper-light);
++  background: var(--accent);
++  box-shadow:
++    0 3px 8px rgba(75, 31, 27, 0.2),
++    inset 0 1px rgba(255, 255, 255, 0.18);
++}
++
++.proceed-button .control-copy small,
++.proceed-button .action-chevron {
++  color: color-mix(in srgb, var(--paper-light) 82%, transparent);
++}
++
++.completion-button:hover,
++.completion-button:focus-visible,
++.home-button:hover,
++.home-button:focus-visible {
++  background: color-mix(in srgb, var(--paper-light) 70%, white);
++}
++
++.proceed-button:hover,
++.proceed-button:focus-visible {
++  background: var(--accent-dark);
++}
++
++@media (max-width: 640px) {
++  .reader-navigation {
++    grid-template-columns: repeat(2, minmax(0, 1fr));
++    gap: 8px;
++    padding-right: max(10px, env(safe-area-inset-right));
++    padding-left: max(10px, env(safe-area-inset-left));
++  }
++
++  .navigation-button {
++    min-height: 56px;
++    gap: 8px;
++    padding-inline: 12px;
++  }
++
++  .completion-actions.is-complete {
++    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.12fr) minmax(0, 0.82fr);
++    gap: 8px;
++  }
++
++  .completion-button,
++  .proceed-button,
++  .home-button,
++  .completion-confirmed {
++    min-height: 56px;
++    padding-inline: 8px;
++  }
++
++  .completion-actions .control-copy strong {
++    font-size: clamp(0.76rem, 3.4vw, 0.9rem);
++  }
++
++  .completion-actions .control-copy small {
++    font-size: 0.54rem;
++  }
++
++  .completion-check {
++    display: none;
++  }
+ }
+diff --git a/src/index.css b/src/index.css
+index 34698cf..a7880fe 100644
+--- a/src/index.css
++++ b/src/index.css
+@@ -38,7 +38,7 @@
+   --parchment-folio-image: url('./assets/backgrounds/parchment-folio.png');
+   --parchment-center-image: url('./assets/backgrounds/parchment-center.png');
+   --manuscript-cap-height: clamp(72px, 10vw, 116px);
+-  --reader-navigation-height: calc(104px + env(safe-area-inset-bottom));
++  --reader-navigation-height: calc(82px + env(safe-area-inset-bottom));
+ }
+ 
+ 

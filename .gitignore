@@ -25,3 +25,5 @@ imports/scripture/first1k-lxx/
 *.njsproj
 *.sln
 *.sw?
+
+/image_archive/anagnosis - banners.psd
