@@ -540,6 +540,7 @@ export default function App() {
 
     const expectedAssignmentIndex = item.assignmentIndex
     setHistoryError(null)
+    if (item.streamId === 'psalm') setPsalmReading(null)
     setProgress((current) => {
       if (
         current.streams[item.streamId].assignmentIndex
