@@ -532,6 +532,36 @@ export default function App() {
       setHistoryLoadingId(null)
     }
   }
+  function completeHistoryItem(item: ReadingContentsItem) {
+    if (
+      item.streamId === 'psalm'
+      || !item.isCurrent
+      || item.isCompleted
+    ) {
+      setHistoryError(
+        'Only the current Progressive or Challenge reading can be completed.',
+      )
+      return
+    }
+
+    const expectedAssignmentIndex = item.assignmentIndex
+    setHistoryError(null)
+    setProgress((current) => {
+      if (
+        current.streams[item.streamId].assignmentIndex
+        !== expectedAssignmentIndex
+      ) {
+        return current
+      }
+
+      return markDailySection(
+        completeStreamAssignment(current, item.streamId, item.id),
+        officeDate.iso,
+        item.streamId,
+      )
+    })
+  }
+
   async function undoHistoryItem(item: ReadingContentsItem) {
     const stream = progress.streams[item.streamId]
 
@@ -868,7 +898,7 @@ export default function App() {
           <button className="options-close" type="button" onClick={()=>setReadHistoryOpen(false)}>×</button>
         </header>
         {contentsItems.length
-          ? <div className="read-history-list">{contentsItems.map((item)=><div className={['read-history-row',item.isCurrent?'is-current':'',item.isCompleted?'is-completed':''].filter(Boolean).join(' ')} key={`${item.streamId}:${item.assignmentIndex}:${item.id}`} ref={item.isCurrent?currentContentsItem:undefined}><button className="read-history-item" type="button" aria-current={item.isCurrent?'page':undefined} disabled={historyLoadingId!==null||historyUndoingId!==null} onClick={()=>void openContentsItem(item)}><span>{item.titleGreek}</span><small>{historyLoadingId===item.id?'Ἀνοίγεται…':item.reference}</small><em>{item.isCurrent?'Νῦν':item.isCompleted?'Ἀνεγνώσθη':'Οὔπω'}{options.showGloss&&<small>{item.isCurrent?'Current':item.isCompleted?'Read':'Unread'}</small>}</em></button>{canUndoLatestCompletion&&item.id===latestCompletedId&&!item.isCurrent&&<button className="read-history-undo" type="button" disabled={historyLoadingId!==null||historyUndoingId!==null} onClick={()=>void undoHistoryItem(item)}><span>{historyUndoingId===item.id?'Ἀνακαλεῖται…':'Ἀνακάλεσον'}</span>{options.showGloss&&<small>{historyUndoingId===item.id?'Restoring…':'Undo completion'}</small>}</button>}</div>)}</div>
+          ? <div className="read-history-list">{contentsItems.map((item)=><div className={['read-history-row',item.isCurrent?'is-current':'',item.isCompleted?'is-completed':''].filter(Boolean).join(' ')} key={`${item.streamId}:${item.assignmentIndex}:${item.id}`} ref={item.isCurrent?currentContentsItem:undefined}><button className="read-history-item" type="button" aria-current={item.isCurrent?'page':undefined} disabled={historyLoadingId!==null||historyUndoingId!==null} onClick={()=>void openContentsItem(item)}><span>{item.titleGreek}</span><small>{historyLoadingId===item.id?'Ἀνοίγεται…':item.reference}</small><em>{item.isCurrent?'Νῦν':item.isCompleted?'Ἀνεγνώσθη':'Οὔπω'}{options.showGloss&&<small>{item.isCurrent?'Current':item.isCompleted?'Read':'Unread'}</small>}</em></button>{item.isCurrent&&!item.isCompleted&&item.streamId!=='psalm'&&<button className="read-history-undo" type="button" disabled={historyLoadingId!==null||historyUndoingId!==null} onClick={()=>completeHistoryItem(item)}><span>Σφράγισον</span>{options.showGloss&&<small>Mark complete</small>}</button>}{canUndoLatestCompletion&&item.id===latestCompletedId&&!item.isCurrent&&<button className="read-history-undo" type="button" disabled={historyLoadingId!==null||historyUndoingId!==null} onClick={()=>void undoHistoryItem(item)}><span>{historyUndoingId===item.id?'Ἀνακαλεῖται…':'Ἀνακάλεσον'}</span>{options.showGloss&&<small>{historyUndoingId===item.id?'Restoring…':'Undo completion'}</small>}</button>}</div>)}</div>
           : <p className="read-history-empty"><span>Οὐκ εἰσὶν ἀναγνώσματα.</span>{options.showGloss&&<small>No readings are available.</small>}</p>}
         {historyError&&<p className="read-history-error" role="alert">{historyError}</p>}
       </section>
