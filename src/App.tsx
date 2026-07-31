@@ -580,7 +580,6 @@ export default function App() {
         setCurrentVerseIndex(0)
       }
       setReaderMenuOpen(false)
-      setReadHistoryOpen(false)
     } catch (error) {
       setHistoryError(
         error instanceof Error
