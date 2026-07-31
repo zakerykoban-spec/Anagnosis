@@ -532,29 +532,64 @@ export default function App() {
       setHistoryLoadingId(null)
     }
   }
-  function completeHistoryItem(item: ReadingContentsItem) {
+  async function completeHistoryItem(item: ReadingContentsItem) {
     if (!item.isCurrent || item.isCompleted) {
       setHistoryError('Only the current reading can be completed.')
       return
     }
 
     const expectedAssignmentIndex = item.assignmentIndex
-    setHistoryError(null)
-    if (item.streamId === 'psalm') setPsalmReading(null)
-    setProgress((current) => {
-      if (
-        current.streams[item.streamId].assignmentIndex
-        !== expectedAssignmentIndex
-      ) {
-        return current
-      }
+    if (
+      progress.streams[item.streamId].assignmentIndex
+      !== expectedAssignmentIndex
+    ) {
+      setHistoryError('The current reading has already changed.')
+      return
+    }
 
-      return markDailySection(
-        completeStreamAssignment(current, item.streamId, item.id),
-        officeDate.iso,
-        item.streamId,
+    setHistoryError(null)
+    setHistoryLoadingId(item.id)
+    try {
+      const nextAssignmentIndex = expectedAssignmentIndex + 1
+      const nextReading = item.streamId === 'psalm'
+        ? await loadPsalm((nextAssignmentIndex % PSALM_COUNT) + 1)
+        : planCandidates[item.streamId][nextAssignmentIndex] ?? null
+
+      if (item.streamId === 'psalm') setPsalmReading(null)
+      setProgress((current) => {
+        if (
+          current.streams[item.streamId].assignmentIndex
+          !== expectedAssignmentIndex
+        ) {
+          return current
+        }
+
+        return markDailySection(
+          completeStreamAssignment(current, item.streamId, item.id),
+          officeDate.iso,
+          item.streamId,
+        )
+      })
+
+      if (nextReading) {
+        if (item.streamId === 'psalm') setPsalmReading(nextReading)
+        pendingScroll.current = { kind: 'top' }
+        setFreeReadingEntry(null)
+        setReviewEntry(null)
+        setActiveEntry(nextReading)
+        setCurrentVerseIndex(0)
+      }
+      setReaderMenuOpen(false)
+      setReadHistoryOpen(false)
+    } catch (error) {
+      setHistoryError(
+        error instanceof Error
+          ? error.message
+          : 'Unable to open the next reading.',
       )
-    })
+    } finally {
+      setHistoryLoadingId(null)
+    }
   }
 
   async function undoHistoryItem(item: ReadingContentsItem) {
@@ -893,7 +928,7 @@ export default function App() {
           <button className="options-close" type="button" onClick={()=>setReadHistoryOpen(false)}>×</button>
         </header>
         {contentsItems.length
-          ? <div className="read-history-list">{contentsItems.map((item)=><div className={['read-history-row',item.isCurrent?'is-current':'',item.isCompleted?'is-completed':''].filter(Boolean).join(' ')} key={`${item.streamId}:${item.assignmentIndex}:${item.id}`} ref={item.isCurrent?currentContentsItem:undefined}><button className="read-history-item" type="button" aria-current={item.isCurrent?'page':undefined} disabled={historyLoadingId!==null||historyUndoingId!==null} onClick={()=>void openContentsItem(item)}><span>{item.titleGreek}</span><small>{historyLoadingId===item.id?'Ἀνοίγεται…':item.reference}</small><em>{item.isCurrent?'Νῦν':item.isCompleted?'Ἀνεγνώσθη':'Οὔπω'}{options.showGloss&&<small>{item.isCurrent?'Current':item.isCompleted?'Read':'Unread'}</small>}</em></button>{item.isCurrent&&!item.isCompleted&&<button className="read-history-undo" type="button" disabled={historyLoadingId!==null||historyUndoingId!==null} onClick={()=>completeHistoryItem(item)}><span>Σφράγισον</span>{options.showGloss&&<small>Mark complete</small>}</button>}{canUndoLatestCompletion&&item.id===latestCompletedId&&!item.isCurrent&&<button className="read-history-undo" type="button" disabled={historyLoadingId!==null||historyUndoingId!==null} onClick={()=>void undoHistoryItem(item)}><span>{historyUndoingId===item.id?'Ἀνακαλεῖται…':'Ἀνακάλεσον'}</span>{options.showGloss&&<small>{historyUndoingId===item.id?'Restoring…':'Undo completion'}</small>}</button>}</div>)}</div>
+          ? <div className="read-history-list">{contentsItems.map((item)=><div className={['read-history-row',item.isCurrent?'is-current':'',item.isCompleted?'is-completed':''].filter(Boolean).join(' ')} key={`${item.streamId}:${item.assignmentIndex}:${item.id}`} ref={item.isCurrent?currentContentsItem:undefined}><button className="read-history-item" type="button" aria-current={item.isCurrent?'page':undefined} disabled={historyLoadingId!==null||historyUndoingId!==null} onClick={()=>void openContentsItem(item)}><span>{item.titleGreek}</span><small>{historyLoadingId===item.id?'Ἀνοίγεται…':item.reference}</small><em>{item.isCurrent?'Νῦν':item.isCompleted?'Ἀνεγνώσθη':'Οὔπω'}{options.showGloss&&<small>{item.isCurrent?'Current':item.isCompleted?'Read':'Unread'}</small>}</em></button>{item.isCurrent&&!item.isCompleted&&<button className="read-history-undo" type="button" disabled={historyLoadingId!==null||historyUndoingId!==null} onClick={()=>void completeHistoryItem(item)}><span>Σφράγισον</span>{options.showGloss&&<small>Mark complete</small>}</button>}{canUndoLatestCompletion&&item.id===latestCompletedId&&!item.isCurrent&&<button className="read-history-undo" type="button" disabled={historyLoadingId!==null||historyUndoingId!==null} onClick={()=>void undoHistoryItem(item)}><span>{historyUndoingId===item.id?'Ἀνακαλεῖται…':'Ἀνακάλεσον'}</span>{options.showGloss&&<small>{historyUndoingId===item.id?'Restoring…':'Undo completion'}</small>}</button>}</div>)}</div>
           : <p className="read-history-empty"><span>Οὐκ εἰσὶν ἀναγνώσματα.</span>{options.showGloss&&<small>No readings are available.</small>}</p>}
         {historyError&&<p className="read-history-error" role="alert">{historyError}</p>}
       </section>
