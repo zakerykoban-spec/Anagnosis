@@ -87,8 +87,15 @@ type LoadedReadingPlan = {
   loading: boolean
   error: string | null
 }
+type FreeReadingLocation = {
+  corpus: ScriptureCorpusId
+  bookId: string
+  chapter: ScriptureReferencePart
+  verseId: string
+}
 
 const OPTIONS_KEY = 'anagnosis.options.v1'
+const FREE_READING_LOCATION_KEY = 'anagnosis.free-reading-location.v1'
 const PSALM_COUNT = 150
 const GREEK_MONTHS = ['Ἰανουαρίου','Φεβρουαρίου','Μαρτίου','Ἀπριλίου','Μαΐου','Ἰουνίου','Ἰουλίου','Αὐγούστου','Σεπτεμβρίου','Ὀκτωβρίου','Νοεμβρίου','Δεκεμβρίου'] as const
 const GREEK_WEEKDAYS = ['Κυριακή','Δευτέρα','Τρίτη','Τετάρτη','Πέμπτη','Παρασκευή','Σάββατον'] as const
@@ -137,6 +144,25 @@ function loadOptions(): ReaderOptions {
       showPsalm: parsed.showPsalm ?? DEFAULT_OPTIONS.showPsalm,
     }
   } catch { return DEFAULT_OPTIONS }
+}
+
+function loadFreeReadingLocation(): FreeReadingLocation | null {
+  try {
+    const stored = localStorage.getItem(FREE_READING_LOCATION_KEY)
+    if (!stored) return null
+    const parsed = JSON.parse(stored) as Partial<FreeReadingLocation>
+    if (
+      (parsed.corpus !== 'sblgnt' && parsed.corpus !== 'lxx')
+      || typeof parsed.bookId !== 'string'
+      || (typeof parsed.chapter !== 'string' && typeof parsed.chapter !== 'number')
+      || typeof parsed.verseId !== 'string'
+    ) return null
+    return parsed as FreeReadingLocation
+  } catch { return null }
+}
+
+function saveFreeReadingLocation(location: FreeReadingLocation) {
+  localStorage.setItem(FREE_READING_LOCATION_KEY, JSON.stringify(location))
 }
 
 function streamForEntry(entry: OfficeEntry | null): ReadingStreamId | null {
@@ -288,6 +314,8 @@ export default function App() {
   const [reviewVerseIndex,setReviewVerseIndex] = useState(0)
   const [freeReadingEntry,setFreeReadingEntry] = useState<ScriptureReading|null>(null)
   const [freeReadingVerseIndex,setFreeReadingVerseIndex] = useState(0)
+  const [freeReadingLocation,setFreeReadingLocation] =
+    useState<FreeReadingLocation|null>(()=>loadFreeReadingLocation())
   const [scriptureBrowserOpen,setScriptureBrowserOpen] = useState(false)
   const [scriptureBrowserCorpus,setScriptureBrowserCorpus] =
     useState<ScriptureCorpusId>('sblgnt')
@@ -474,7 +502,19 @@ export default function App() {
       return
     }
     pendingScroll.current={kind:'verse',verseId:nextVerse.id}
-    if(freeReadingEntry)setFreeReadingVerseIndex(nextIndex)
+    if(freeReadingEntry){
+      setFreeReadingVerseIndex(nextIndex)
+      if(displayedBookId){
+        const location: FreeReadingLocation = {
+          corpus: displayedCorpus,
+          bookId: displayedBookId,
+          chapter: nextVerse.chapter,
+          verseId: nextVerse.id,
+        }
+        setFreeReadingLocation(location)
+        saveFreeReadingLocation(location)
+      }
+    }
     else if(reviewEntry)setReviewVerseIndex(nextIndex)
     else {
       setCurrentVerseIndex(nextIndex)
@@ -658,6 +698,45 @@ export default function App() {
     setReaderMenuOpen(false)
     setScriptureBrowserOpen(true)
   }
+  async function openFreeReading() {
+    if (!freeReadingLocation) {
+      openFreeReadingBrowser()
+      return
+    }
+
+    const book = bookForCorpus(
+      freeReadingLocation.corpus,
+      freeReadingLocation.bookId,
+    )
+    if (!book) {
+      openFreeReadingBrowser()
+      return
+    }
+
+    try {
+      const reading = freeReadingLocation.corpus === 'lxx'
+        ? await loadLxxChapter(book.id, freeReadingLocation.chapter)
+        : await loadSblgntChapter(book.id, freeReadingLocation.chapter)
+      const verseIndex = Math.max(
+        reading.verses.findIndex(verse=>verse.id===freeReadingLocation.verseId),
+        0,
+      )
+      const verseId = reading.verses[verseIndex]?.id
+      pendingScroll.current = verseId
+        ? { kind: 'verse', verseId }
+        : { kind: 'top' }
+      setFreeReadingEntry(reading)
+      setFreeReadingVerseIndex(verseIndex)
+      setReviewEntry(null)
+      setScriptureBrowserOpen(false)
+      setReaderMenuOpen(false)
+      setReadHistoryOpen(false)
+      setView('reader')
+    } catch {
+      openFreeReadingBrowser()
+      setScriptureBrowserError('Unable to restore the saved reading.')
+    }
+  }
   function openFreeReadingBrowser() {
     setPlanSelectorStream(null)
     setScriptureBrowserBookId(null)
@@ -734,6 +813,17 @@ export default function App() {
       pendingScroll.current = { kind: 'top' }
       setFreeReadingEntry(reading)
       setFreeReadingVerseIndex(0)
+      const firstVerse = reading.verses[0]
+      if (firstVerse) {
+        const location: FreeReadingLocation = {
+          corpus: scriptureBrowserCorpus,
+          bookId: book.id,
+          chapter: chapterNumber,
+          verseId: firstVerse.id,
+        }
+        setFreeReadingLocation(location)
+        saveFreeReadingLocation(location)
+      }
       setReviewEntry(null)
       setScriptureBrowserOpen(false)
       setReaderMenuOpen(false)
@@ -747,6 +837,38 @@ export default function App() {
       )
     } finally {
       setScriptureBrowserLoadingKey(null)
+    }
+  }
+  async function advanceFreeReadingChapter() {
+    if (!freeReadingEntry || !displayedBook || !displayedBookId) return
+    const chapters = chapterNumbers(displayedBook)
+    const currentChapter = displayedVerse?.chapter
+    const chapterIndex = chapters.findIndex(
+      chapter=>String(chapter)===String(currentChapter),
+    )
+    const nextChapter = chapters[chapterIndex + 1]
+    if (nextChapter === undefined) return
+
+    try {
+      const reading = displayedCorpus === 'lxx'
+        ? await loadLxxChapter(displayedBookId, nextChapter)
+        : await loadSblgntChapter(displayedBookId, nextChapter)
+      const firstVerse = reading.verses[0]
+      pendingScroll.current = { kind: 'top' }
+      setFreeReadingEntry(reading)
+      setFreeReadingVerseIndex(0)
+      if (firstVerse) {
+        const location: FreeReadingLocation = {
+          corpus: displayedCorpus,
+          bookId: displayedBookId,
+          chapter: nextChapter,
+          verseId: firstVerse.id,
+        }
+        setFreeReadingLocation(location)
+        saveFreeReadingLocation(location)
+      }
+    } catch {
+      setScriptureBrowserError('Unable to open the next chapter.')
     }
   }
   function leaveReader(){
@@ -835,7 +957,7 @@ export default function App() {
       {options.showPsalm&&(psalmReading?<OfficeReadingButton entry={psalmReading} icon="lyre" showGloss={options.showGloss} complete={markedToday('psalm')} onOpen={openEntry}/>:<div className="office-reading office-reading-status">{psalmError??`Ψαλμὸς ${psalmNumber}…`}</div>)}
       <OfficeReadingButton entry={calendarOffice.closingPrayer} icon="lampstand" showGloss={options.showGloss} complete={markedToday(calendarOffice.closingPrayer.id)} onOpen={openEntry}/>
     </div>
-    <HomeReadingDock showGloss={options.showGloss} onOpenFreeReading={openFreeReadingBrowser} onOpenPrayer={openEntry}/>
+    <HomeReadingDock showGloss={options.showGloss} onOpenFreeReading={()=>void openFreeReading()} onOpenPrayer={openEntry}/>
     {menuOpen&&<div className="options-backdrop" role="presentation" onPointerDown={e=>{if(e.target===e.currentTarget)setMenuOpen(false)}}><section className="options-menu" role="dialog" aria-modal="true"><header className="options-menu-header"><h2><VoiceText term={UI.options} showGloss={options.showGloss}/></h2><button className="options-close" type="button" onClick={()=>setMenuOpen(false)}>×</button></header><div className="options-list">{([{key:'showGloss',term:UI.englishAids},{key:'showProgressive',term:UI.progressiveReading},{key:'showChallenge',term:UI.challengeReading},{key:'showPsalm',term:UI.psalm}] as const).map(({key,term})=><label className="option-switch" key={key}><VoiceText term={term} showGloss={options.showGloss}/><input type="checkbox" checked={options[key]} onChange={(e:ChangeEvent<HTMLInputElement>)=>setOptions(c=>({...c,[key]:e.target.checked}))}/><span className="switch-track" aria-hidden="true"/></label>)}<div className="plan-options" aria-label="Reading plan books"><button className="plan-option" type="button" onClick={()=>openPlanSelector('progressive')}><span><strong>Πρόοδος</strong>{options.showGloss&&<small>Progressive book</small>}</span><span><em>{progressiveBook?.titleGreek ?? 'Γραφαί'}</em><small>{progressiveBook?.code}</small></span><span aria-hidden="true">›</span></button><button className="plan-option" type="button" onClick={()=>openPlanSelector('challenge')}><span><strong>Ἄσκησις</strong>{options.showGloss&&<small>Challenge book</small>}</span><span><em>{challengeBook?.titleGreek ?? 'Γραφαί'}</em><small>{challengeBook?.code}</small></span><span aria-hidden="true">›</span></button></div></div><section className="about-panel" aria-labelledby="about-title"><h3 id="about-title"><span>Περί</span>{options.showGloss&&<small>About</small>}</h3><div className="about-sources"><p>SBLGNT 1.2 · CC BY 4.0</p><p>LXX Swete / First1KGreek · CC BY-SA 4.0</p><p>Διδαχὴ 9–10 and traditional Greek prayers · public domain</p></div></section></section></div>}
     {scriptureBrowserDialog}
   </section></main>
@@ -860,7 +982,7 @@ export default function App() {
   return <main className={`reader-shell reader-shell-${displayedEntry.kind}`}>
     <header className="reader-header">
       <button className="text-button" type="button" onClick={leaveReader}>
-        <VoiceText term={UI.back} showGloss={options.showGloss}/>
+        <VoiceText term={{greek:'Οἶκος',english:'Home'}} showGloss={options.showGloss}/>
       </button>
       <div className="reader-title">
         <p>{displayedEntry.titleGreek}</p>
@@ -898,7 +1020,7 @@ export default function App() {
         </article>}
     {scriptureReading&&<nav className="reader-navigation" aria-label="Πλοήγησις στίχων">
       <button className="navigation-button navigation-button-back" type="button" disabled={displayedVerseIndex===0} onClick={()=>moveToVerse(displayedVerseIndex-1)}><span className="navigation-chevron" aria-hidden="true">‹</span><span className="control-copy"><strong>Ὀπίσω</strong>{options.showGloss&&<small>Previous verse</small>}</span></button>
-      <button className="navigation-button navigation-button-next" type="button" disabled={displayedVerseIndex===scriptureReading.verses.length-1} onClick={()=>moveToVerse(displayedVerseIndex+1)}><span className="control-copy"><strong>Ἔμπροσθεν</strong>{options.showGloss&&<small>Next verse</small>}</span><span className="navigation-chevron" aria-hidden="true">›</span></button>
+      <button className="navigation-button navigation-button-next" type="button" disabled={displayedVerseIndex===scriptureReading.verses.length-1&&(!freeReadingEntry||!displayedBook||chapterNumbers(displayedBook).findIndex(chapter=>String(chapter)===String(displayedVerse?.chapter))===chapterNumbers(displayedBook).length-1)} onClick={()=>{if(freeReadingEntry&&displayedVerseIndex===scriptureReading.verses.length-1)void advanceFreeReadingChapter();else moveToVerse(displayedVerseIndex+1)}}><span className="control-copy"><strong>{freeReadingEntry&&displayedVerseIndex===scriptureReading.verses.length-1?'Πρόβαινε':'Ἔμπροσθεν'}</strong>{options.showGloss&&<small>{freeReadingEntry&&displayedVerseIndex===scriptureReading.verses.length-1?'Next chapter':'Next verse'}</small>}</span><span className="navigation-chevron" aria-hidden="true">›</span></button>
     </nav>}
     {!reviewEntry&&!freeReadingEntry&&!isMealPrayer&&<footer className={`completion-actions${isMarked?' is-complete':''}${activePlanComplete?' is-plan-complete':''}`}>{!isMarked?<button className="completion-button" type="button" onClick={completeActiveEntry}><span className="control-copy"><strong>Σφράγισον</strong>{options.showGloss&&<small>Mark complete</small>}</span></button>:<div className="completion-confirmed" role="status"><span className="completion-check" aria-hidden="true">✓</span><span className="control-copy"><strong>Πεπλήρωται</strong>{options.showGloss&&<small>Completed</small>}</span></div>}{isMarked&&activeStream&&activeStream!=='psalm'&&activePlanComplete?<div className="plan-complete-actions"><button className="proceed-button" type="button" onClick={()=>openPlanSelector(activeStream)}><span className="control-copy"><strong>Ἑλοῦ βιβλίου</strong>{options.showGloss&&<small>Choose next book</small>}</span><span className="action-chevron" aria-hidden="true">›</span></button><button className="home-button" type="button" onClick={()=>restartPlan(activeStream)}><span className="control-copy"><strong>Ἀνάγνωθι πάλιν</strong>{options.showGloss&&<small>Read again</small>}</span></button></div>:isMarked&&activeStream&&<button className="proceed-button" type="button" onClick={proceed}><span className="control-copy"><strong>Πρόβαινε</strong>{options.showGloss&&<small>Continue</small>}</span><span className="action-chevron" aria-hidden="true">›</span></button>}{isMarked&&<button className="home-button" type="button" onClick={()=>{pendingScroll.current={kind:'top'};setView('office')}}><span className="control-copy"><strong>Οἶκος</strong>{options.showGloss&&<small>Home</small>}</span></button>}</footer>}
     {readerMenuOpen&&<div className="options-backdrop reader-overlay" role="presentation" onPointerDown={e=>{if(e.target===e.currentTarget)setReaderMenuOpen(false)}}>
