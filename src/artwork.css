@@ -716,3 +716,119 @@
     display: none;
   }
 }
+
+
+/* Free Reading and Table Prayers share the optional home dock. */
+.home-reading-dock {
+  position: relative;
+  z-index: 4;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 3fr);
+  align-items: stretch;
+  margin-top: 9px;
+  padding: 14px 0 10px;
+  border-top: 1px solid var(--line-strong);
+}
+
+.home-reading-dock .meal-prayers {
+  min-width: 0;
+  margin: 0;
+  padding: 0 0 0 10px;
+  border: 0;
+  border-left: 1px solid var(--line);
+}
+
+.free-reading-panel {
+  display: grid;
+  min-width: 0;
+  min-height: 126px;
+  grid-template-rows: 1fr auto;
+  gap: 2px;
+  place-items: center;
+  padding: 5px 7px 3px 0;
+  border: 0;
+  border-radius: 0;
+  color: var(--ink);
+  text-align: center;
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.free-reading-panel:hover,
+.free-reading-panel:focus-visible {
+  background: var(--hover);
+}
+
+.free-reading-icon {
+  display: block;
+  width: min(100%, 92px);
+  height: 92px;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+  filter: var(--artwork-filter);
+}
+
+.free-reading-panel-label {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  justify-items: center;
+  line-height: 1.1;
+}
+
+.free-reading-panel-label > span {
+  font-family:
+    "Iowan Old Style",
+    "Palatino Linotype",
+    "Book Antiqua",
+    "Times New Roman",
+    serif;
+  font-size: 0.82rem;
+}
+
+.free-reading-panel-label small {
+  color: var(--muted);
+  font-size: 0.56rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .home-reading-dock {
+    padding-top: 12px;
+    padding-bottom: 8px;
+  }
+
+  .home-reading-dock .meal-prayers {
+    padding-left: 6px;
+  }
+
+  .free-reading-panel {
+    min-height: 116px;
+    padding-right: 4px;
+  }
+
+  .free-reading-icon {
+    width: min(100%, 74px);
+    height: 80px;
+  }
+
+  .free-reading-panel-label > span {
+    font-size: clamp(0.68rem, 2.9vw, 0.78rem);
+  }
+
+  .free-reading-panel-label small {
+    font-size: clamp(0.48rem, 2.2vw, 0.54rem);
+  }
+
+  .home-reading-dock .meal-prayer-button {
+    min-height: 102px;
+  }
+
+  .home-reading-dock .meal-icon,
+  .home-reading-dock .meal-icon img {
+    width: min(20vw, 80px);
+    height: min(20vw, 80px);
+  }
+}
