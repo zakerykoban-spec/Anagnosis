@@ -1,0 +1,252 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "name": "STEP Bible TAGNT, TEGMC, and TBESG",
+    "stepCommit": "b86d26cdb1f51729e73b5b4eb7f7ccadc5dfba39",
+    "license": "CC BY 4.0",
+    "matchingStrategyVersion": 1,
+    "rareLemmaThreshold": 30,
+    "files": {
+      "tagntGospels": {
+        "path": "Translators Amalgamated OT+NT/TAGNT Mat-Jhn - Translators Amalgamated Greek NT - STEPBible.org CC-BY.txt",
+        "sha256": "ab8eaaeb68e17a1dcfa34e1e9350358f22f03bc2a97244d848750ad81044bc8e"
+      },
+      "tagntActsRevelation": {
+        "path": "Translators Amalgamated OT+NT/TAGNT Act-Rev - Translators Amalgamated Greek NT - STEPBible.org CC-BY.txt",
+        "sha256": "524e32375361e6d3fa2f7ef00b87605fdc4317a762f395651a05fdc31ad031b7"
+      },
+      "tegmc": {
+        "path": "Morphology codes/TEGMC - Translators Expansion of Greek Morphhology Codes - STEPBible.org CC BY.txt",
+        "sha256": "5f0416f7617019a6082285214903bde569a980d5fd3b88b8d7020d944e94de82"
+      },
+      "tbesg": {
+        "path": "Lexicons/TBESG - Translators Brief lexicon of Extended Strongs for Greek - STEPBible.org CC BY.txt",
+        "sha256": "312f723d7b8ef263bbdfb0451c9b8057125804dfff390b6f8544cff2a84b57f4"
+      }
+    }
+  },
+  "totals": {
+    "displayTokens": 137741,
+    "alignedTokens": 136637,
+    "rareTokens": 20031,
+    "unresolvedTokens": 1104
+  },
+  "books": [
+    {
+      "id": "matthew",
+      "filename": "matthew.json",
+      "displayTokens": 18329,
+      "alignedTokens": 18272,
+      "rareTokens": 2466,
+      "unresolvedTokens": 57
+    },
+    {
+      "id": "mark",
+      "filename": "mark.json",
+      "displayTokens": 11286,
+      "alignedTokens": 11072,
+      "rareTokens": 1448,
+      "unresolvedTokens": 214
+    },
+    {
+      "id": "luke",
+      "filename": "luke.json",
+      "displayTokens": 19446,
+      "alignedTokens": 19360,
+      "rareTokens": 2732,
+      "unresolvedTokens": 86
+    },
+    {
+      "id": "john",
+      "filename": "john.json",
+      "displayTokens": 15625,
+      "alignedTokens": 15389,
+      "rareTokens": 1143,
+      "unresolvedTokens": 236
+    },
+    {
+      "id": "acts",
+      "filename": "acts.json",
+      "displayTokens": 18412,
+      "alignedTokens": 18309,
+      "rareTokens": 2811,
+      "unresolvedTokens": 103
+    },
+    {
+      "id": "romans",
+      "filename": "romans.json",
+      "displayTokens": 7055,
+      "alignedTokens": 7007,
+      "rareTokens": 1061,
+      "unresolvedTokens": 48
+    },
+    {
+      "id": "1-corinthians",
+      "filename": "1-corinthians.json",
+      "displayTokens": 6812,
+      "alignedTokens": 6761,
+      "rareTokens": 1098,
+      "unresolvedTokens": 51
+    },
+    {
+      "id": "2-corinthians",
+      "filename": "2-corinthians.json",
+      "displayTokens": 4473,
+      "alignedTokens": 4410,
+      "rareTokens": 813,
+      "unresolvedTokens": 63
+    },
+    {
+      "id": "galatians",
+      "filename": "galatians.json",
+      "displayTokens": 2226,
+      "alignedTokens": 2217,
+      "rareTokens": 342,
+      "unresolvedTokens": 9
+    },
+    {
+      "id": "ephesians",
+      "filename": "ephesians.json",
+      "displayTokens": 2416,
+      "alignedTokens": 2392,
+      "rareTokens": 401,
+      "unresolvedTokens": 24
+    },
+    {
+      "id": "philippians",
+      "filename": "philippians.json",
+      "displayTokens": 1626,
+      "alignedTokens": 1587,
+      "rareTokens": 287,
+      "unresolvedTokens": 39
+    },
+    {
+      "id": "colossians",
+      "filename": "colossians.json",
+      "displayTokens": 1580,
+      "alignedTokens": 1571,
+      "rareTokens": 255,
+      "unresolvedTokens": 9
+    },
+    {
+      "id": "1-thessalonians",
+      "filename": "1-thessalonians.json",
+      "displayTokens": 1473,
+      "alignedTokens": 1453,
+      "rareTokens": 202,
+      "unresolvedTokens": 20
+    },
+    {
+      "id": "2-thessalonians",
+      "filename": "2-thessalonians.json",
+      "displayTokens": 820,
+      "alignedTokens": 816,
+      "rareTokens": 109,
+      "unresolvedTokens": 4
+    },
+    {
+      "id": "1-timothy",
+      "filename": "1-timothy.json",
+      "displayTokens": 1591,
+      "alignedTokens": 1583,
+      "rareTokens": 437,
+      "unresolvedTokens": 8
+    },
+    {
+      "id": "2-timothy",
+      "filename": "2-timothy.json",
+      "displayTokens": 1235,
+      "alignedTokens": 1228,
+      "rareTokens": 273,
+      "unresolvedTokens": 7
+    },
+    {
+      "id": "titus",
+      "filename": "titus.json",
+      "displayTokens": 659,
+      "alignedTokens": 658,
+      "rareTokens": 190,
+      "unresolvedTokens": 1
+    },
+    {
+      "id": "philemon",
+      "filename": "philemon.json",
+      "displayTokens": 334,
+      "alignedTokens": 333,
+      "rareTokens": 48,
+      "unresolvedTokens": 1
+    },
+    {
+      "id": "hebrews",
+      "filename": "hebrews.json",
+      "displayTokens": 4935,
+      "alignedTokens": 4913,
+      "rareTokens": 1081,
+      "unresolvedTokens": 22
+    },
+    {
+      "id": "james",
+      "filename": "james.json",
+      "displayTokens": 1739,
+      "alignedTokens": 1732,
+      "rareTokens": 388,
+      "unresolvedTokens": 7
+    },
+    {
+      "id": "1-peter",
+      "filename": "1-peter.json",
+      "displayTokens": 1678,
+      "alignedTokens": 1670,
+      "rareTokens": 384,
+      "unresolvedTokens": 8
+    },
+    {
+      "id": "2-peter",
+      "filename": "2-peter.json",
+      "displayTokens": 1098,
+      "alignedTokens": 1094,
+      "rareTokens": 292,
+      "unresolvedTokens": 4
+    },
+    {
+      "id": "1-john",
+      "filename": "1-john.json",
+      "displayTokens": 2137,
+      "alignedTokens": 2122,
+      "rareTokens": 119,
+      "unresolvedTokens": 15
+    },
+    {
+      "id": "2-john",
+      "filename": "2-john.json",
+      "displayTokens": 245,
+      "alignedTokens": 242,
+      "rareTokens": 21,
+      "unresolvedTokens": 3
+    },
+    {
+      "id": "3-john",
+      "filename": "3-john.json",
+      "displayTokens": 219,
+      "alignedTokens": 208,
+      "rareTokens": 24,
+      "unresolvedTokens": 11
+    },
+    {
+      "id": "jude",
+      "filename": "jude.json",
+      "displayTokens": 459,
+      "alignedTokens": 452,
+      "rareTokens": 102,
+      "unresolvedTokens": 7
+    },
+    {
+      "id": "revelation",
+      "filename": "revelation.json",
+      "displayTokens": 9833,
+      "alignedTokens": 9786,
+      "rareTokens": 1504,
+      "unresolvedTokens": 47
+    }
+  ]
+}
