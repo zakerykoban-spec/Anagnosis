@@ -872,32 +872,14 @@ export default function App() {
     }
   }
   function leaveReader(){
-    if(freeReadingEntry){
-      const activeVerse=activeEntry?.kind==='scripture'
-        ? activeEntry.verses[currentVerseIndex]
-        : null
-      pendingScroll.current=remembersVersePosition(activeStream)&&activeVerse
-        ? {kind:'verse',verseId:activeVerse.id}
-        : {kind:'top'}
-      setFreeReadingEntry(null)
-      setScriptureBrowserOpen(false)
-      if(!activeEntry)setView('office')
-      return
-    }
-    if(reviewEntry){
-      const activeVerse=activeEntry?.kind==='scripture'
-        ? activeEntry.verses[currentVerseIndex]
-        : null
-      pendingScroll.current=remembersVersePosition(activeStream)&&activeVerse
-        ? {kind:'verse',verseId:activeVerse.id}
-        : {kind:'top'}
-      setReviewEntry(null)
-      setReadHistoryOpen(true)
-      return
-    }
     pendingScroll.current={kind:'top'}
+    setFreeReadingEntry(null)
+    setReviewEntry(null)
+    setActiveEntry(null)
     setReaderMenuOpen(false)
     setReadHistoryOpen(false)
+    setScriptureBrowserOpen(false)
+    setPlanSelectorStream(null)
     setView('office')
   }
   function completeActiveEntry(){
