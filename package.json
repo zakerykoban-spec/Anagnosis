@@ -12,7 +12,9 @@
     "scripture:import": "node scripts/import-sblgnt.mjs && node scripts/import-lxx.mjs",
     "scripture:import:lxx": "node scripts/import-lxx.mjs",
     "scripture:validate": "node scripts/validate-sblgnt.mjs && node scripts/validate-lxx.mjs",
-    "scripture:validate:lxx": "node scripts/validate-lxx.mjs"
+    "scripture:validate:lxx": "node scripts/validate-lxx.mjs",
+    "scripture:import:step": "node scripts/import-step-tagnt.mjs",
+    "scripture:validate:step": "node scripts/validate-step-tagnt.mjs"
   },
   "dependencies": {
     "react": "^19.2.7",

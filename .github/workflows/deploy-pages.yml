@@ -44,6 +44,9 @@ jobs:
       - name: Validate Scripture data
         run: npm run scripture:validate
 
+      - name: Validate STEP lexical data
+        run: npm run scripture:validate:step
+
       - name: Build
         run: npm run build
 

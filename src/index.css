@@ -51,7 +51,9 @@ html {
 }
 
 html:has(.reader-shell),
-body:has(.reader-shell) {
+body:has(.reader-shell),
+html:has(.office-shell),
+body:has(.office-shell) {
   overscroll-behavior-y: none;
 }
 
