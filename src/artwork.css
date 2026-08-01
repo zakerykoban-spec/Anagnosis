@@ -742,10 +742,10 @@
   display: grid;
   min-width: 0;
   min-height: 126px;
-  grid-template-rows: 1fr auto;
-  gap: 2px;
-  place-items: center;
-  padding: 5px 7px 3px 0;
+  grid-template-rows: auto 1fr;
+  gap: 10px;
+  place-items: start center;
+  padding: 0 7px 3px 0;
   border: 0;
   border-radius: 0;
   color: var(--ink);
@@ -770,27 +770,29 @@
   filter: var(--artwork-filter);
 }
 
-.free-reading-panel-label {
+.free-reading-heading {
   display: grid;
-  gap: 2px;
+  gap: 3px;
   min-width: 0;
   justify-items: center;
-  line-height: 1.1;
-}
-
-.free-reading-panel-label > span {
+  color: var(--accent);
   font-family:
     "Iowan Old Style",
     "Palatino Linotype",
     "Book Antiqua",
     "Times New Roman",
     serif;
-  font-size: 0.82rem;
+  font-size: clamp(0.82rem, 3vw, 1.08rem);
+  line-height: 1.1;
 }
 
-.free-reading-panel-label small {
+.free-reading-heading small {
   color: var(--muted);
-  font-size: 0.56rem;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(0.48rem, 2vw, 0.6rem);
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   white-space: nowrap;
 }
 
@@ -810,16 +812,8 @@
   }
 
   .free-reading-icon {
-    width: min(100%, 74px);
-    height: 80px;
-  }
-
-  .free-reading-panel-label > span {
-    font-size: clamp(0.68rem, 2.9vw, 0.78rem);
-  }
-
-  .free-reading-panel-label small {
-    font-size: clamp(0.48rem, 2.2vw, 0.54rem);
+    width: min(20vw, 80px);
+    height: min(20vw, 80px);
   }
 
   .home-reading-dock .meal-prayer-button {
