@@ -888,7 +888,7 @@ export default function App() {
       : <article className={`scripture${isLongForm?' scripture-long-form':''}`} lang="grc">
           <p className="reading-section">{displayedEntry.sectionGreek}</p>
           {reviewEntry&&<p className="history-review-label"><span>Ἀνεγνωσμένον</span>{options.showGloss&&<small>Previously read</small>}</p>}
-          {freeReadingEntry&&<p className="history-review-label free-reading-label"><span>Ἐλευθέρα ἀνάγνωσις</span>{options.showGloss&&<small>Free reading · devotional progress unchanged</small>}</p>}
+          {freeReadingEntry&&<p className="history-review-label free-reading-label"><span>Ἐλευθέρα ἀνάγνωσις</span></p>}
           <h1>{displayedEntry.titleGreek}</h1>
           {options.showGloss&&<p className="reader-reference">{displayedEntry.reference}</p>}
           {readerBannerKind&&<ReaderBanner kind={readerBannerKind}/>}
