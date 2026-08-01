@@ -26,6 +26,7 @@ import {
   remembersVersePosition,
   restoredVerseIndex,
 } from '../src/readingNavigation.ts'
+import { resolveFreeReadingBoundary } from '../src/freeReadingNavigation.ts'
 import {
   bookForCorpus,
   booksForCorpus,
@@ -578,6 +579,157 @@ test('the Scripture browser derives selectable chapters from catalog metadata', 
   ])
   assert.equal(chapterNumbers(psalms).at(-1), 151)
   assert.deepEqual(chapterNumbers(null), [])
+})
+
+test('Free Reading resolves chapter and book boundaries within one corpus', () => {
+  assert.deepEqual(
+    resolveFreeReadingBoundary('sblgnt', 'mark', 2, 'previous'),
+    {
+      corpus: 'sblgnt',
+      bookId: 'mark',
+      chapter: 1,
+      verseEdge: 'last',
+      kind: 'chapter',
+    },
+  )
+  assert.deepEqual(
+    resolveFreeReadingBoundary('sblgnt', 'mark', 1, 'previous'),
+    {
+      corpus: 'sblgnt',
+      bookId: 'matthew',
+      chapter: 28,
+      verseEdge: 'last',
+      kind: 'book',
+    },
+  )
+  assert.deepEqual(
+    resolveFreeReadingBoundary('sblgnt', 'mark', 15, 'next'),
+    {
+      corpus: 'sblgnt',
+      bookId: 'mark',
+      chapter: 16,
+      verseEdge: 'first',
+      kind: 'chapter',
+    },
+  )
+  assert.deepEqual(
+    resolveFreeReadingBoundary('sblgnt', 'mark', 16, 'next'),
+    {
+      corpus: 'sblgnt',
+      bookId: 'luke',
+      chapter: 1,
+      verseEdge: 'first',
+      kind: 'book',
+    },
+  )
+})
+
+test('Free Reading stops at corpus boundaries', () => {
+  assert.equal(
+    resolveFreeReadingBoundary('sblgnt', 'matthew', 1, 'previous'),
+    null,
+  )
+  assert.equal(
+    resolveFreeReadingBoundary('sblgnt', 'revelation', 22, 'next'),
+    null,
+  )
+  assert.equal(
+    resolveFreeReadingBoundary('lxx', 'genesis', 1, 'previous'),
+    null,
+  )
+  assert.equal(
+    resolveFreeReadingBoundary(
+      'lxx',
+      'bel-and-the-dragon-theodotion',
+      1,
+      'next',
+    ),
+    null,
+  )
+})
+
+test('Free Reading resolves representative LXX chapter and book boundaries', () => {
+  assert.deepEqual(
+    resolveFreeReadingBoundary('lxx', 'genesis', 2, 'previous'),
+    {
+      corpus: 'lxx',
+      bookId: 'genesis',
+      chapter: 1,
+      verseEdge: 'last',
+      kind: 'chapter',
+    },
+  )
+  assert.deepEqual(
+    resolveFreeReadingBoundary('lxx', 'genesis', 1, 'next'),
+    {
+      corpus: 'lxx',
+      bookId: 'genesis',
+      chapter: 2,
+      verseEdge: 'first',
+      kind: 'chapter',
+    },
+  )
+  assert.deepEqual(
+    resolveFreeReadingBoundary('lxx', 'exodus', 1, 'previous'),
+    {
+      corpus: 'lxx',
+      bookId: 'genesis',
+      chapter: 50,
+      verseEdge: 'last',
+      kind: 'book',
+    },
+  )
+  assert.deepEqual(
+    resolveFreeReadingBoundary('lxx', 'genesis', 50, 'next'),
+    {
+      corpus: 'lxx',
+      bookId: 'exodus',
+      chapter: 1,
+      verseEdge: 'first',
+      kind: 'book',
+    },
+  )
+})
+
+test('every LXX book boundary resolves through the available catalog order', () => {
+  const books = booksForCorpus('lxx')
+
+  books.forEach((book, index) => {
+    const firstChapter = book.chapterNumbers[0]
+    const finalChapter = book.chapterNumbers.at(-1)
+    assert.notEqual(firstChapter, undefined)
+    assert.notEqual(finalChapter, undefined)
+
+    const previous = resolveFreeReadingBoundary(
+      'lxx',
+      book.id,
+      firstChapter!,
+      'previous',
+    )
+    const previousBook = books[index - 1]
+    if (previousBook) {
+      assert.equal(previous?.bookId, previousBook.id)
+      assert.equal(previous?.chapter, previousBook.chapterNumbers.at(-1))
+      assert.equal(previous?.kind, 'book')
+    } else {
+      assert.equal(previous, null)
+    }
+
+    const next = resolveFreeReadingBoundary(
+      'lxx',
+      book.id,
+      finalChapter!,
+      'next',
+    )
+    const nextBook = books[index + 1]
+    if (nextBook) {
+      assert.equal(next?.bookId, nextBook.id)
+      assert.equal(next?.chapter, nextBook.chapterNumbers[0])
+      assert.equal(next?.kind, 'book')
+    } else {
+      assert.equal(next, null)
+    }
+  })
 })
 
 test('the LXX catalog preserves source chapter labels and textual variants', () => {
