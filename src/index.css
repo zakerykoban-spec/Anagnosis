@@ -50,6 +50,11 @@ html {
   background: var(--page);
 }
 
+html:has(.reader-shell),
+body:has(.reader-shell) {
+  overscroll-behavior-y: none;
+}
+
 body {
   min-width: 320px;
   min-height: 100vh;
