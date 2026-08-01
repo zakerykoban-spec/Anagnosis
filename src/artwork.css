@@ -838,12 +838,17 @@
 
 .free-reading-heading {
   align-self: start;
-  font-size: clamp(0.9rem, 3.1vw, 1.08rem);
+  font-size: 1.08rem;
   line-height: 1;
 }
 
 .free-reading-icon {
   align-self: center;
+}
+
+.free-reading-icon,
+.free-reading-label {
+  transform: translateY(-6px);
 }
 
 .free-reading-label {
