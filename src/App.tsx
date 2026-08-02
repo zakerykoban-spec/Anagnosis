@@ -12,6 +12,10 @@ import { HelpPanel } from './components/HelpPanel'
 import { LexicalPopup } from './components/LexicalPopup'
 import { LexicalWord } from './components/LexicalWord'
 import {
+  ReaderReferenceNavigator,
+  type ReaderNavigatorSelection,
+} from './components/ReaderReferenceNavigator'
+import {
   loadPsalm,
   resolveDailyOffice,
   weekdayTabs,
@@ -50,9 +54,9 @@ import {
 } from './readingProgress'
 import { buildReadingPlan } from './readingPlans'
 import {
-  resolveFreeReadingBoundary,
-  type FreeReadingBoundaryDirection,
-} from './freeReadingNavigation'
+  bookIdFromVerseId,
+  buildReadingWithContinuation,
+} from './readerContinuity'
 import {
   bookForCorpus,
   booksForCorpus,
@@ -73,7 +77,6 @@ import {
   type NtLexicalBook,
 } from './models/lexical'
 import { loadSblgntLexicalBook } from './stepLexicalLibrary'
-import { createSingleFlightGuard } from './singleFlight'
 import { UI } from './ui/lexicon'
 import altarBanner from './assets/banners/banner-altar.webp'
 import afterMealBanner from './assets/banners/banner-meal-after.webp'
@@ -96,6 +99,7 @@ import './pass2.css'
 import './pass3.css'
 import './artwork.css'
 import './lexical.css'
+import './reader-navigation.css'
 
 type AppView = 'office' | 'reader'
 type ReaderOptions = { showGloss: boolean; showProgressive: boolean; showChallenge: boolean; showPsalm: boolean }
@@ -284,13 +288,22 @@ function useSelectedReadingPlan(
 
 function groupVersesByChapter(verses: ScriptureVerse[]) {
   const groups: Array<{
+    bookId: string
     chapter: ScriptureReferencePart
     verses: ScriptureVerse[]
   }> = []
   verses.forEach((verse) => {
+    const bookId = bookIdFromVerseId(verse.id) ?? 'unknown'
     const last = groups[groups.length - 1]
-    if (!last || last.chapter !== verse.chapter) groups.push({ chapter: verse.chapter, verses: [verse] })
-    else last.verses.push(verse)
+    if (
+      !last
+      || last.bookId !== bookId
+      || String(last.chapter) !== String(verse.chapter)
+    ) {
+      groups.push({ bookId, chapter: verse.chapter, verses: [verse] })
+    } else {
+      last.verses.push(verse)
+    }
   })
   return groups
 }
@@ -343,6 +356,14 @@ export default function App() {
   const [freeReadingVerseIndex,setFreeReadingVerseIndex] = useState(0)
   const [freeReadingLocation,setFreeReadingLocation] =
     useState<FreeReadingLocation|null>(()=>loadFreeReadingLocation())
+  const [readerScriptureEntry,setReaderScriptureEntry] =
+    useState<ScriptureReading|null>(null)
+  const [readerScriptureVerseIndex,setReaderScriptureVerseIndex] =
+    useState(0)
+  const [readerScriptureCorpus,setReaderScriptureCorpus] =
+    useState<ScriptureCorpusId>('sblgnt')
+  const [visibleVerseId,setVisibleVerseId] = useState<string|null>(null)
+  const [referenceNavigatorOpen,setReferenceNavigatorOpen] = useState(false)
   const [scriptureBrowserOpen,setScriptureBrowserOpen] = useState(false)
   const [scriptureBrowserCorpus,setScriptureBrowserCorpus] =
     useState<ScriptureCorpusId>('sblgnt')
@@ -359,10 +380,6 @@ export default function App() {
   const [historyLoadingId,setHistoryLoadingId] = useState<string|null>(null)
   const [historyUndoingId,setHistoryUndoingId] = useState<string|null>(null)
   const [historyError,setHistoryError] = useState<string|null>(null)
-  const [freeReadingBoundaryLoading,setFreeReadingBoundaryLoading] =
-    useState<FreeReadingBoundaryDirection|null>(null)
-  const [freeReadingBoundaryError,setFreeReadingBoundaryError] =
-    useState<string|null>(null)
   const [loadedLexicalBook,setLoadedLexicalBook] =
     useState<LoadedLexicalBook>({ bookId: '', data: null })
   const [lexicalSelection,setLexicalSelection] =
@@ -374,8 +391,9 @@ export default function App() {
   const pendingScroll = useRef<
     { kind: 'top' } | { kind: 'verse'; verseId: string } | null
   >(null)
-  const freeReadingBoundaryGuard = useRef(createSingleFlightGuard())
   const lexicalAnchor = useRef<HTMLButtonElement|null>(null)
+  const visibleVerseIdRef = useRef<string|null>(null)
+  const readerLoadToken = useRef(0)
 
   const progressivePlan = useSelectedReadingPlan(
     'progressive',
@@ -447,42 +465,44 @@ export default function App() {
     && planCandidates[activeStream].length > 0
     && progress.streams[activeStream].assignmentIndex
       >= planCandidates[activeStream].length
-  const displayedEntry = freeReadingEntry ?? reviewEntry ?? activeEntry
-  const scriptureReading = displayedEntry?.kind === 'scripture' ? displayedEntry : null
+  const displayedEntry = freeReadingEntry
+    ?? reviewEntry
+    ?? readerScriptureEntry
+    ?? activeEntry
+  const scriptureReading = displayedEntry?.kind === 'scripture'
+    ? displayedEntry
+    : null
   const displayedVerseIndex = freeReadingEntry
     ? freeReadingVerseIndex
     : reviewEntry
       ? reviewVerseIndex
-      : currentVerseIndex
-  const displayedCorpus = scriptureReading
-    ? corpusForReading(scriptureReading)
-    : 'sblgnt'
-  const displayedVerse = scriptureReading?.verses[displayedVerseIndex] ?? null
-  const displayedBookId = scriptureReading
+      : readerScriptureEntry
+        ? readerScriptureVerseIndex
+        : currentVerseIndex
+  const displayedCorpus = readerScriptureEntry
+    && !freeReadingEntry
+    && !reviewEntry
+    ? readerScriptureCorpus
+    : scriptureReading
+      ? corpusForReading(scriptureReading)
+      : 'sblgnt'
+  const selectedVerse = scriptureReading?.verses[displayedVerseIndex] ?? null
+  const visibleVerseIndex = scriptureReading
+    ? scriptureReading.verses.findIndex(verse => verse.id === visibleVerseId)
+    : -1
+  const displayedVerse = visibleVerseIndex >= 0
+    ? scriptureReading?.verses[visibleVerseIndex] ?? selectedVerse
+    : selectedVerse
+  const displayedBookId = displayedVerse
+    ? bookIdFromVerseId(displayedVerse.id)
+    : scriptureReading
+      ? bookIdForReading(scriptureReading)
+      : null
+  const displayedBook = bookForCorpus(displayedCorpus, displayedBookId)
+  const firstDisplayedBookId = scriptureReading
     ? bookIdForReading(scriptureReading)
     : null
-  const displayedBook = bookForCorpus(displayedCorpus, displayedBookId)
-  const previousFreeReadingBoundary = freeReadingEntry
-    && displayedBookId
-    && displayedVerse
-    ? resolveFreeReadingBoundary(
-        displayedCorpus,
-        displayedBookId,
-        displayedVerse.chapter,
-        'previous',
-      )
-    : null
-  const nextFreeReadingBoundary = freeReadingEntry
-    && displayedBookId
-    && displayedVerse
-    ? resolveFreeReadingBoundary(
-        displayedCorpus,
-        displayedBookId,
-        displayedVerse.chapter,
-        'next',
-      )
-    : null
-  const isDisplayedPsalm = displayedBookId === 'psalms'
+  const isDisplayedPsalm = firstDisplayedBookId === 'psalms'
   const isLongForm = freeReadingEntry
     ? !isDisplayedPsalm
     : activeStream === 'progressive' || activeStream === 'challenge'
@@ -500,7 +520,15 @@ export default function App() {
     scriptureBrowserCorpus,
     scriptureBrowserBookId,
   )
-  const chapterGroups = useMemo(()=>scriptureReading ? groupVersesByChapter(scriptureReading.verses) : [],[scriptureReading])
+  const chapterGroups = useMemo(
+    () => scriptureReading
+      ? groupVersesByChapter(scriptureReading.verses)
+      : [],
+    [scriptureReading],
+  )
+  const activeEndpointId = activeEntry?.kind === 'scripture'
+    ? activeEntry.verses.at(-1)?.id ?? null
+    : null
 
   useEffect(()=>{ localStorage.setItem(OPTIONS_KEY,JSON.stringify(options)) },[options])
   useEffect(()=>saveProgress(progress),[progress])
@@ -517,6 +545,98 @@ export default function App() {
       })
     return () => { cancelled = true }
   }, [displayedBookId, lexicalEnabled])
+  const setCurrentVisibleVerse = useCallback((verseId: string | null) => {
+    visibleVerseIdRef.current = verseId
+    setVisibleVerseId(verseId)
+  }, [])
+  const persistVisibleVerse = useCallback((verse: ScriptureVerse) => {
+    const bookId = bookIdFromVerseId(verse.id)
+    if (!bookId) return
+
+    if (freeReadingEntry) {
+      const location: FreeReadingLocation = {
+        corpus: displayedCorpus,
+        bookId,
+        chapter: verse.chapter,
+        verseId: verse.id,
+      }
+      setFreeReadingLocation(location)
+      saveFreeReadingLocation(location)
+      return
+    }
+
+    if (reviewEntry || !activeStream || !remembersVersePosition(activeStream)) {
+      return
+    }
+
+    const allowedCorpus = activeStream === 'psalm'
+      ? 'lxx'
+      : progress.planSelections[activeStream].corpus
+    const allowedBookId = activeStream === 'psalm'
+      ? 'psalms'
+      : progress.planSelections[activeStream].bookId
+    if (displayedCorpus !== allowedCorpus || bookId !== allowedBookId) return
+
+    setProgress(current => updateStreamPosition(
+      current,
+      activeStream,
+      verse.id,
+    ))
+  }, [
+    activeStream,
+    displayedCorpus,
+    freeReadingEntry,
+    progress.planSelections,
+    reviewEntry,
+  ])
+  useEffect(() => {
+    if (view !== 'reader' || !scriptureReading) return
+    let frame = 0
+    let persistenceTimer: ReturnType<typeof setTimeout> | null = null
+
+    const updateVisibleVerse = () => {
+      const headerBottom = document.querySelector('.reader-header')
+        ?.getBoundingClientRect().bottom ?? 0
+      const targetY = headerBottom + 24
+      let candidate = scriptureReading.verses[0] ?? null
+
+      for (const verse of scriptureReading.verses) {
+        const element = verseElements.current[verse.id]
+        if (!element) continue
+        const rect = element.getBoundingClientRect()
+        if (rect.top <= targetY) candidate = verse
+        else break
+      }
+
+      if (!candidate || candidate.id === visibleVerseIdRef.current) return
+      setCurrentVisibleVerse(candidate.id)
+      if (persistenceTimer) window.clearTimeout(persistenceTimer)
+      persistenceTimer = window.setTimeout(
+        () => persistVisibleVerse(candidate),
+        180,
+      )
+    }
+
+    const onScroll = () => {
+      window.cancelAnimationFrame(frame)
+      frame = window.requestAnimationFrame(updateVisibleVerse)
+    }
+
+    frame = window.requestAnimationFrame(updateVisibleVerse)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+      window.cancelAnimationFrame(frame)
+      if (persistenceTimer) window.clearTimeout(persistenceTimer)
+    }
+  }, [
+    persistVisibleVerse,
+    scriptureReading,
+    setCurrentVisibleVerse,
+    view,
+  ])
   useLayoutEffect(() => {
     if (!readHistoryOpen) return
     currentContentsItem.current?.scrollIntoView({
@@ -575,24 +695,100 @@ export default function App() {
     })}</span>
   }
 
+  async function loadReaderChapter(
+    corpus: ScriptureCorpusId,
+    bookId: string,
+    chapter: ScriptureReferencePart,
+  ) {
+    return corpus === 'lxx'
+      ? loadLxxChapter(bookId, chapter)
+      : loadSblgntChapter(bookId, chapter)
+  }
+  async function prepareReaderEntry(
+    entry: ScriptureReading,
+    targetVerseId: string,
+  ) {
+    const token = ++readerLoadToken.current
+    const corpus = corpusForReading(entry)
+    let base = entry
+    const targetParts = targetVerseId.split('.')
+    const targetBookId = targetParts[0]
+    const targetChapter = targetParts[1]
+
+    try {
+      if (
+        targetBookId
+        && targetChapter
+        && !entry.verses.some(verse => verse.id === targetVerseId)
+      ) {
+        const chapterReading = await loadReaderChapter(
+          corpus,
+          targetBookId,
+          targetChapter,
+        )
+        base = {
+          ...chapterReading,
+          id: `reader:${entry.id}:${targetChapter}`,
+          sectionGreek: entry.sectionGreek,
+          sectionEnglish: entry.sectionEnglish,
+        }
+      }
+      const expanded = await buildReadingWithContinuation(
+        base,
+        corpus,
+        loadReaderChapter,
+      )
+      if (token !== readerLoadToken.current) return
+      const targetIndex = Math.max(
+        expanded.verses.findIndex(verse => verse.id === targetVerseId),
+        0,
+      )
+      const verse = expanded.verses[targetIndex]
+      setReaderScriptureCorpus(corpus)
+      setReaderScriptureEntry(expanded)
+      setReaderScriptureVerseIndex(targetIndex)
+      setCurrentVerseIndex(targetIndex)
+      setCurrentVisibleVerse(verse?.id ?? null)
+      pendingScroll.current = verse
+        ? { kind: 'verse', verseId: verse.id }
+        : { kind: 'top' }
+    } catch {
+      if (token !== readerLoadToken.current) return
+      const targetIndex = Math.max(
+        entry.verses.findIndex(verse => verse.id === targetVerseId),
+        0,
+      )
+      const verse = entry.verses[targetIndex]
+      setReaderScriptureCorpus(corpus)
+      setReaderScriptureEntry(entry)
+      setReaderScriptureVerseIndex(targetIndex)
+      setCurrentVerseIndex(targetIndex)
+      setCurrentVisibleVerse(verse?.id ?? null)
+    }
+  }
   function openEntry(entry: OfficeEntry){
     setLexicalSelection(null)
+    setReferenceNavigatorOpen(false)
     const stream=streamForEntry(entry)
+    const savedVerseId=entry.kind==='scripture'&&stream
+      ? progress.streams[stream].lastVerseId
+      : null
     const nextIndex=entry.kind==='scripture'&&stream
       ? restoredVerseIndex(
           stream,
-          progress.streams[stream].lastVerseId,
+          savedVerseId,
           entry.verses.map(verse=>verse.id),
         )
       : 0
-    const rememberedVerseId=nextIndex>0&&entry.kind==='scripture'
-      ? entry.verses[nextIndex].id
+    const targetVerseId=entry.kind==='scripture'
+      ? savedVerseId ?? entry.verses[nextIndex]?.id ?? null
       : null
-    if(entry.kind==='scripture'&&remembersVersePosition(stream)){
-      setProgress(c=>updateStreamPosition(c,stream,entry.verses[nextIndex].id))
+    if(entry.kind==='scripture'&&remembersVersePosition(stream)&&targetVerseId){
+      setProgress(c=>updateStreamPosition(c,stream,targetVerseId))
     }
-    pendingScroll.current=rememberedVerseId
-      ? {kind:'verse',verseId:rememberedVerseId}
+    pendingScroll.current=targetVerseId&&entry.kind==='scripture'
+      && entry.verses.some(verse=>verse.id===targetVerseId)
+      ? {kind:'verse',verseId:targetVerseId}
       : {kind:'top'}
     setFreeReadingEntry(null)
     setReviewEntry(null)
@@ -600,6 +796,17 @@ export default function App() {
     setReadHistoryOpen(false)
     setScriptureBrowserOpen(false)
     setCurrentVerseIndex(nextIndex)
+    if(entry.kind==='scripture'){
+      setReaderScriptureEntry(entry)
+      setReaderScriptureVerseIndex(nextIndex)
+      setReaderScriptureCorpus(corpusForReading(entry))
+      setCurrentVisibleVerse(targetVerseId)
+      if(targetVerseId)void prepareReaderEntry(entry,targetVerseId)
+    }else{
+      readerLoadToken.current+=1
+      setReaderScriptureEntry(null)
+      setCurrentVisibleVerse(null)
+    }
     if(entry.id.startsWith('weekday-prayer:'))setSelectedWeekday(today.getDay())
     setActiveEntry(entry)
     setView('reader')
@@ -609,6 +816,8 @@ export default function App() {
     setLexicalSelection(null)
     const nextIndex=Math.min(Math.max(index,0),scriptureReading.verses.length-1)
     const nextVerse=scriptureReading.verses[nextIndex]
+    setCurrentVisibleVerse(nextVerse.id)
+    persistVisibleVerse(nextVerse)
     if(nextIndex===displayedVerseIndex){
       verseElements.current[nextVerse.id]?.scrollIntoView({
         behavior:'auto',
@@ -617,26 +826,12 @@ export default function App() {
       return
     }
     pendingScroll.current={kind:'verse',verseId:nextVerse.id}
-    if(freeReadingEntry){
-      setFreeReadingVerseIndex(nextIndex)
-      if(displayedBookId){
-        const location: FreeReadingLocation = {
-          corpus: displayedCorpus,
-          bookId: displayedBookId,
-          chapter: nextVerse.chapter,
-          verseId: nextVerse.id,
-        }
-        setFreeReadingLocation(location)
-        saveFreeReadingLocation(location)
-      }
-    }
+    if(freeReadingEntry)setFreeReadingVerseIndex(nextIndex)
     else if(reviewEntry)setReviewVerseIndex(nextIndex)
-    else {
+    else if(readerScriptureEntry){
+      setReaderScriptureVerseIndex(nextIndex)
       setCurrentVerseIndex(nextIndex)
-      if(remembersVersePosition(activeStream)){
-        setProgress(c=>updateStreamPosition(c,activeStream,nextVerse.id))
-      }
-    }
+    }else setCurrentVerseIndex(nextIndex)
   }
   async function openContentsItem(item: ReadingContentsItem) {
     setHistoryError(null)
@@ -671,6 +866,11 @@ export default function App() {
         setFreeReadingEntry(null)
         setActiveEntry(reading)
         setReviewEntry(null)
+        setReaderScriptureEntry(reading)
+        setReaderScriptureCorpus(corpusForReading(reading))
+        setReaderScriptureVerseIndex(0)
+        setCurrentVisibleVerse(reading.verses[0]?.id ?? null)
+        if(reading.verses[0])void prepareReaderEntry(reading,reading.verses[0].id)
         setCurrentVerseIndex(0)
         setReaderMenuOpen(false)
         setReadHistoryOpen(false)
@@ -736,6 +936,11 @@ export default function App() {
         setFreeReadingEntry(null)
         setReviewEntry(null)
         setActiveEntry(nextReading)
+        setReaderScriptureEntry(nextReading)
+        setReaderScriptureCorpus(corpusForReading(nextReading))
+        setReaderScriptureVerseIndex(0)
+        setCurrentVisibleVerse(nextReading.verses[0]?.id ?? null)
+        if(nextReading.verses[0])void prepareReaderEntry(nextReading,nextReading.verses[0].id)
         setCurrentVerseIndex(0)
       }
       setReaderMenuOpen(false)
@@ -794,6 +999,11 @@ export default function App() {
       setFreeReadingEntry(null)
       setActiveEntry(reading)
       setReviewEntry(null)
+      setReaderScriptureEntry(reading)
+      setReaderScriptureCorpus(corpusForReading(reading))
+      setReaderScriptureVerseIndex(0)
+      setCurrentVisibleVerse(reading.verses[0]?.id ?? null)
+      if(reading.verses[0])void prepareReaderEntry(reading,reading.verses[0].id)
       setCurrentVerseIndex(0)
       setView('reader')
     } catch (error) {
@@ -805,13 +1015,8 @@ export default function App() {
     }
   }
   function openScriptureBrowser() {
-    setPlanSelectorStream(null)
-    setScriptureBrowserCorpus(displayedCorpus)
-    setScriptureBrowserBookId(null)
-    setScriptureBrowserView('books')
-    setScriptureBrowserError(null)
     setReaderMenuOpen(false)
-    setScriptureBrowserOpen(true)
+    setReferenceNavigatorOpen(true)
   }
   async function openFreeReading() {
     if (!freeReadingLocation) {
@@ -829,9 +1034,16 @@ export default function App() {
     }
 
     try {
-      const reading = freeReadingLocation.corpus === 'lxx'
-        ? await loadLxxChapter(book.id, freeReadingLocation.chapter)
-        : await loadSblgntChapter(book.id, freeReadingLocation.chapter)
+      const chapter = await loadReaderChapter(
+        freeReadingLocation.corpus,
+        book.id,
+        freeReadingLocation.chapter,
+      )
+      const reading = await buildReadingWithContinuation(
+        chapter,
+        freeReadingLocation.corpus,
+        loadReaderChapter,
+      )
       const verseIndex = Math.max(
         reading.verses.findIndex(verse=>verse.id===freeReadingLocation.verseId),
         0,
@@ -840,12 +1052,16 @@ export default function App() {
       pendingScroll.current = verseId
         ? { kind: 'verse', verseId }
         : { kind: 'top' }
+      readerLoadToken.current+=1
+      setReaderScriptureEntry(null)
       setFreeReadingEntry(reading)
       setFreeReadingVerseIndex(verseIndex)
+      setCurrentVisibleVerse(verseId ?? null)
       setReviewEntry(null)
       setScriptureBrowserOpen(false)
       setReaderMenuOpen(false)
       setReadHistoryOpen(false)
+      setReferenceNavigatorOpen(false)
       setView('reader')
     } catch {
       openFreeReadingBrowser()
@@ -890,6 +1106,8 @@ export default function App() {
       setActiveEntry(null)
       setReviewEntry(null)
       setFreeReadingEntry(null)
+      setReaderScriptureEntry(null)
+      setCurrentVisibleVerse(null)
       pendingScroll.current = { kind: 'top' }
       setView('office')
       return
@@ -908,6 +1126,11 @@ export default function App() {
       setFreeReadingEntry(null)
       setReviewEntry(null)
       setActiveEntry(firstReading)
+      setReaderScriptureEntry(firstReading)
+      setReaderScriptureCorpus(corpusForReading(firstReading))
+      setReaderScriptureVerseIndex(0)
+      setCurrentVisibleVerse(firstReading.verses[0]?.id ?? null)
+      if(firstReading.verses[0])void prepareReaderEntry(firstReading,firstReading.verses[0].id)
       setCurrentVerseIndex(0)
     }
   }
@@ -919,14 +1142,22 @@ export default function App() {
       `${scriptureBrowserCorpus}:${book.id}:${chapterNumber}`
     setScriptureBrowserLoadingKey(loadingKey)
     setScriptureBrowserError(null)
-    setFreeReadingBoundaryError(null)
 
     try {
-      const reading = scriptureBrowserCorpus === 'lxx'
-        ? await loadLxxChapter(book.id, chapterNumber)
-        : await loadSblgntChapter(book.id, chapterNumber)
+      const chapter = await loadReaderChapter(
+        scriptureBrowserCorpus,
+        book.id,
+        chapterNumber,
+      )
+      const reading = await buildReadingWithContinuation(
+        chapter,
+        scriptureBrowserCorpus,
+        loadReaderChapter,
+      )
 
       pendingScroll.current = { kind: 'top' }
+      readerLoadToken.current+=1
+      setReaderScriptureEntry(null)
       setFreeReadingEntry(reading)
       setFreeReadingVerseIndex(0)
       const firstVerse = reading.verses[0]
@@ -939,6 +1170,7 @@ export default function App() {
         }
         setFreeReadingLocation(location)
         saveFreeReadingLocation(location)
+        setCurrentVisibleVerse(firstVerse.id)
       }
       setReviewEntry(null)
       setScriptureBrowserOpen(false)
@@ -955,60 +1187,76 @@ export default function App() {
       setScriptureBrowserLoadingKey(null)
     }
   }
-  async function navigateFreeReadingBoundary(
-    direction: FreeReadingBoundaryDirection,
+  async function selectReaderReference(
+    selection: ReaderNavigatorSelection,
   ) {
-    if (!freeReadingEntry || !displayedBook || !displayedBookId) return
-    const destination = direction === 'previous'
-      ? previousFreeReadingBoundary
-      : nextFreeReadingBoundary
-    if (!destination) return
+    setReferenceNavigatorOpen(false)
+    setLexicalSelection(null)
+    const token = ++readerLoadToken.current
+    let reading = selection.reading
+    try {
+      reading = await buildReadingWithContinuation(
+        selection.reading,
+        selection.corpus,
+        loadReaderChapter,
+      )
+    } catch {
+      // The selected chapter itself is still safe to open.
+    }
+    if (token != readerLoadToken.current) return
+    const verseIndex = Math.max(
+      reading.verses.findIndex(verse => verse.id === selection.verseId),
+      0,
+    )
+    const verse = reading.verses[verseIndex]
+    pendingScroll.current = verse
+      ? { kind: 'verse', verseId: verse.id }
+      : { kind: 'top' }
+    setCurrentVisibleVerse(verse?.id ?? null)
 
-    await freeReadingBoundaryGuard.current.run(async () => {
-      setLexicalSelection(null)
-      setFreeReadingBoundaryLoading(direction)
-      setFreeReadingBoundaryError(null)
-      try {
-        const reading = destination.corpus === 'lxx'
-          ? await loadLxxChapter(destination.bookId, destination.chapter)
-          : await loadSblgntChapter(destination.bookId, destination.chapter)
-        const verseIndex = destination.verseEdge === 'last'
-          ? reading.verses.length - 1
-          : 0
-        const verse = reading.verses[verseIndex]
-        if (!verse) throw new Error('The destination has no verses.')
-        pendingScroll.current = { kind: 'verse', verseId: verse.id }
-        setFreeReadingEntry(reading)
-        setFreeReadingVerseIndex(verseIndex)
-        const location: FreeReadingLocation = {
-          corpus: destination.corpus,
-          bookId: destination.bookId,
-          chapter: destination.chapter,
-          verseId: verse.id,
-        }
-        setFreeReadingLocation(location)
-        saveFreeReadingLocation(location)
-      } catch {
-        setFreeReadingBoundaryError(
-          direction === 'previous'
-            ? 'Unable to open the previous reading.'
-            : 'Unable to open the next reading.',
-        )
-      } finally {
-        setFreeReadingBoundaryLoading(null)
+    if (activeStream && activeEntry?.kind === 'scripture') {
+      setFreeReadingEntry(null)
+      setReviewEntry(null)
+      setReaderScriptureCorpus(selection.corpus)
+      setReaderScriptureEntry({
+        ...reading,
+        sectionGreek: activeEntry.sectionGreek,
+        sectionEnglish: activeEntry.sectionEnglish,
+      })
+      setReaderScriptureVerseIndex(verseIndex)
+      setCurrentVerseIndex(verseIndex)
+      if (verse) persistVisibleVerse(verse)
+      return
+    }
+
+    setReaderScriptureEntry(null)
+    setReviewEntry(null)
+    setFreeReadingEntry(reading)
+    setFreeReadingVerseIndex(verseIndex)
+    if (verse) {
+      const location: FreeReadingLocation = {
+        corpus: selection.corpus,
+        bookId: selection.book.id,
+        chapter: selection.chapter,
+        verseId: verse.id,
       }
-    })
+      setFreeReadingLocation(location)
+      saveFreeReadingLocation(location)
+    }
   }
   function leaveReader(){
+    readerLoadToken.current+=1
     pendingScroll.current={kind:'top'}
     setFreeReadingEntry(null)
     setReviewEntry(null)
+    setReaderScriptureEntry(null)
+    setCurrentVisibleVerse(null)
     setActiveEntry(null)
     setReaderMenuOpen(false)
     setReadHistoryOpen(false)
     setScriptureBrowserOpen(false)
+    setReferenceNavigatorOpen(false)
     setPlanSelectorStream(null)
-    setFreeReadingBoundaryError(null)
     setLexicalSelection(null)
     setView('office')
   }
@@ -1091,18 +1339,55 @@ export default function App() {
         : displayedEntry.kind === 'prayer'
           ? 'altar'
           : null
+  function readingCompletionBoundary(verseId: string) {
+    if (
+      !activeStream
+      || !activeEndpointId
+      || verseId !== activeEndpointId
+      || reviewEntry
+      || freeReadingEntry
+    ) return null
+
+    return <span className="reading-completion-boundary">
+      <span className="reading-completion-label">
+        <span>Τέλος τοῦ ἀναγνώσματος</span>
+        {options.showGloss&&<small>Today’s reading ends here</small>}
+      </span>
+      {!isMarked
+        ? <button className="reading-completion-button" type="button" onClick={completeActiveEntry}><strong>Σφράγισον</strong>{options.showGloss&&<small>Mark read</small>}</button>
+        : <><span className="reading-completion-confirmed" role="status"><strong>Πεπλήρωται</strong>{options.showGloss&&<small>Marked read</small>}</span><span className="reading-completion-actions">{activeStream!=='psalm'&&activePlanComplete?<><button className="reading-completion-action" type="button" onClick={()=>openPlanSelector(activeStream)}><strong>Ἑλοῦ βιβλίου</strong>{options.showGloss&&<small>Choose next book</small>}</button><button className="reading-completion-action" type="button" onClick={()=>restartPlan(activeStream)}><strong>Ἀνάγνωθι πάλιν</strong>{options.showGloss&&<small>Read again</small>}</button></>:<button className="reading-completion-action" type="button" onClick={proceed}><strong>Πρόβαινε</strong>{options.showGloss&&<small>Continue</small>}</button>}<button className="reading-completion-action" type="button" onClick={()=>{pendingScroll.current={kind:'top'};setView('office')}}><strong>Οἶκος</strong>{options.showGloss&&<small>Home</small>}</button></span></>}
+    </span>
+  }
+  function scriptureBookBoundary(bookId: string, previousBookId?: string) {
+    if (!previousBookId || previousBookId === bookId) return null
+    return <h2 className="reader-book-boundary">
+      {bookForCorpus(displayedCorpus, bookId)?.titleGreek ?? bookId}
+    </h2>
+  }
+  function renderScriptureBody() {
+    if (!scriptureReading) return null
+
+    if (isLongForm) {
+      return <div className="long-form-text">{chapterGroups.map((group,groupIndex)=><div className="continuous-chapter-block" key={`${group.bookId}:${String(group.chapter)}`}>{scriptureBookBoundary(group.bookId,chapterGroups[groupIndex-1]?.bookId)}<section className="long-form-chapter"><span className="chapter-marker">{group.chapter}</span><p>{group.verses.map(verse=>{const index=scriptureReading.verses.findIndex(candidate=>candidate.id===verse.id);return <span className={index===displayedVerseIndex?'long-form-verse current-verse':'long-form-verse'} id={verse.id} key={verse.id} ref={element=>{verseElements.current[verse.id]=element}} onClick={()=>moveToVerse(index)}><button className="verse-number" type="button" onClick={(event:MouseEvent<HTMLButtonElement>)=>{event.stopPropagation();moveToVerse(index)}}>{verse.number}</button>{renderVerseText(verse)}{' '}{readingCompletionBoundary(verse.id)}</span>})}</p></section></div>)}</div>
+    }
+
+    if (chapterGroups.length > 1) {
+      return <div className="chaptered-verse-list">{chapterGroups.map((group,groupIndex)=><section className="chaptered-verse-section" key={`${group.bookId}:${String(group.chapter)}`}>{scriptureBookBoundary(group.bookId,chapterGroups[groupIndex-1]?.bookId)}{groupIndex>0&&<span className="chapter-marker">{group.chapter}</span>}<div className="verse-list">{group.verses.map(verse=>{const index=scriptureReading.verses.findIndex(candidate=>candidate.id===verse.id);return <span key={verse.id}><p className={index===displayedVerseIndex?'verse current-verse':'verse'} id={verse.id} ref={element=>{verseElements.current[verse.id]=element}} onClick={()=>moveToVerse(index)}><button className="verse-number" type="button" onClick={(event:MouseEvent<HTMLButtonElement>)=>{event.stopPropagation();moveToVerse(index)}}>{verse.number}</button>{renderVerseText(verse)}</p>{readingCompletionBoundary(verse.id)}</span>})}</div></section>)}</div>
+    }
+
+    return <div className="verse-list">{scriptureReading.verses.map((verse,index)=><span key={verse.id}><p className={index===displayedVerseIndex?'verse current-verse':'verse'} id={verse.id} ref={element=>{verseElements.current[verse.id]=element}} onClick={()=>moveToVerse(index)}><button className="verse-number" type="button" onClick={(event:MouseEvent<HTMLButtonElement>)=>{event.stopPropagation();moveToVerse(index)}}>{verse.number}</button>{renderVerseText(verse)}</p>{readingCompletionBoundary(verse.id)}</span>)}</div>
+  }
   return <main className={`reader-shell reader-shell-${displayedEntry.kind}`}>
     <header className="reader-header">
       <button className="text-button" type="button" onClick={leaveReader}>
         <VoiceText term={{greek:'Οἶκος',english:'Home'}} showGloss={options.showGloss}/>
       </button>
-      <div className="reader-title">
-        <p>{displayedEntry.titleGreek}</p>
-        {options.showGloss&&<span>{displayedEntry.reference}</span>}
-      </div>
+      {scriptureReading&&displayedVerse
+        ? <button className="reader-reference-control" type="button" onClick={()=>setReferenceNavigatorOpen(true)}><strong>{displayedBook?.titleGreek ?? displayedEntry.titleGreek}</strong><span>{displayedBook?.code ?? displayedEntry.reference} {displayedVerse.chapter}:{displayedVerse.number}</span></button>
+        : <div className="reader-title"><p>{displayedEntry.titleGreek}</p>{options.showGloss&&<span>{displayedEntry.reference}</span>}</div>}
       <div className="reader-header-actions">
-        {scriptureReading&&<p className="reader-progress">{displayedVerseIndex+1} / {scriptureReading.verses.length}</p>}
-        {activeStream?<button className="reader-menu-trigger icon-button" type="button" aria-label="Ἐπιλογαὶ ἀναγνώσεως" onClick={()=>setReaderMenuOpen(true)}><MenuIcon/></button>:freeReadingEntry&&<button className="reader-menu-trigger icon-button" type="button" aria-label="Γραφαί · Free reading contents" onClick={openFreeReadingBrowser}><BookIcon/></button>}
+        {scriptureReading&&<p className="reader-progress">{Math.max(visibleVerseIndex,displayedVerseIndex)+1} / {scriptureReading.verses.length}</p>}
+        {activeStream?<button className="reader-menu-trigger icon-button" type="button" aria-label="Ἐπιλογαὶ ἀναγνώσεως" onClick={()=>setReaderMenuOpen(true)}><MenuIcon/></button>:freeReadingEntry&&<button className="reader-menu-trigger icon-button" type="button" aria-label="Τόπος ἀναγνώσεως" onClick={()=>setReferenceNavigatorOpen(true)}><BookIcon/></button>}
       </div>
     </header>
     {displayedEntry.kind==='prayer'
@@ -1126,16 +1411,9 @@ export default function App() {
           <h1>{displayedEntry.titleGreek}</h1>
           {options.showGloss&&<p className="reader-reference">{displayedEntry.reference}</p>}
           {readerBannerKind&&<ReaderBanner kind={readerBannerKind}/>}
-          {isLongForm
-            ? <div className="long-form-text">{chapterGroups.map(ch=><section className="long-form-chapter" key={ch.chapter}><span className="chapter-marker">{ch.chapter}</span><p>{ch.verses.map(verse=>{const index=displayedEntry.verses.findIndex(v=>v.id===verse.id);return <span className={index===displayedVerseIndex?'long-form-verse current-verse':'long-form-verse'} id={verse.id} key={verse.id} ref={el=>{verseElements.current[verse.id]=el}} onClick={()=>moveToVerse(index)}><button className="verse-number" type="button" onClick={(e:MouseEvent<HTMLButtonElement>)=>{e.stopPropagation();moveToVerse(index)}}>{verse.number}</button>{renderVerseText(verse)}{' '}</span>})}</p></section>)}</div>
-            : <div className="verse-list">{displayedEntry.verses.map((verse,index)=><p className={index===displayedVerseIndex?'verse current-verse':'verse'} id={verse.id} key={verse.id} ref={el=>{verseElements.current[verse.id]=el}} onClick={()=>moveToVerse(index)}><button className="verse-number" type="button" onClick={(e:MouseEvent<HTMLButtonElement>)=>{e.stopPropagation();moveToVerse(index)}}>{verse.number}</button>{renderVerseText(verse)}</p>)}</div>}
+          {renderScriptureBody()}
         </article>}
-    {freeReadingBoundaryError&&<p className="free-reading-boundary-error" role="alert">{freeReadingBoundaryError}</p>}
-    {scriptureReading&&<nav className="reader-navigation" aria-label="Πλοήγησις στίχων">
-      <button className="navigation-button navigation-button-back" type="button" aria-busy={freeReadingBoundaryLoading==='previous'} disabled={freeReadingBoundaryLoading!==null||(displayedVerseIndex===0&&(!freeReadingEntry||!previousFreeReadingBoundary))} onClick={()=>{if(freeReadingEntry&&displayedVerseIndex===0)void navigateFreeReadingBoundary('previous');else moveToVerse(displayedVerseIndex-1)}}><span className="navigation-chevron" aria-hidden="true">‹</span><span className="control-copy"><strong>{freeReadingBoundaryLoading==='previous'?'Ἀνοίγεται…':'Ὀπίσω'}</strong>{options.showGloss&&<small>{freeReadingBoundaryLoading==='previous'?'Opening…':freeReadingEntry&&displayedVerseIndex===0?previousFreeReadingBoundary?.kind==='book'?'Previous book':'Previous chapter':'Previous verse'}</small>}</span></button>
-      <button className="navigation-button navigation-button-next" type="button" aria-busy={freeReadingBoundaryLoading==='next'} disabled={freeReadingBoundaryLoading!==null||(displayedVerseIndex===scriptureReading.verses.length-1&&(!freeReadingEntry||!nextFreeReadingBoundary))} onClick={()=>{if(freeReadingEntry&&displayedVerseIndex===scriptureReading.verses.length-1)void navigateFreeReadingBoundary('next');else moveToVerse(displayedVerseIndex+1)}}><span className="control-copy"><strong>{freeReadingBoundaryLoading==='next'?'Ἀνοίγεται…':freeReadingEntry&&displayedVerseIndex===scriptureReading.verses.length-1?'Πρόβαινε':'Ἔμπροσθεν'}</strong>{options.showGloss&&<small>{freeReadingBoundaryLoading==='next'?'Opening…':freeReadingEntry&&displayedVerseIndex===scriptureReading.verses.length-1?nextFreeReadingBoundary?.kind==='book'?'Next book':'Next chapter':'Next verse'}</small>}</span><span className="navigation-chevron" aria-hidden="true">›</span></button>
-    </nav>}
-    {!reviewEntry&&!freeReadingEntry&&!isMealPrayer&&<footer className={`completion-actions${isMarked?' is-complete':''}${activePlanComplete?' is-plan-complete':''}`}>{!isMarked?<button className="completion-button" type="button" onClick={completeActiveEntry}><span className="control-copy"><strong>Σφράγισον</strong>{options.showGloss&&<small>Mark complete</small>}</span></button>:<div className="completion-confirmed" role="status"><span className="completion-check" aria-hidden="true">✓</span><span className="control-copy"><strong>Πεπλήρωται</strong>{options.showGloss&&<small>Completed</small>}</span></div>}{isMarked&&activeStream&&activeStream!=='psalm'&&activePlanComplete?<div className="plan-complete-actions"><button className="proceed-button" type="button" onClick={()=>openPlanSelector(activeStream)}><span className="control-copy"><strong>Ἑλοῦ βιβλίου</strong>{options.showGloss&&<small>Choose next book</small>}</span><span className="action-chevron" aria-hidden="true">›</span></button><button className="home-button" type="button" onClick={()=>restartPlan(activeStream)}><span className="control-copy"><strong>Ἀνάγνωθι πάλιν</strong>{options.showGloss&&<small>Read again</small>}</span></button></div>:isMarked&&activeStream&&<button className="proceed-button" type="button" onClick={proceed}><span className="control-copy"><strong>Πρόβαινε</strong>{options.showGloss&&<small>Continue</small>}</span><span className="action-chevron" aria-hidden="true">›</span></button>}{isMarked&&<button className="home-button" type="button" onClick={()=>{pendingScroll.current={kind:'top'};setView('office')}}><span className="control-copy"><strong>Οἶκος</strong>{options.showGloss&&<small>Home</small>}</span></button>}</footer>}
+    {displayedEntry.kind==='prayer'&&!reviewEntry&&!freeReadingEntry&&!isMealPrayer&&<footer className={`completion-actions${isMarked?' is-complete':''}${activePlanComplete?' is-plan-complete':''}`}>{!isMarked?<button className="completion-button" type="button" onClick={completeActiveEntry}><span className="control-copy"><strong>Σφράγισον</strong>{options.showGloss&&<small>Mark complete</small>}</span></button>:<div className="completion-confirmed" role="status"><span className="completion-check" aria-hidden="true">✓</span><span className="control-copy"><strong>Πεπλήρωται</strong>{options.showGloss&&<small>Completed</small>}</span></div>}{isMarked&&activeStream&&activeStream!=='psalm'&&activePlanComplete?<div className="plan-complete-actions"><button className="proceed-button" type="button" onClick={()=>openPlanSelector(activeStream)}><span className="control-copy"><strong>Ἑλοῦ βιβλίου</strong>{options.showGloss&&<small>Choose next book</small>}</span><span className="action-chevron" aria-hidden="true">›</span></button><button className="home-button" type="button" onClick={()=>restartPlan(activeStream)}><span className="control-copy"><strong>Ἀνάγνωθι πάλιν</strong>{options.showGloss&&<small>Read again</small>}</span></button></div>:isMarked&&activeStream&&<button className="proceed-button" type="button" onClick={proceed}><span className="control-copy"><strong>Πρόβαινε</strong>{options.showGloss&&<small>Continue</small>}</span><span className="action-chevron" aria-hidden="true">›</span></button>}{isMarked&&<button className="home-button" type="button" onClick={()=>{pendingScroll.current={kind:'top'};setView('office')}}><span className="control-copy"><strong>Οἶκος</strong>{options.showGloss&&<small>Home</small>}</span></button>}</footer>}
     {readerMenuOpen&&<div className="options-backdrop reader-overlay" role="presentation" onPointerDown={e=>{if(e.target===e.currentTarget)setReaderMenuOpen(false)}}>
       <section className="options-menu reader-options-menu" role="dialog" aria-modal="true" aria-labelledby="reader-options-title">
         <header className="options-menu-header">
@@ -1171,6 +1449,7 @@ export default function App() {
         {historyError&&<p className="read-history-error" role="alert">{historyError}</p>}
       </section>
     </div>}
+    <ReaderReferenceNavigator open={referenceNavigatorOpen} corpus={displayedCorpus} bookId={displayedBookId} chapter={displayedVerse?.chapter ?? null} verseId={displayedVerse?.id ?? null} showGloss={options.showGloss} onClose={()=>setReferenceNavigatorOpen(false)} onSelect={(selection)=>void selectReaderReference(selection)}/>
     {scriptureBrowserDialog}
     {lexicalSelection&&<LexicalPopup info={lexicalSelection} anchor={lexicalAnchor} showGloss={options.showGloss} onClose={closeLexicalPopup}/>}
   </main>
