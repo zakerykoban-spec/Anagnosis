@@ -1,0 +1,274 @@
+.reader-navigation {
+  display: none !important;
+}
+
+.reader-shell {
+  padding-bottom: 0 !important;
+}
+
+.reader-reference-control {
+  display: grid;
+  min-width: 0;
+  max-width: 420px;
+  gap: 1px;
+  justify-self: center;
+  padding: 5px 12px;
+  border: 0;
+  border-radius: 7px;
+  color: var(--ink);
+  text-align: center;
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.reader-reference-control:hover,
+.reader-reference-control:focus-visible {
+  background: var(--hover);
+}
+
+.reader-reference-control strong,
+.reader-reference-control span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reader-reference-control strong {
+  font-family:
+    "Iowan Old Style",
+    "Palatino Linotype",
+    "Book Antiqua",
+    "Times New Roman",
+    serif;
+  font-size: 0.96rem;
+  font-weight: 500;
+}
+
+.reader-reference-control span {
+  color: var(--muted);
+  font-size: 0.67rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.reader-reference-navigator .options-menu-header h2 {
+  display: grid;
+  gap: 2px;
+}
+
+.reader-reference-navigator .options-menu-header h2 > small {
+  color: var(--muted);
+  font-size: 0.58rem;
+  font-weight: 400;
+}
+
+.scripture-chapter-choice.is-selected,
+.scripture-verse-choice.is-selected {
+  color: var(--paper-light);
+  background: var(--accent);
+}
+
+.scripture-verse-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  padding: 12px;
+}
+
+.scripture-verse-choice {
+  min-width: 0;
+  min-height: 46px;
+  padding: 5px;
+  border: 0;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  background: transparent;
+  cursor: pointer;
+}
+
+.scripture-verse-choice:nth-child(6n) {
+  border-right: 0;
+}
+
+.scripture-verse-choice:hover,
+.scripture-verse-choice:focus-visible {
+  background: var(--hover);
+}
+
+.scripture-verse-choice.is-selected:hover,
+.scripture-verse-choice.is-selected:focus-visible {
+  background: var(--accent-dark);
+}
+
+.reading-completion-boundary {
+  display: grid;
+  width: 100%;
+  gap: 10px;
+  justify-items: center;
+  margin: 1.8rem 0 2rem;
+  padding: 1.15rem 0;
+  border-top: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line-strong);
+  color: var(--accent);
+  text-align: center;
+}
+
+.reading-completion-label {
+  display: grid;
+  gap: 2px;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.reading-completion-label small {
+  color: var(--muted);
+  font-size: 0.56rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+
+.reading-completion-button,
+.reading-completion-action {
+  display: grid;
+  min-width: 148px;
+  min-height: 46px;
+  gap: 2px;
+  place-content: center;
+  padding: 8px 18px;
+  border: 1px solid var(--accent);
+  border-radius: 7px;
+  color: var(--paper-light);
+  font: inherit;
+  background: var(--accent);
+  cursor: pointer;
+}
+
+.reading-completion-button strong,
+.reading-completion-action strong {
+  font-family:
+    "Iowan Old Style",
+    "Palatino Linotype",
+    "Book Antiqua",
+    "Times New Roman",
+    serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.reading-completion-button small,
+.reading-completion-action small {
+  color: inherit;
+  font-size: 0.58rem;
+  opacity: 0.8;
+}
+
+.reading-completion-confirmed {
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  color: var(--accent);
+}
+
+.reading-completion-confirmed strong {
+  font-family:
+    "Iowan Old Style",
+    "Palatino Linotype",
+    "Book Antiqua",
+    "Times New Roman",
+    serif;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.reading-completion-confirmed small {
+  color: var(--muted);
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.58rem;
+}
+
+.reading-completion-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.reading-completion-action {
+  min-width: 126px;
+  color: var(--accent);
+  background: transparent;
+}
+
+.reader-book-boundary {
+  margin: 2.25rem 0 0.8rem;
+  color: var(--accent);
+  font-family:
+    "Iowan Old Style",
+    "Palatino Linotype",
+    "Book Antiqua",
+    "Times New Roman",
+    serif;
+  font-size: 1.12rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.chaptered-verse-list {
+  display: grid;
+  gap: 2.4rem;
+  margin-top: 36px;
+}
+
+.chaptered-verse-section > .chapter-marker {
+  display: block;
+  margin-bottom: 0.75rem;
+  color: var(--accent);
+  font-family:
+    "Iowan Old Style",
+    "Palatino Linotype",
+    "Book Antiqua",
+    "Times New Roman",
+    serif;
+  font-size: 1.22rem;
+  text-align: center;
+}
+
+.chaptered-verse-section .verse-list {
+  margin-top: 0;
+}
+
+@media (max-width: 640px) {
+  .reader-reference-control {
+    max-width: none;
+    padding-inline: 5px;
+  }
+
+  .reader-reference-control strong {
+    font-size: 0.88rem;
+  }
+
+  .scripture-verse-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+
+  .scripture-verse-choice:nth-child(6n) {
+    border-right: 1px solid var(--line);
+  }
+
+  .scripture-verse-choice:nth-child(5n) {
+    border-right: 0;
+  }
+
+  .reading-completion-boundary {
+    margin-block: 1.45rem 1.7rem;
+  }
+}
