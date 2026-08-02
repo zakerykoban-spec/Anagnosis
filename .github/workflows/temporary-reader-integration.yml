@@ -25,6 +25,19 @@ jobs:
           node-version: 22
           cache: npm
 
+      - name: Correct integration-script indentation
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/apply-unified-reader-navigation.py')
+          text = path.read_text(encoding='utf-8')
+          old = '"      setFreeReadingBoundaryError(null)\\n\\n"'
+          new = '"    setFreeReadingBoundaryError(null)\\n\\n"'
+          if old not in text:
+              raise SystemExit('Expected integration-script marker was not found.')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+
       - name: Apply reader integration
         run: python scripts/apply-unified-reader-navigation.py
 
