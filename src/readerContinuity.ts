@@ -1,12 +1,12 @@
-import type { ScriptureReading, ScriptureVerse } from './data/dailyOffice'
+import type { ScriptureReading, ScriptureVerse } from './data/dailyOffice.ts'
 import {
   resolveFreeReadingBoundary,
   type FreeReadingBoundaryDestination,
-} from './freeReadingNavigation'
+} from './freeReadingNavigation.ts'
 import type {
   ScriptureReferencePart,
-} from './models/scripture'
-import type { ScriptureCorpusId } from './scriptureCatalog'
+} from './models/scripture.ts'
+import type { ScriptureCorpusId } from './scriptureCatalog.ts'
 
 export type ReaderChapterLoader = (
   corpus: ScriptureCorpusId,
