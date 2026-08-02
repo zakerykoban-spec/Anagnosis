@@ -1,16 +1,16 @@
 name: Temporary reader integration runner
 
 on:
-  issues:
-    types: [opened]
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: write
-  issues: write
 
 jobs:
   integrate:
-    if: github.event.issue.title == 'RUN: unified reader integration'
+    if: github.head_ref == 'feat/unified-reader-navigation' && github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout feature branch
@@ -52,15 +52,3 @@ jobs:
           git add -A
           git commit -m "feat: add unified continuous reader navigation"
           git push origin HEAD:feat/unified-reader-navigation
-
-      - name: Report success
-        if: success()
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh issue comment "${{ github.event.issue.number }}" --body "Unified reader integration completed and validated on feat/unified-reader-navigation."
-
-      - name: Report failure
-        if: failure()
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh issue comment "${{ github.event.issue.number }}" --body "Unified reader integration failed. Review the Temporary reader integration runner logs."
