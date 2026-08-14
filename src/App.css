@@ -608,6 +608,31 @@
   text-align: center;
 }
 
+.passage-navigator-trigger {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  justify-self: center;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 6px;
+  font: inherit;
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.passage-navigator-trigger:hover,
+.passage-navigator-trigger:focus-visible {
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+
+.passage-navigator-trigger:focus-visible {
+  outline: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  outline-offset: 2px;
+}
+
 .reader-title p,
 .reader-title span,
 .reader-progress {
@@ -666,6 +691,7 @@
 
 .reader-options-menu,
 .read-history-menu,
+.passage-navigator-menu,
 .scripture-browser-menu {
   transform: none;
   animation-name: reader-menu-in;
@@ -767,6 +793,252 @@
 .read-history-menu {
   width: min(100%, 440px);
   max-height: min(70dvh, 660px);
+}
+
+.passage-navigator-menu {
+  display: flex;
+  width: min(100%, 440px);
+  max-height: min(76dvh, 680px);
+  flex-direction: column;
+}
+
+.passage-reference-form {
+  display: grid;
+  gap: 7px;
+  padding: 14px 16px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.passage-reference-form > label {
+  display: flex;
+  gap: 7px;
+  align-items: baseline;
+  color: var(--ink);
+  font-family:
+    "Iowan Old Style",
+    "Palatino Linotype",
+    "Book Antiqua",
+    "Times New Roman",
+    serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.passage-reference-form > label small {
+  color: var(--muted);
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.6rem;
+  font-weight: 500;
+}
+
+.passage-reference-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.passage-reference-control input {
+  min-width: 0;
+  height: 48px;
+  padding: 8px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+  background: color-mix(in srgb, var(--paper-light) 86%, white);
+}
+
+.passage-reference-control input:focus {
+  border-color: color-mix(in srgb, var(--accent) 65%, var(--line));
+  outline: 2px solid color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+.passage-reference-control input[aria-invalid="true"] {
+  border-color: var(--accent);
+}
+
+.passage-reference-control button {
+  display: grid;
+  min-width: 76px;
+  min-height: 48px;
+  gap: 1px;
+  place-content: center;
+  padding: 7px 12px;
+  border: 0;
+  border-radius: 7px;
+  color: var(--paper-light);
+  font: inherit;
+  background: var(--accent);
+  cursor: pointer;
+}
+
+.passage-reference-control button span {
+  font-family:
+    "Iowan Old Style",
+    "Palatino Linotype",
+    "Book Antiqua",
+    "Times New Roman",
+    serif;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.passage-reference-control button small {
+  font-size: 0.54rem;
+  opacity: 0.82;
+}
+
+.passage-reference-control button:disabled,
+.passage-recent-list button:disabled {
+  cursor: wait;
+  opacity: 0.66;
+}
+
+.passage-navigator-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--ink) 2%, transparent);
+}
+
+.passage-navigator-tabs button {
+  display: grid;
+  min-height: 46px;
+  gap: 1px;
+  place-content: center;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--muted);
+  font: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+.passage-navigator-tabs button.is-selected {
+  border-color: var(--line-strong);
+  color: var(--accent);
+  background: var(--paper);
+}
+
+.passage-navigator-tabs span {
+  font-family:
+    "Iowan Old Style",
+    "Palatino Linotype",
+    "Book Antiqua",
+    "Times New Roman",
+    serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.passage-navigator-tabs small {
+  font-size: 0.56rem;
+}
+
+.passage-contents-panel {
+  padding: 14px 16px 18px;
+}
+
+.passage-contents-panel > button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  min-height: 64px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  color: var(--ink);
+  text-align: left;
+  font: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+.passage-contents-panel > button:hover,
+.passage-contents-panel > button:focus-visible,
+.passage-recent-list button:hover,
+.passage-recent-list button:focus-visible {
+  background: var(--hover);
+}
+
+.passage-contents-panel > button > span:first-child {
+  display: grid;
+  gap: 3px;
+}
+
+.passage-contents-panel strong,
+.passage-recent-list span {
+  font-family:
+    "Iowan Old Style",
+    "Palatino Linotype",
+    "Book Antiqua",
+    "Times New Roman",
+    serif;
+  font-size: 0.96rem;
+}
+
+.passage-contents-panel small,
+.passage-recent-list small {
+  color: var(--muted);
+  font-size: 0.62rem;
+}
+
+.passage-contents-panel > button > span:last-child {
+  color: var(--accent);
+  font-family: Georgia, serif;
+  font-size: 1.4rem;
+}
+
+.passage-recent-list {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.passage-recent-list button {
+  display: grid;
+  width: 100%;
+  min-height: 62px;
+  gap: 4px;
+  align-content: center;
+  padding: 10px 20px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+  text-align: left;
+  font: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+.passage-recent-list button[aria-current="page"] {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+.passage-recent-empty {
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  margin: 0;
+  padding: 28px 18px 32px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  text-align: center;
+}
+
+.passage-recent-empty small {
+  font-size: 0.61rem;
+}
+
+.passage-navigator-error {
+  border-top: 1px solid var(--line);
 }
 
 .scripture-browser-menu {
