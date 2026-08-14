@@ -155,3 +155,16 @@ Attribution is retained in the application, this source record, each generated
 book's metadata, and the generated manifest. No endorsement by
 OpenGreekAndLatin, First1KGreek, the University of Leipzig, or the source
 editors is implied.
+
+## New Testament enrichment layers
+
+Optional lexical and syntax metadata never replace or rewrite the canonical
+SBLGNT display text. Both layers are limited to SBLGNT Progressive, Challenge,
+and Open Text readings and are lazy-loaded by book.
+
+- STEP Bible lexical metadata is documented in
+  `docs/09_STEP_LEXICAL_DATA.md`.
+- MACULA Greek syntax metadata is documented in
+  `docs/10_MACULA_SYNTAX_DATA.md`.
+
+The Septuagint does not currently receive either enrichment layer.

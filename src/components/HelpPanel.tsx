@@ -19,6 +19,11 @@ export function HelpPanel({ showGloss }: { showGloss: boolean }) {
         <p>English glosses follow the English-aids setting. Septuagint readings do not yet include lexical popups.</p>
       </section>
       <section>
+        <h4>Σύνταξις</h4>
+        <p>Tap the small verse number to select a verse, then choose Σύνταξις · Insight. The panel groups the canonical Greek verse by clause and syntactic role; it never opens from an ordinary word tap.</p>
+        <p>Syntax assistance is available for SBLGNT Progressive, Challenge, and Open Text reading. English labels follow the English-aids setting.</p>
+      </section>
+      <section>
         <h4>Λέξεις γραμματικαί</h4>
         <p>The compact line follows Randall Buth’s Greek-first grammatical terminology. It distinguishes indicative time, ὁ χρόνος, from aspect in other forms, ἡ ὄψις.</p>
         <div className="grammar-guide" role="list">

@@ -11,6 +11,7 @@ import { VoiceText } from './components/VoiceText'
 import { HelpPanel } from './components/HelpPanel'
 import { LexicalPopup } from './components/LexicalPopup'
 import { LexicalWord } from './components/LexicalWord'
+import { InsightPanel } from './components/InsightPanel'
 import {
   loadPsalm,
   resolveDailyOffice,
@@ -80,6 +81,11 @@ import {
   type NtLexicalBook,
 } from './models/lexical'
 import { loadSblgntLexicalBook } from './stepLexicalLibrary'
+import { loadSblgntSyntaxBook } from './maculaSyntaxLibrary'
+import {
+  syntaxAssistanceApplies,
+  type NtSyntaxBook,
+} from './models/syntax'
 import { createSingleFlightGuard } from './singleFlight'
 import {
   explicitVerseSelectionAfterMove,
@@ -108,6 +114,7 @@ import './pass2.css'
 import './pass3.css'
 import './artwork.css'
 import './lexical.css'
+import './syntax.css'
 
 type AppView = 'office' | 'reader'
 type ReaderOptions = { showGloss: boolean; showProgressive: boolean; showChallenge: boolean; showPsalm: boolean }
@@ -133,6 +140,10 @@ type FreeReadingLocation = {
 type LoadedLexicalBook = {
   bookId: string
   data: NtLexicalBook | null
+}
+type LoadedSyntaxBook = {
+  bookId: string
+  data: NtSyntaxBook | null
 }
 
 const OPTIONS_KEY = 'anagnosis.options.v1'
@@ -395,6 +406,11 @@ export default function App() {
   const [lexicalSelection,setLexicalSelection] =
     useState<LexicalWordInfo|null>(null)
   const [selectedVerseId,setSelectedVerseId] = useState<string|null>(null)
+  const [loadedSyntaxBook,setLoadedSyntaxBook] =
+    useState<LoadedSyntaxBook>({ bookId: '', data: null })
+  const [insightOpen,setInsightOpen] = useState(false)
+  const [syntaxLoading,setSyntaxLoading] = useState(false)
+  const [syntaxError,setSyntaxError] = useState<string|null>(null)
   const [selectedWeekday,setSelectedWeekday] = useState(today.getDay())
   const verseElements = useRef<Record<string,HTMLElement|null>>({})
   const menuTrigger = useRef<HTMLButtonElement|null>(null)
@@ -404,6 +420,8 @@ export default function App() {
   >(null)
   const freeReadingBoundaryGuard = useRef(createSingleFlightGuard())
   const lexicalAnchor = useRef<HTMLButtonElement|null>(null)
+  const insightAction = useRef<HTMLButtonElement|null>(null)
+  const insightRequest = useRef(0)
 
   const progressivePlan = useSelectedReadingPlan(
     'progressive',
@@ -539,6 +557,18 @@ export default function App() {
     && loadedLexicalBook.bookId === displayedBookId
     ? loadedLexicalBook.data
     : null
+  const syntaxEnabled = displayedBookId !== null
+    && syntaxAssistanceApplies(displayedCorpus, lexicalContext)
+  const syntaxBook = syntaxEnabled
+    && loadedSyntaxBook.bookId === displayedBookId
+    ? loadedSyntaxBook.data
+    : null
+  const selectedInsightVerse = selectedVerseId && scriptureReading
+    ? scriptureReading.verses.find((verse) => verse.id === selectedVerseId) ?? null
+    : null
+  const insightReference = selectedInsightVerse
+    ? `${displayedBook?.code ?? displayedEntry?.reference ?? ''} ${selectedInsightVerse.chapter}:${selectedInsightVerse.number}`.trim()
+    : ''
   const scriptureBrowserBooks = booksForCorpus(scriptureBrowserCorpus)
   const scriptureBrowserBook = bookForCorpus(
     scriptureBrowserCorpus,
@@ -587,18 +617,58 @@ export default function App() {
     })
   }, [displayedEntry, displayedVerseIndex, view])
 
+  function selectVerse(verseId: string | null) {
+    insightRequest.current += 1
+    setInsightOpen(false)
+    setSyntaxLoading(false)
+    setSyntaxError(null)
+    setSelectedVerseId(verseId)
+  }
+
   const closeLexicalPopup = useCallback(() => {
     const anchor = lexicalAnchor.current
     setLexicalSelection(null)
     requestAnimationFrame(() => anchor?.focus())
   }, [])
 
+  const closeInsight = useCallback(() => {
+    setInsightOpen(false)
+    requestAnimationFrame(() => insightAction.current?.focus())
+  }, [])
+
+  async function openInsight() {
+    if (!syntaxEnabled || !displayedBookId || !selectedInsightVerse) return
+    setLexicalSelection(null)
+    setInsightOpen(true)
+    setSyntaxError(null)
+    if (loadedSyntaxBook.bookId === displayedBookId && loadedSyntaxBook.data) {
+      setSyntaxLoading(false)
+      return
+    }
+
+    const request = ++insightRequest.current
+    setSyntaxLoading(true)
+    try {
+      const data = await loadSblgntSyntaxBook(displayedBookId)
+      if (request !== insightRequest.current) return
+      setLoadedSyntaxBook({ bookId: displayedBookId, data })
+      setSyntaxLoading(false)
+    } catch (error) {
+      if (request !== insightRequest.current) return
+      setLoadedSyntaxBook({ bookId: displayedBookId, data: null })
+      setSyntaxLoading(false)
+      setSyntaxError(
+        error instanceof Error ? error.message : 'Unable to load syntax data.',
+      )
+    }
+  }
+
   function openLexicalPopup(
     info: LexicalWordInfo,
     anchor: HTMLButtonElement,
   ) {
     lexicalAnchor.current = anchor
-    setSelectedVerseId(null)
+    selectVerse(null)
     setLexicalSelection(info)
   }
 
@@ -625,7 +695,7 @@ export default function App() {
 
   function openEntry(entry: OfficeEntry){
     setLexicalSelection(null)
-    setSelectedVerseId(null)
+    selectVerse(null)
     const stream=streamForEntry(entry)
     const nextIndex=entry.kind==='scripture'&&stream
       ? restoredVerseIndex(
@@ -659,7 +729,7 @@ export default function App() {
     setLexicalSelection(null)
     const nextIndex=Math.min(Math.max(index,0),scriptureReading.verses.length-1)
     const nextVerse=scriptureReading.verses[nextIndex]
-    setSelectedVerseId(explicitVerseSelectionAfterMove(nextVerse.id,intent))
+    selectVerse(explicitVerseSelectionAfterMove(nextVerse.id,intent))
     if(nextIndex===displayedVerseIndex){
       verseElements.current[nextVerse.id]?.scrollIntoView({
         behavior:'auto',
@@ -697,7 +767,7 @@ export default function App() {
         item.psalmNumber ? await loadPsalm(item.psalmNumber) : null
       )
       if (!reading) throw new Error('Unable to load this reading.')
-      setSelectedVerseId(null)
+      selectVerse(null)
 
       if (item.isCurrent) {
         setFreeReadingEntry(null)
@@ -784,7 +854,7 @@ export default function App() {
 
       if (nextReading) {
         if (item.streamId === 'psalm') setPsalmReading(nextReading)
-        setSelectedVerseId(null)
+        selectVerse(null)
         pendingScroll.current = { kind: 'top' }
         setFreeReadingEntry(null)
         setReviewEntry(null)
@@ -826,7 +896,7 @@ export default function App() {
         item.psalmNumber ? await loadPsalm(item.psalmNumber) : null
       )
       if (!reading) throw new Error('Unable to restore this reading.')
-      setSelectedVerseId(null)
+      selectVerse(null)
 
       setProgress((current) => {
         const undone = undoLastStreamCompletion(
@@ -910,7 +980,7 @@ export default function App() {
       const verse = reading.verses[verseIndex]
       if (!verse) return 'The destination has no verses.'
       setLexicalSelection(null)
-      setSelectedVerseId(null)
+      selectVerse(null)
       pendingScroll.current = { kind: 'verse', verseId: verse.id }
       setFreeReadingEntry(reading)
       setFreeReadingVerseIndex(verseIndex)
@@ -1008,7 +1078,7 @@ export default function App() {
         0,
       )
       const verseId = reading.verses[verseIndex]?.id
-      setSelectedVerseId(null)
+      selectVerse(null)
       pendingScroll.current = verseId
         ? { kind: 'verse', verseId }
         : { kind: 'top' }
@@ -1063,7 +1133,7 @@ export default function App() {
       ))
       setScriptureBrowserOpen(false)
       setPlanSelectorStream(null)
-      setSelectedVerseId(null)
+      selectVerse(null)
       setActiveEntry(null)
       setReviewEntry(null)
       setFreeReadingEntry(null)
@@ -1081,7 +1151,7 @@ export default function App() {
     const firstReading = planCandidates[streamId][0]
 
     if (view === 'reader' && firstReading) {
-      setSelectedVerseId(null)
+      selectVerse(null)
       pendingScroll.current = { kind: 'top' }
       setFreeReadingEntry(null)
       setReviewEntry(null)
@@ -1119,7 +1189,7 @@ export default function App() {
 
     await freeReadingBoundaryGuard.current.run(async () => {
       setLexicalSelection(null)
-      setSelectedVerseId(null)
+      selectVerse(null)
       setFreeReadingBoundaryLoading(direction)
       setFreeReadingBoundaryError(null)
       try {
@@ -1165,7 +1235,7 @@ export default function App() {
     setPlanSelectorStream(null)
     setFreeReadingBoundaryError(null)
     setLexicalSelection(null)
-    setSelectedVerseId(null)
+    selectVerse(null)
     setView('office')
   }
   function completeActiveEntry(){
@@ -1251,7 +1321,7 @@ export default function App() {
       <OfficeReadingButton entry={calendarOffice.closingPrayer} icon="lampstand" showGloss={options.showGloss} complete={markedToday(calendarOffice.closingPrayer.id)} onOpen={openEntry}/>
     </div>
     <HomeReadingDock showGloss={options.showGloss} onOpenFreeReading={()=>void openFreeReading()} onOpenPrayer={openEntry}/>
-    {menuOpen&&<div className="options-backdrop" role="presentation" onPointerDown={e=>{if(e.target===e.currentTarget)setMenuOpen(false)}}><section className="options-menu office-options-menu" role="dialog" aria-modal="true"><header className="options-menu-header"><h2><VoiceText term={UI.options} showGloss={options.showGloss}/></h2><button className="options-close" type="button" onClick={()=>setMenuOpen(false)}>×</button></header><div className="options-list">{([{key:'showGloss',term:UI.englishAids},{key:'showProgressive',term:UI.progressiveReading},{key:'showChallenge',term:UI.challengeReading},{key:'showPsalm',term:UI.psalm}] as const).map(({key,term})=><label className="option-switch" key={key}><VoiceText term={term} showGloss={options.showGloss}/><input type="checkbox" checked={options[key]} onChange={(e:ChangeEvent<HTMLInputElement>)=>setOptions(c=>({...c,[key]:e.target.checked}))}/><span className="switch-track" aria-hidden="true"/></label>)}<div className="plan-options" aria-label="Reading plan books"><button className="plan-option" type="button" onClick={()=>openPlanSelector('progressive')}><span><strong>Πρόοδος</strong>{options.showGloss&&<small>Progressive book</small>}</span><span><em>{progressiveBook?.titleGreek ?? 'Γραφαί'}</em><small>{progressiveBook?.code}</small></span><span aria-hidden="true">›</span></button><button className="plan-option" type="button" onClick={()=>openPlanSelector('challenge')}><span><strong>Ἄσκησις</strong>{options.showGloss&&<small>Challenge book</small>}</span><span><em>{challengeBook?.titleGreek ?? 'Γραφαί'}</em><small>{challengeBook?.code}</small></span><span aria-hidden="true">›</span></button></div></div><HelpPanel showGloss={options.showGloss}/><section className="about-panel" aria-labelledby="about-title"><h3 id="about-title"><span>Περί</span>{options.showGloss&&<small>About</small>}</h3><div className="about-sources"><p>Ἀνάγνωσις is a daily Greek Scripture reader with completion-based plans and open-text reading.</p><p>SBLGNT 1.2 · CC BY 4.0</p><p>LXX Swete / First1KGreek · CC BY-SA 4.0</p><p>Lexical metadata: <a href="https://www.stepbible.org/" target="_blank" rel="noreferrer">STEP Bible</a> TAGNT, TEGMC, and TBESG · CC BY 4.0</p><p>Word assistance applies only to SBLGNT Progressive, Challenge, and Open Text readings; LXX lexical assistance is not currently included.</p><p>Διδαχὴ 9–10 and traditional Greek prayers · public domain</p></div></section></section></div>}
+    {menuOpen&&<div className="options-backdrop" role="presentation" onPointerDown={e=>{if(e.target===e.currentTarget)setMenuOpen(false)}}><section className="options-menu office-options-menu" role="dialog" aria-modal="true"><header className="options-menu-header"><h2><VoiceText term={UI.options} showGloss={options.showGloss}/></h2><button className="options-close" type="button" onClick={()=>setMenuOpen(false)}>×</button></header><div className="options-list">{([{key:'showGloss',term:UI.englishAids},{key:'showProgressive',term:UI.progressiveReading},{key:'showChallenge',term:UI.challengeReading},{key:'showPsalm',term:UI.psalm}] as const).map(({key,term})=><label className="option-switch" key={key}><VoiceText term={term} showGloss={options.showGloss}/><input type="checkbox" checked={options[key]} onChange={(e:ChangeEvent<HTMLInputElement>)=>setOptions(c=>({...c,[key]:e.target.checked}))}/><span className="switch-track" aria-hidden="true"/></label>)}<div className="plan-options" aria-label="Reading plan books"><button className="plan-option" type="button" onClick={()=>openPlanSelector('progressive')}><span><strong>Πρόοδος</strong>{options.showGloss&&<small>Progressive book</small>}</span><span><em>{progressiveBook?.titleGreek ?? 'Γραφαί'}</em><small>{progressiveBook?.code}</small></span><span aria-hidden="true">›</span></button><button className="plan-option" type="button" onClick={()=>openPlanSelector('challenge')}><span><strong>Ἄσκησις</strong>{options.showGloss&&<small>Challenge book</small>}</span><span><em>{challengeBook?.titleGreek ?? 'Γραφαί'}</em><small>{challengeBook?.code}</small></span><span aria-hidden="true">›</span></button></div></div><HelpPanel showGloss={options.showGloss}/><section className="about-panel" aria-labelledby="about-title"><h3 id="about-title"><span>Περί</span>{options.showGloss&&<small>About</small>}</h3><div className="about-sources"><p>Ἀνάγνωσις is a daily Greek Scripture reader with completion-based plans and open-text reading.</p><p>SBLGNT 1.2 · CC BY 4.0</p><p>LXX Swete / First1KGreek · CC BY-SA 4.0</p><p>Lexical metadata: <a href="https://www.stepbible.org/" target="_blank" rel="noreferrer">STEP Bible</a> TAGNT, TEGMC, and TBESG · CC BY 4.0</p><p>Syntax metadata: <a href="https://github.com/Clear-Bible/macula-greek" target="_blank" rel="noreferrer">MACULA Greek Linguistic Datasets</a> · CC BY 4.0</p><p>Word and syntax assistance apply only to SBLGNT Progressive, Challenge, and Open Text readings; LXX assistance is not currently included.</p><p>Διδαχὴ 9–10 and traditional Greek prayers · public domain</p></div></section></section></div>}
     {passageNavigatorDialog}
     {scriptureBrowserDialog}
   </section></main>
@@ -1289,7 +1359,7 @@ export default function App() {
     {displayedEntry.kind==='prayer'
       ? <article className="prayer-reader" lang="grc">
           <p className="prayer-section">{displayedEntry.sectionGreek}</p>
-          {isWeekdayPrayer&&<nav className="weekday-tabs">{weekdayTabs.map((day,index)=><button className={['weekday-tab',index===selectedWeekday?'is-selected':'',index===today.getDay()?'is-today':''].filter(Boolean).join(' ')} type="button" key={day.short} onClick={()=>{pendingScroll.current={kind:'top'};setSelectedVerseId(null);setSelectedWeekday(index);setActiveEntry(weeklyPrayerCycle[index])}}>{day.short}</button>)}</nav>}
+          {isWeekdayPrayer&&<nav className="weekday-tabs">{weekdayTabs.map((day,index)=><button className={['weekday-tab',index===selectedWeekday?'is-selected':'',index===today.getDay()?'is-today':''].filter(Boolean).join(' ')} type="button" key={day.short} onClick={()=>{pendingScroll.current={kind:'top'};selectVerse(null);setSelectedWeekday(index);setActiveEntry(weeklyPrayerCycle[index])}}>{day.short}</button>)}</nav>}
           <div className="prayer-meta">
             {displayedEntry.weekdayGreek&&<p className="prayer-weekday">{displayedEntry.weekdayGreek}</p>}
             <h1 className="prayer-name">{displayedEntry.titleGreek}</h1>
@@ -1312,6 +1382,7 @@ export default function App() {
             : <div className="verse-list">{displayedEntry.verses.map((verse,index)=>{const selected=isExplicitVerseSelected(selectedVerseId,verse.id);return <p className={index===displayedVerseIndex?'verse current-verse':'verse'} data-verse-selected={selected||undefined} id={verse.id} key={verse.id} ref={el=>{verseElements.current[verse.id]=el}} onClick={()=>moveToVerse(index)}><button className="verse-number" type="button" aria-label={`Στίχος ${verse.number}`} aria-pressed={selected} onClick={(e:MouseEvent<HTMLButtonElement>)=>{e.stopPropagation();moveToVerse(index,'verse-number')}}>{verse.number}</button>{renderVerseText(verse)}</p>})}</div>}
         </article>}
     {freeReadingBoundaryError&&<p className="free-reading-boundary-error" role="alert">{freeReadingBoundaryError}</p>}
+    {syntaxEnabled&&selectedInsightVerse&&<button className="insight-action" type="button" ref={insightAction} aria-haspopup="dialog" onClick={()=>void openInsight()}><span>Σύνταξις</span>{options.showGloss&&<small>Insight</small>}</button>}
     {scriptureReading&&<nav className="reader-navigation" aria-label="Πλοήγησις στίχων">
       <button className="navigation-button navigation-button-back" type="button" aria-busy={freeReadingBoundaryLoading==='previous'} disabled={freeReadingBoundaryLoading!==null||(displayedVerseIndex===0&&(!freeReadingEntry||!previousFreeReadingBoundary))} onClick={()=>{if(freeReadingEntry&&displayedVerseIndex===0)void navigateFreeReadingBoundary('previous');else moveToVerse(displayedVerseIndex-1)}}><span className="navigation-chevron" aria-hidden="true">‹</span><span className="control-copy"><strong>{freeReadingBoundaryLoading==='previous'?'Ἀνοίγεται…':'Ὀπίσω'}</strong>{options.showGloss&&<small>{freeReadingBoundaryLoading==='previous'?'Opening…':freeReadingEntry&&displayedVerseIndex===0?previousFreeReadingBoundary?.kind==='book'?'Previous book':'Previous chapter':'Previous verse'}</small>}</span></button>
       <button className="navigation-button navigation-button-next" type="button" aria-busy={freeReadingBoundaryLoading==='next'} disabled={freeReadingBoundaryLoading!==null||(displayedVerseIndex===scriptureReading.verses.length-1&&(!freeReadingEntry||!nextFreeReadingBoundary))} onClick={()=>{if(freeReadingEntry&&displayedVerseIndex===scriptureReading.verses.length-1)void navigateFreeReadingBoundary('next');else moveToVerse(displayedVerseIndex+1)}}><span className="control-copy"><strong>{freeReadingBoundaryLoading==='next'?'Ἀνοίγεται…':freeReadingEntry&&displayedVerseIndex===scriptureReading.verses.length-1?'Πρόβαινε':'Ἔμπροσθεν'}</strong>{options.showGloss&&<small>{freeReadingBoundaryLoading==='next'?'Opening…':freeReadingEntry&&displayedVerseIndex===scriptureReading.verses.length-1?nextFreeReadingBoundary?.kind==='book'?'Next book':'Next chapter':'Next verse'}</small>}</span><span className="navigation-chevron" aria-hidden="true">›</span></button>
@@ -1355,5 +1426,6 @@ export default function App() {
     {passageNavigatorDialog}
     {scriptureBrowserDialog}
     {lexicalSelection&&<LexicalPopup info={lexicalSelection} anchor={lexicalAnchor} showGloss={options.showGloss} onClose={closeLexicalPopup}/>}
+    {insightOpen&&selectedInsightVerse&&<InsightPanel book={syntaxBook} error={syntaxError} loading={syntaxLoading} reference={insightReference} showGloss={options.showGloss} verse={selectedInsightVerse} onClose={closeInsight}/>}
   </main>
 }
