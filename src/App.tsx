@@ -6,7 +6,7 @@ import {
   useRef,
   useState,
 } from 'react'
-import type { ChangeEvent, MouseEvent } from 'react'
+import type { ChangeEvent, FormEvent, MouseEvent } from 'react'
 import { VoiceText } from './components/VoiceText'
 import { HelpPanel } from './components/HelpPanel'
 import { LexicalPopup } from './components/LexicalPopup'
@@ -65,6 +65,13 @@ import {
   loadSblgntChapter,
   loadScriptureBook,
 } from './scriptureLibrary'
+import {
+  formatPassageReference,
+  loadRecentPassages,
+  parsePassageReference,
+  recordRecentPassage,
+  type PassageDestination,
+} from './passageNavigator'
 import type { ScriptureReferencePart } from './models/scripture'
 import {
   lexicalAssistanceApplies,
@@ -109,6 +116,8 @@ type OfficeIconKind = 'prayer' | 'codex' | 'lamp' | 'lyre' | 'lampstand'
 type OfficeDate = { iso: string; day: number; monthGreek: string; year: number; english: string; weekdayGreek: string }
 type ReaderBannerKind = 'altar' | 'meal' | 'after-meal' | 'psalm'
 type ScriptureBrowserView = 'books' | 'chapters'
+type ScriptureBrowserContext = 'contents' | 'free-reading'
+type PassageNavigatorView = 'contents' | 'recent'
 type LoadedReadingPlan = {
   key: string
   readings: ScriptureReading[]
@@ -128,6 +137,7 @@ type LoadedLexicalBook = {
 
 const OPTIONS_KEY = 'anagnosis.options.v1'
 const FREE_READING_LOCATION_KEY = 'anagnosis.free-reading-location.v1'
+const RECENT_PASSAGES_KEY = 'anagnosis.recent-passages.v1'
 const PSALM_COUNT = 150
 const GREEK_MONTHS = ['Ἰανουαρίου','Φεβρουαρίου','Μαρτίου','Ἀπριλίου','Μαΐου','Ἰουνίου','Ἰουλίου','Αὐγούστου','Σεπτεμβρίου','Ὀκτωβρίου','Νοεμβρίου','Δεκεμβρίου'] as const
 const GREEK_WEEKDAYS = ['Κυριακή','Δευτέρα','Τρίτη','Τετάρτη','Πέμπτη','Παρασκευή','Σάββατον'] as const
@@ -353,12 +363,24 @@ export default function App() {
     useState<ScriptureCorpusId>('sblgnt')
   const [scriptureBrowserView,setScriptureBrowserView] =
     useState<ScriptureBrowserView>('books')
+  const [scriptureBrowserContext,setScriptureBrowserContext] =
+    useState<ScriptureBrowserContext>('free-reading')
   const [scriptureBrowserBookId,setScriptureBrowserBookId] =
     useState<string|null>(null)
   const [scriptureBrowserLoadingKey,setScriptureBrowserLoadingKey] =
     useState<string|null>(null)
   const [scriptureBrowserError,setScriptureBrowserError] =
     useState<string|null>(null)
+  const [passageNavigatorOpen,setPassageNavigatorOpen] = useState(false)
+  const [passageNavigatorView,setPassageNavigatorView] =
+    useState<PassageNavigatorView>('contents')
+  const [passageReferenceInput,setPassageReferenceInput] = useState('')
+  const [passageNavigatorLoading,setPassageNavigatorLoading] = useState(false)
+  const [passageNavigatorError,setPassageNavigatorError] =
+    useState<string|null>(null)
+  const [recentPassages,setRecentPassages] = useState<PassageDestination[]>(
+    ()=>loadRecentPassages(localStorage.getItem(RECENT_PASSAGES_KEY)),
+  )
   const [planSelectorStream,setPlanSelectorStream] =
     useState<ReadingPlanStreamId|null>(null)
   const [historyLoadingId,setHistoryLoadingId] = useState<string|null>(null)
@@ -468,6 +490,22 @@ export default function App() {
     ? bookIdForReading(scriptureReading)
     : null
   const displayedBook = bookForCorpus(displayedCorpus, displayedBookId)
+  const displayedVerseNumber = displayedVerse
+    && Number.isInteger(Number(displayedVerse.number))
+    && Number(displayedVerse.number) > 0
+    ? Number(displayedVerse.number)
+    : undefined
+  const currentPassageDestination: PassageDestination | null =
+    scriptureReading && displayedBookId && displayedVerse
+      ? {
+          corpus: displayedCorpus,
+          bookId: displayedBookId,
+          chapter: displayedVerse.chapter,
+          ...(displayedVerseNumber === undefined
+            ? {}
+            : { verseNumber: displayedVerseNumber }),
+        }
+      : null
   const previousFreeReadingBoundary = freeReadingEntry
     && displayedBookId
     && displayedVerse
@@ -509,6 +547,9 @@ export default function App() {
   const chapterGroups = useMemo(()=>scriptureReading ? groupVersesByChapter(scriptureReading.verses) : [],[scriptureReading])
 
   useEffect(()=>{ localStorage.setItem(OPTIONS_KEY,JSON.stringify(options)) },[options])
+  useEffect(()=>{
+    localStorage.setItem(RECENT_PASSAGES_KEY,JSON.stringify(recentPassages))
+  },[recentPassages])
   useEffect(()=>saveProgress(progress),[progress])
   useEffect(()=>{ if(!options.showPsalm)return; let cancelled=false; loadPsalm(psalmNumber).then(r=>{if(!cancelled){setPsalmReading(r);setPsalmError(null)}}).catch((e:unknown)=>{if(!cancelled)setPsalmError(e instanceof Error?e.message:'Unable to load the Psalm.')}); return()=>{cancelled=true} },[options.showPsalm,psalmNumber])
   useEffect(() => {
@@ -606,6 +647,7 @@ export default function App() {
     setReviewEntry(null)
     setReaderMenuOpen(false)
     setReadHistoryOpen(false)
+    setPassageNavigatorOpen(false)
     setScriptureBrowserOpen(false)
     setCurrentVerseIndex(nextIndex)
     if(entry.id.startsWith('weekday-prayer:'))setSelectedWeekday(today.getDay())
@@ -816,13 +858,130 @@ export default function App() {
       setHistoryUndoingId(null)
     }
   }
+  function rememberPassage(destination: PassageDestination) {
+    setRecentPassages((current) =>
+      recordRecentPassage(current, destination),
+    )
+  }
+  async function openPassageDestination(
+    destination: PassageDestination,
+  ): Promise<string | null> {
+    const book = bookForCorpus(destination.corpus, destination.bookId)
+    if (!book) return 'That Scripture book is not available.'
+
+    setFreeReadingBoundaryError(null)
+
+    const canPreserveDisplayedReading = (
+      destination.verseNumber !== undefined
+      && scriptureReading !== null
+      && displayedBookId === destination.bookId
+      && displayedCorpus === destination.corpus
+    )
+    const displayedDestinationIndex = canPreserveDisplayedReading
+      ? scriptureReading.verses.findIndex((verse) =>
+          String(verse.chapter) === String(destination.chapter)
+          && String(verse.number) === String(destination.verseNumber),
+        )
+      : -1
+
+    if (displayedDestinationIndex >= 0) {
+      moveToVerse(displayedDestinationIndex)
+      rememberPassage(destination)
+      setPassageNavigatorOpen(false)
+      setScriptureBrowserOpen(false)
+      setReaderMenuOpen(false)
+      setReadHistoryOpen(false)
+      return null
+    }
+
+    try {
+      const reading = destination.corpus === 'lxx'
+        ? await loadLxxChapter(destination.bookId, destination.chapter)
+        : await loadSblgntChapter(destination.bookId, destination.chapter)
+      const verseIndex = destination.verseNumber === undefined
+        ? 0
+        : reading.verses.findIndex(
+            (verse) => String(verse.number) === String(destination.verseNumber),
+          )
+      if (verseIndex < 0) {
+        return `${formatPassageReference(destination)} is not available in this chapter.`
+      }
+
+      const verse = reading.verses[verseIndex]
+      if (!verse) return 'The destination has no verses.'
+      setLexicalSelection(null)
+      setSelectedVerseId(null)
+      pendingScroll.current = { kind: 'verse', verseId: verse.id }
+      setFreeReadingEntry(reading)
+      setFreeReadingVerseIndex(verseIndex)
+      const location: FreeReadingLocation = {
+        corpus: destination.corpus,
+        bookId: destination.bookId,
+        chapter: destination.chapter,
+        verseId: verse.id,
+      }
+      setFreeReadingLocation(location)
+      saveFreeReadingLocation(location)
+      setReviewEntry(null)
+      setPassageNavigatorOpen(false)
+      setScriptureBrowserOpen(false)
+      setReaderMenuOpen(false)
+      setReadHistoryOpen(false)
+      rememberPassage(destination)
+      setView('reader')
+      return null
+    } catch (error) {
+      return error instanceof Error
+        ? error.message
+        : 'Unable to open this passage.'
+    }
+  }
+  function openPassageNavigator() {
+    if (!currentPassageDestination) return
+    setPassageReferenceInput(
+      formatPassageReference(currentPassageDestination),
+    )
+    setPassageNavigatorView('contents')
+    setPassageNavigatorError(null)
+    setReaderMenuOpen(false)
+    setReadHistoryOpen(false)
+    setScriptureBrowserOpen(false)
+    setPassageNavigatorOpen(true)
+  }
+  async function submitPassageReference(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const result = parsePassageReference(passageReferenceInput)
+    if (!result.destination) {
+      setPassageNavigatorError(result.error)
+      return
+    }
+
+    setPassageNavigatorError(null)
+    setPassageNavigatorLoading(true)
+    const error = await openPassageDestination(result.destination)
+    if (error) setPassageNavigatorError(error)
+    setPassageNavigatorLoading(false)
+  }
+  async function openRecentPassage(destination: PassageDestination) {
+    setPassageNavigatorError(null)
+    setPassageNavigatorLoading(true)
+    const error = await openPassageDestination(destination)
+    if (error) setPassageNavigatorError(error)
+    setPassageNavigatorLoading(false)
+  }
+  function openPassageContents() {
+    setPassageNavigatorOpen(false)
+    openScriptureBrowser()
+  }
   function openScriptureBrowser() {
     setPlanSelectorStream(null)
+    setScriptureBrowserContext('contents')
     setScriptureBrowserCorpus(displayedCorpus)
     setScriptureBrowserBookId(null)
     setScriptureBrowserView('books')
     setScriptureBrowserError(null)
     setReaderMenuOpen(false)
+    setPassageNavigatorOpen(false)
     setScriptureBrowserOpen(true)
   }
   async function openFreeReading() {
@@ -867,22 +1026,26 @@ export default function App() {
   }
   function openFreeReadingBrowser() {
     setPlanSelectorStream(null)
+    setScriptureBrowserContext('free-reading')
     setScriptureBrowserBookId(null)
     setScriptureBrowserView('books')
     setScriptureBrowserError(null)
     setMenuOpen(false)
     setReaderMenuOpen(false)
+    setPassageNavigatorOpen(false)
     setScriptureBrowserOpen(true)
   }
   function openPlanSelector(streamId: ReadingPlanStreamId) {
     const selection = progress.planSelections[streamId]
     setPlanSelectorStream(streamId)
+    setScriptureBrowserContext('free-reading')
     setScriptureBrowserCorpus(selection.corpus)
     setScriptureBrowserBookId(null)
     setScriptureBrowserView('books')
     setScriptureBrowserError(null)
     setMenuOpen(false)
     setReaderMenuOpen(false)
+    setPassageNavigatorOpen(false)
     setScriptureBrowserOpen(true)
   }
   function selectScriptureBrowserCorpus(corpus: ScriptureCorpusId) {
@@ -934,39 +1097,13 @@ export default function App() {
       `${scriptureBrowserCorpus}:${book.id}:${chapterNumber}`
     setScriptureBrowserLoadingKey(loadingKey)
     setScriptureBrowserError(null)
-    setFreeReadingBoundaryError(null)
-
     try {
-      const reading = scriptureBrowserCorpus === 'lxx'
-        ? await loadLxxChapter(book.id, chapterNumber)
-        : await loadSblgntChapter(book.id, chapterNumber)
-
-      setSelectedVerseId(null)
-      pendingScroll.current = { kind: 'top' }
-      setFreeReadingEntry(reading)
-      setFreeReadingVerseIndex(0)
-      const firstVerse = reading.verses[0]
-      if (firstVerse) {
-        const location: FreeReadingLocation = {
-          corpus: scriptureBrowserCorpus,
-          bookId: book.id,
-          chapter: chapterNumber,
-          verseId: firstVerse.id,
-        }
-        setFreeReadingLocation(location)
-        saveFreeReadingLocation(location)
-      }
-      setReviewEntry(null)
-      setScriptureBrowserOpen(false)
-      setReaderMenuOpen(false)
-      setReadHistoryOpen(false)
-      setView('reader')
-    } catch (error) {
-      setScriptureBrowserError(
-        error instanceof Error
-          ? error.message
-          : 'Unable to open this chapter.',
-      )
+      const error = await openPassageDestination({
+        corpus: scriptureBrowserCorpus,
+        bookId: book.id,
+        chapter: chapterNumber,
+      })
+      if (error) setScriptureBrowserError(error)
     } finally {
       setScriptureBrowserLoadingKey(null)
     }
@@ -1023,6 +1160,7 @@ export default function App() {
     setActiveEntry(null)
     setReaderMenuOpen(false)
     setReadHistoryOpen(false)
+    setPassageNavigatorOpen(false)
     setScriptureBrowserOpen(false)
     setPlanSelectorStream(null)
     setFreeReadingBoundaryError(null)
@@ -1054,10 +1192,35 @@ export default function App() {
   }
   function proceed(){ if(!activeStream)return; const next=activeStream==='psalm'?psalmReading:planCandidates[activeStream][progress.streams[activeStream].assignmentIndex]; if(next)openEntry(next) }
   const markedToday=(id:string)=>isDailySectionMarked(progress,officeDate.iso,id)
+  const passageNavigatorDialog = passageNavigatorOpen&&<div className="options-backdrop reader-overlay" role="presentation" onPointerDown={e=>{if(e.target===e.currentTarget)setPassageNavigatorOpen(false)}}>
+    <section className="options-menu passage-navigator-menu" role="dialog" aria-modal="true" aria-labelledby="passage-navigator-title">
+      <header className="options-menu-header">
+        <h2 id="passage-navigator-title"><VoiceText term={{greek:'Πλοήγησις',english:'Passage'}} showGloss={options.showGloss}/></h2>
+        <button className="options-close" type="button" onClick={()=>setPassageNavigatorOpen(false)}>×</button>
+      </header>
+      <form className="passage-reference-form" onSubmit={e=>void submitPassageReference(e)}>
+        <label htmlFor="passage-reference"><span>Τόπος</span>{options.showGloss&&<small>Reference</small>}</label>
+        <div className="passage-reference-control">
+          <input id="passage-reference" type="text" value={passageReferenceInput} placeholder="Mark 9 or Mark 9:2" autoCapitalize="words" autoComplete="off" spellCheck="false" disabled={passageNavigatorLoading} aria-invalid={Boolean(passageNavigatorError)} onChange={e=>{setPassageReferenceInput(e.target.value);setPassageNavigatorError(null)}}/>
+          <button type="submit" disabled={passageNavigatorLoading}><span>{passageNavigatorLoading?'…':'Ἄνοιξον'}</span>{options.showGloss&&<small>{passageNavigatorLoading?'Opening':'Open'}</small>}</button>
+        </div>
+      </form>
+      <nav className="passage-navigator-tabs" aria-label="Passage navigator views">
+        <button className={passageNavigatorView==='contents'?'is-selected':''} type="button" aria-pressed={passageNavigatorView==='contents'} onClick={()=>setPassageNavigatorView('contents')}><span>Περιεχόμενα</span>{options.showGloss&&<small>Contents</small>}</button>
+        <button className={passageNavigatorView==='recent'?'is-selected':''} type="button" aria-pressed={passageNavigatorView==='recent'} onClick={()=>setPassageNavigatorView('recent')}><span>Πρόσφατα</span>{options.showGloss&&<small>Recent</small>}</button>
+      </nav>
+      {passageNavigatorView==='contents'
+        ? <div className="passage-contents-panel"><button type="button" onClick={openPassageContents}><span><strong>Γραφαί</strong>{options.showGloss&&<small>Browse books and chapters</small>}</span><span aria-hidden="true">›</span></button></div>
+        : recentPassages.length
+          ? <div className="passage-recent-list">{recentPassages.map((destination)=>{const book=bookForCorpus(destination.corpus,destination.bookId);const reference=formatPassageReference(destination);const isCurrent=currentPassageDestination!==null&&currentPassageDestination.corpus===destination.corpus&&currentPassageDestination.bookId===destination.bookId&&String(currentPassageDestination.chapter)===String(destination.chapter)&&currentPassageDestination.verseNumber===destination.verseNumber;return <button type="button" key={`${destination.corpus}:${destination.bookId}:${String(destination.chapter)}`} aria-current={isCurrent?'page':undefined} disabled={passageNavigatorLoading} onClick={()=>void openRecentPassage(destination)}><span>{book?.titleGreek??destination.bookId}</span><small>{reference} · {destination.corpus==='lxx'?'Septuagint':'SBLGNT'}</small></button>})}</div>
+          : <p className="passage-recent-empty"><span>Οὔπω πρόσφατοι τόποι.</span>{options.showGloss&&<small>No recent passages yet.</small>}</p>}
+      {passageNavigatorError&&<p className="read-history-error passage-navigator-error" role="alert">{passageNavigatorError}</p>}
+    </section>
+  </div>
   const scriptureBrowserDialog = scriptureBrowserOpen&&<div className="options-backdrop reader-overlay" role="presentation" onPointerDown={e=>{if(e.target===e.currentTarget)setScriptureBrowserOpen(false)}}>
     <section className="options-menu scripture-browser-menu" role="dialog" aria-modal="true" aria-labelledby="scripture-browser-title">
       <header className="options-menu-header">
-        <h2 id="scripture-browser-title"><VoiceText term={planSelectorStream ? {greek:planSelectorStream==='progressive'?'Πρόοδος':'Ἄσκησις',english:planSelectorStream==='progressive'?'Choose Progressive book':'Choose Challenge book'} : {greek:'Γραφαί',english:'Free reading'}} showGloss={options.showGloss}/></h2>
+        <h2 id="scripture-browser-title"><VoiceText term={planSelectorStream ? {greek:planSelectorStream==='progressive'?'Πρόοδος':'Ἄσκησις',english:planSelectorStream==='progressive'?'Choose Progressive book':'Choose Challenge book'} : scriptureBrowserContext==='contents' ? {greek:'Περιεχόμενα',english:'Contents'} : {greek:'Γραφαί',english:'Free reading'}} showGloss={options.showGloss}/></h2>
         <button className="options-close" type="button" onClick={()=>setScriptureBrowserOpen(false)}>×</button>
       </header>
       <nav className="scripture-corpus-tabs" aria-label="Scripture corpus">
@@ -1089,6 +1252,7 @@ export default function App() {
     </div>
     <HomeReadingDock showGloss={options.showGloss} onOpenFreeReading={()=>void openFreeReading()} onOpenPrayer={openEntry}/>
     {menuOpen&&<div className="options-backdrop" role="presentation" onPointerDown={e=>{if(e.target===e.currentTarget)setMenuOpen(false)}}><section className="options-menu office-options-menu" role="dialog" aria-modal="true"><header className="options-menu-header"><h2><VoiceText term={UI.options} showGloss={options.showGloss}/></h2><button className="options-close" type="button" onClick={()=>setMenuOpen(false)}>×</button></header><div className="options-list">{([{key:'showGloss',term:UI.englishAids},{key:'showProgressive',term:UI.progressiveReading},{key:'showChallenge',term:UI.challengeReading},{key:'showPsalm',term:UI.psalm}] as const).map(({key,term})=><label className="option-switch" key={key}><VoiceText term={term} showGloss={options.showGloss}/><input type="checkbox" checked={options[key]} onChange={(e:ChangeEvent<HTMLInputElement>)=>setOptions(c=>({...c,[key]:e.target.checked}))}/><span className="switch-track" aria-hidden="true"/></label>)}<div className="plan-options" aria-label="Reading plan books"><button className="plan-option" type="button" onClick={()=>openPlanSelector('progressive')}><span><strong>Πρόοδος</strong>{options.showGloss&&<small>Progressive book</small>}</span><span><em>{progressiveBook?.titleGreek ?? 'Γραφαί'}</em><small>{progressiveBook?.code}</small></span><span aria-hidden="true">›</span></button><button className="plan-option" type="button" onClick={()=>openPlanSelector('challenge')}><span><strong>Ἄσκησις</strong>{options.showGloss&&<small>Challenge book</small>}</span><span><em>{challengeBook?.titleGreek ?? 'Γραφαί'}</em><small>{challengeBook?.code}</small></span><span aria-hidden="true">›</span></button></div></div><HelpPanel showGloss={options.showGloss}/><section className="about-panel" aria-labelledby="about-title"><h3 id="about-title"><span>Περί</span>{options.showGloss&&<small>About</small>}</h3><div className="about-sources"><p>Ἀνάγνωσις is a daily Greek Scripture reader with completion-based plans and open-text reading.</p><p>SBLGNT 1.2 · CC BY 4.0</p><p>LXX Swete / First1KGreek · CC BY-SA 4.0</p><p>Lexical metadata: <a href="https://www.stepbible.org/" target="_blank" rel="noreferrer">STEP Bible</a> TAGNT, TEGMC, and TBESG · CC BY 4.0</p><p>Word assistance applies only to SBLGNT Progressive, Challenge, and Open Text readings; LXX lexical assistance is not currently included.</p><p>Διδαχὴ 9–10 and traditional Greek prayers · public domain</p></div></section></section></div>}
+    {passageNavigatorDialog}
     {scriptureBrowserDialog}
   </section></main>
 
@@ -1114,10 +1278,9 @@ export default function App() {
       <button className="text-button" type="button" onClick={leaveReader}>
         <VoiceText term={{greek:'Οἶκος',english:'Home'}} showGloss={options.showGloss}/>
       </button>
-      <div className="reader-title">
-        <p>{displayedEntry.titleGreek}</p>
-        {options.showGloss&&<span>{displayedEntry.reference}</span>}
-      </div>
+      {scriptureReading
+        ? <button className="reader-title passage-navigator-trigger" type="button" aria-haspopup="dialog" aria-label={`Open passage navigator, ${currentPassageDestination?formatPassageReference(currentPassageDestination):displayedEntry.reference}`} onClick={openPassageNavigator}><p>{displayedEntry.titleGreek}</p>{options.showGloss&&<span>{displayedEntry.reference}</span>}</button>
+        : <div className="reader-title"><p>{displayedEntry.titleGreek}</p>{options.showGloss&&<span>{displayedEntry.reference}</span>}</div>}
       <div className="reader-header-actions">
         {scriptureReading&&<p className="reader-progress">{displayedVerseIndex+1} / {scriptureReading.verses.length}</p>}
         {activeStream?<button className="reader-menu-trigger icon-button" type="button" aria-label="Ἐπιλογαὶ ἀναγνώσεως" onClick={()=>setReaderMenuOpen(true)}><MenuIcon/></button>:freeReadingEntry&&<button className="reader-menu-trigger icon-button" type="button" aria-label="Γραφαί · Free reading contents" onClick={openFreeReadingBrowser}><BookIcon/></button>}
@@ -1189,6 +1352,7 @@ export default function App() {
         {historyError&&<p className="read-history-error" role="alert">{historyError}</p>}
       </section>
     </div>}
+    {passageNavigatorDialog}
     {scriptureBrowserDialog}
     {lexicalSelection&&<LexicalPopup info={lexicalSelection} anchor={lexicalAnchor} showGloss={options.showGloss} onClose={closeLexicalPopup}/>}
   </main>
