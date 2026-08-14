@@ -7,10 +7,10 @@
   "portsAttributes": {
     "4173": {
       "label": "Anagnosis iPhone Preview",
-      "onAutoForward": "openBrowser",
+      "onAutoForward": "notify",
       "visibility": "public"
     }
   },
   "postCreateCommand": "npm ci && npm run build",
-  "postStartCommand": "nohup npm run preview -- --host 0.0.0.0 --port 4173 > /tmp/anagnosis-preview.log 2>&1 &"
+  "postAttachCommand": "if ! curl -fsS http://127.0.0.1:4173/ > /dev/null; then nohup npm run preview -- --host 0.0.0.0 --port 4173 > /tmp/anagnosis-preview.log 2>&1 & fi"
 }
