@@ -2,9 +2,11 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+const appBase = process.env.CODESPACES === 'true' ? '/' : '/Anagnosis/'
+
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/Anagnosis/',
+  base: appBase,
   plugins: [
     react(),
     VitePWA({
@@ -18,8 +20,8 @@ export default defineConfig({
         background_color: '#30231b',
         display: 'standalone',
         lang: 'grc',
-        start_url: '/Anagnosis/',
-        scope: '/Anagnosis/',
+        start_url: appBase,
+        scope: appBase,
         icons: [
           {
             src: 'icons/anagnosis-192.png',
