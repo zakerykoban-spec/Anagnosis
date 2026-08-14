@@ -74,6 +74,11 @@ import {
 } from './models/lexical'
 import { loadSblgntLexicalBook } from './stepLexicalLibrary'
 import { createSingleFlightGuard } from './singleFlight'
+import {
+  explicitVerseSelectionAfterMove,
+  isExplicitVerseSelected,
+  type VerseMoveIntent,
+} from './verseSelection'
 import { UI } from './ui/lexicon'
 import altarBanner from './assets/banners/banner-altar.webp'
 import afterMealBanner from './assets/banners/banner-meal-after.webp'
@@ -367,6 +372,7 @@ export default function App() {
     useState<LoadedLexicalBook>({ bookId: '', data: null })
   const [lexicalSelection,setLexicalSelection] =
     useState<LexicalWordInfo|null>(null)
+  const [selectedVerseId,setSelectedVerseId] = useState<string|null>(null)
   const [selectedWeekday,setSelectedWeekday] = useState(today.getDay())
   const verseElements = useRef<Record<string,HTMLElement|null>>({})
   const menuTrigger = useRef<HTMLButtonElement|null>(null)
@@ -551,16 +557,17 @@ export default function App() {
     anchor: HTMLButtonElement,
   ) {
     lexicalAnchor.current = anchor
+    setSelectedVerseId(null)
     setLexicalSelection(info)
   }
 
   function renderVerseText(verse: ScriptureVerse) {
     if (!lexicalEnabled || !lexicalBook) {
-      return <span>{verse.displayText}</span>
+      return <span className="verse-text">{verse.displayText}</span>
     }
     const surfaces = verse.displayText.split(/\s+/u).filter(Boolean)
     const words = lexicalWordsForVerse(lexicalBook, verse.id, surfaces)
-    return <span className="lexical-text">{surfaces.map((surface, index) => {
+    return <span className="lexical-text verse-text">{surfaces.map((surface, index) => {
       const info = words.get(index)
       return <span key={`${verse.id}:${index}`}>
         {info
@@ -577,6 +584,7 @@ export default function App() {
 
   function openEntry(entry: OfficeEntry){
     setLexicalSelection(null)
+    setSelectedVerseId(null)
     const stream=streamForEntry(entry)
     const nextIndex=entry.kind==='scripture'&&stream
       ? restoredVerseIndex(
@@ -604,11 +612,12 @@ export default function App() {
     setActiveEntry(entry)
     setView('reader')
   }
-  function moveToVerse(index:number){
+  function moveToVerse(index:number,intent:VerseMoveIntent='navigation'){
     if(!scriptureReading)return
     setLexicalSelection(null)
     const nextIndex=Math.min(Math.max(index,0),scriptureReading.verses.length-1)
     const nextVerse=scriptureReading.verses[nextIndex]
+    setSelectedVerseId(explicitVerseSelectionAfterMove(nextVerse.id,intent))
     if(nextIndex===displayedVerseIndex){
       verseElements.current[nextVerse.id]?.scrollIntoView({
         behavior:'auto',
@@ -646,6 +655,7 @@ export default function App() {
         item.psalmNumber ? await loadPsalm(item.psalmNumber) : null
       )
       if (!reading) throw new Error('Unable to load this reading.')
+      setSelectedVerseId(null)
 
       if (item.isCurrent) {
         setFreeReadingEntry(null)
@@ -732,6 +742,7 @@ export default function App() {
 
       if (nextReading) {
         if (item.streamId === 'psalm') setPsalmReading(nextReading)
+        setSelectedVerseId(null)
         pendingScroll.current = { kind: 'top' }
         setFreeReadingEntry(null)
         setReviewEntry(null)
@@ -773,6 +784,7 @@ export default function App() {
         item.psalmNumber ? await loadPsalm(item.psalmNumber) : null
       )
       if (!reading) throw new Error('Unable to restore this reading.')
+      setSelectedVerseId(null)
 
       setProgress((current) => {
         const undone = undoLastStreamCompletion(
@@ -837,6 +849,7 @@ export default function App() {
         0,
       )
       const verseId = reading.verses[verseIndex]?.id
+      setSelectedVerseId(null)
       pendingScroll.current = verseId
         ? { kind: 'verse', verseId }
         : { kind: 'top' }
@@ -887,6 +900,7 @@ export default function App() {
       ))
       setScriptureBrowserOpen(false)
       setPlanSelectorStream(null)
+      setSelectedVerseId(null)
       setActiveEntry(null)
       setReviewEntry(null)
       setFreeReadingEntry(null)
@@ -904,6 +918,7 @@ export default function App() {
     const firstReading = planCandidates[streamId][0]
 
     if (view === 'reader' && firstReading) {
+      setSelectedVerseId(null)
       pendingScroll.current = { kind: 'top' }
       setFreeReadingEntry(null)
       setReviewEntry(null)
@@ -926,6 +941,7 @@ export default function App() {
         ? await loadLxxChapter(book.id, chapterNumber)
         : await loadSblgntChapter(book.id, chapterNumber)
 
+      setSelectedVerseId(null)
       pendingScroll.current = { kind: 'top' }
       setFreeReadingEntry(reading)
       setFreeReadingVerseIndex(0)
@@ -966,6 +982,7 @@ export default function App() {
 
     await freeReadingBoundaryGuard.current.run(async () => {
       setLexicalSelection(null)
+      setSelectedVerseId(null)
       setFreeReadingBoundaryLoading(direction)
       setFreeReadingBoundaryError(null)
       try {
@@ -1010,6 +1027,7 @@ export default function App() {
     setPlanSelectorStream(null)
     setFreeReadingBoundaryError(null)
     setLexicalSelection(null)
+    setSelectedVerseId(null)
     setView('office')
   }
   function completeActiveEntry(){
@@ -1108,7 +1126,7 @@ export default function App() {
     {displayedEntry.kind==='prayer'
       ? <article className="prayer-reader" lang="grc">
           <p className="prayer-section">{displayedEntry.sectionGreek}</p>
-          {isWeekdayPrayer&&<nav className="weekday-tabs">{weekdayTabs.map((day,index)=><button className={['weekday-tab',index===selectedWeekday?'is-selected':'',index===today.getDay()?'is-today':''].filter(Boolean).join(' ')} type="button" key={day.short} onClick={()=>{pendingScroll.current={kind:'top'};setSelectedWeekday(index);setActiveEntry(weeklyPrayerCycle[index])}}>{day.short}</button>)}</nav>}
+          {isWeekdayPrayer&&<nav className="weekday-tabs">{weekdayTabs.map((day,index)=><button className={['weekday-tab',index===selectedWeekday?'is-selected':'',index===today.getDay()?'is-today':''].filter(Boolean).join(' ')} type="button" key={day.short} onClick={()=>{pendingScroll.current={kind:'top'};setSelectedVerseId(null);setSelectedWeekday(index);setActiveEntry(weeklyPrayerCycle[index])}}>{day.short}</button>)}</nav>}
           <div className="prayer-meta">
             {displayedEntry.weekdayGreek&&<p className="prayer-weekday">{displayedEntry.weekdayGreek}</p>}
             <h1 className="prayer-name">{displayedEntry.titleGreek}</h1>
@@ -1127,8 +1145,8 @@ export default function App() {
           {options.showGloss&&<p className="reader-reference">{displayedEntry.reference}</p>}
           {readerBannerKind&&<ReaderBanner kind={readerBannerKind}/>}
           {isLongForm
-            ? <div className="long-form-text">{chapterGroups.map(ch=><section className="long-form-chapter" key={ch.chapter}><span className="chapter-marker">{ch.chapter}</span><p>{ch.verses.map(verse=>{const index=displayedEntry.verses.findIndex(v=>v.id===verse.id);return <span className={index===displayedVerseIndex?'long-form-verse current-verse':'long-form-verse'} id={verse.id} key={verse.id} ref={el=>{verseElements.current[verse.id]=el}} onClick={()=>moveToVerse(index)}><button className="verse-number" type="button" onClick={(e:MouseEvent<HTMLButtonElement>)=>{e.stopPropagation();moveToVerse(index)}}>{verse.number}</button>{renderVerseText(verse)}{' '}</span>})}</p></section>)}</div>
-            : <div className="verse-list">{displayedEntry.verses.map((verse,index)=><p className={index===displayedVerseIndex?'verse current-verse':'verse'} id={verse.id} key={verse.id} ref={el=>{verseElements.current[verse.id]=el}} onClick={()=>moveToVerse(index)}><button className="verse-number" type="button" onClick={(e:MouseEvent<HTMLButtonElement>)=>{e.stopPropagation();moveToVerse(index)}}>{verse.number}</button>{renderVerseText(verse)}</p>)}</div>}
+            ? <div className="long-form-text">{chapterGroups.map(ch=><section className="long-form-chapter" key={ch.chapter}><span className="chapter-marker">{ch.chapter}</span><p>{ch.verses.map(verse=>{const index=displayedEntry.verses.findIndex(v=>v.id===verse.id);const selected=isExplicitVerseSelected(selectedVerseId,verse.id);return <span className={index===displayedVerseIndex?'long-form-verse current-verse':'long-form-verse'} data-verse-selected={selected||undefined} id={verse.id} key={verse.id} ref={el=>{verseElements.current[verse.id]=el}} onClick={()=>moveToVerse(index)}><button className="verse-number" type="button" aria-label={`Στίχος ${verse.number}`} aria-pressed={selected} onClick={(e:MouseEvent<HTMLButtonElement>)=>{e.stopPropagation();moveToVerse(index,'verse-number')}}>{verse.number}</button>{renderVerseText(verse)}{' '}</span>})}</p></section>)}</div>
+            : <div className="verse-list">{displayedEntry.verses.map((verse,index)=>{const selected=isExplicitVerseSelected(selectedVerseId,verse.id);return <p className={index===displayedVerseIndex?'verse current-verse':'verse'} data-verse-selected={selected||undefined} id={verse.id} key={verse.id} ref={el=>{verseElements.current[verse.id]=el}} onClick={()=>moveToVerse(index)}><button className="verse-number" type="button" aria-label={`Στίχος ${verse.number}`} aria-pressed={selected} onClick={(e:MouseEvent<HTMLButtonElement>)=>{e.stopPropagation();moveToVerse(index,'verse-number')}}>{verse.number}</button>{renderVerseText(verse)}</p>})}</div>}
         </article>}
     {freeReadingBoundaryError&&<p className="free-reading-boundary-error" role="alert">{freeReadingBoundaryError}</p>}
     {scriptureReading&&<nav className="reader-navigation" aria-label="Πλοήγησις στίχων">

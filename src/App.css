@@ -1255,6 +1255,8 @@
 }
 
 .verse-number {
+  position: relative;
+  z-index: 1;
   min-width: 26px;
   min-height: 32px;
   margin-top: 0.32em;
@@ -1270,6 +1272,23 @@
   font-weight: 750;
   line-height: 1;
   text-align: right;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.verse-number::before {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  content: '';
+  transform: translate(-50%, -50%);
+}
+
+.verse-text {
+  position: relative;
+  z-index: 2;
 }
 
 .prayer-reader {
