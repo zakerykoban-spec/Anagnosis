@@ -41,6 +41,40 @@ export function InsightPanel({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [onClose])
 
+  useEffect(() => {
+    const scrollY = window.scrollY
+    const bodyStyle = document.body.style
+    const rootStyle = document.documentElement.style
+    const previous = {
+      bodyPosition: bodyStyle.position,
+      bodyTop: bodyStyle.top,
+      bodyLeft: bodyStyle.left,
+      bodyRight: bodyStyle.right,
+      bodyWidth: bodyStyle.width,
+      bodyOverflow: bodyStyle.overflow,
+      rootOverflow: rootStyle.overflow,
+    }
+
+    bodyStyle.position = 'fixed'
+    bodyStyle.top = `-${scrollY}px`
+    bodyStyle.left = '0'
+    bodyStyle.right = '0'
+    bodyStyle.width = '100%'
+    bodyStyle.overflow = 'hidden'
+    rootStyle.overflow = 'hidden'
+
+    return () => {
+      bodyStyle.position = previous.bodyPosition
+      bodyStyle.top = previous.bodyTop
+      bodyStyle.left = previous.bodyLeft
+      bodyStyle.right = previous.bodyRight
+      bodyStyle.width = previous.bodyWidth
+      bodyStyle.overflow = previous.bodyOverflow
+      rootStyle.overflow = previous.rootOverflow
+      window.scrollTo({ top: scrollY, left: 0, behavior: 'auto' })
+    }
+  }, [])
+
   return <div
     className="insight-backdrop"
     role="presentation"

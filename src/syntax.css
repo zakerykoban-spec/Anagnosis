@@ -41,6 +41,7 @@
   inset: 0;
   display: grid;
   align-items: end;
+  overscroll-behavior: none;
   background: color-mix(in srgb, #241913 38%, transparent);
   animation: veil-in 140ms ease-out;
 }
@@ -51,6 +52,8 @@
   margin: 0 auto;
   padding: 20px max(22px, env(safe-area-inset-right)) max(22px, env(safe-area-inset-bottom)) max(22px, env(safe-area-inset-left));
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   border: 1px solid var(--line-strong);
   border-bottom: 0;
   border-radius: 16px 16px 0 0;

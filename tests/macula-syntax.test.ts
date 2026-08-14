@@ -97,9 +97,13 @@ test('syntax assistance is limited to approved SBLGNT reading surfaces', () => {
 test('Insight requires explicit verse-number selection and a separate action', () => {
   const app = fs.readFileSync('src/App.tsx', 'utf8')
   const css = fs.readFileSync('src/syntax.css', 'utf8')
+  const panel = fs.readFileSync('src/components/InsightPanel.tsx', 'utf8')
 
   assert.match(app, /moveToVerse\(index,'verse-number'\)/u)
   assert.match(app, /className="insight-action"[^>]*onClick=\{\(\)=>void openInsight\(\)\}/u)
   assert.doesNotMatch(app, /onDoubleClick|onContextMenu|onTouchStart/u)
   assert.match(css, /\.insight-action\s*\{[^}]*position:\s*fixed;/su)
+  assert.match(css, /\.insight-panel\s*\{[^}]*overscroll-behavior:\s*contain;/su)
+  assert.match(panel, /bodyStyle\.position = 'fixed'/u)
+  assert.match(panel, /window\.scrollTo\(\{ top: scrollY/u)
 })
