@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "pilot": true,
+  "books": [
+    {
+      "id": "genesis",
+      "files": [
+        {
+          "filename": "genesis-1.json",
+          "sha256": "3f22897bc9a76648a8061487294b469e9fead3f2fc0d8a64d5b2ea515a2e16dd"
+        },
+        {
+          "filename": "genesis-2.json",
+          "sha256": "dc6c78170d3a99ad947f35a8b0f9eb28dbceae1d3ee04ffecad032d3231be978"
+        }
+      ],
+      "counts": {
+        "displayTokens": 32353,
+        "alignedTokens": 32005,
+        "lexicalTokens": 31989,
+        "glossedTokens": 30305,
+        "versesWithSyntax": 1509,
+        "discardedSyntaxGroups": 2352
+      }
+    },
+    {
+      "id": "psalms",
+      "files": [
+        {
+          "filename": "psalms-1.json",
+          "sha256": "ec9383f5666339cab1b69cc22fb4e4419bc5a860f95fa754d33af5cf3b7ce209"
+        },
+        {
+          "filename": "psalms-2.json",
+          "sha256": "17179e376dfbc1d2cb96e0678ae215b825cef5420cbf8301b261ad11feaf6203"
+        }
+      ],
+      "counts": {
+        "displayTokens": 34236,
+        "alignedTokens": 34152,
+        "lexicalTokens": 34147,
+        "glossedTokens": 33041,
+        "versesWithSyntax": 2481,
+        "discardedSyntaxGroups": 2327
+      }
+    },
+    {
+      "id": "isaiah",
+      "files": [
+        {
+          "filename": "isaiah-1.json",
+          "sha256": "cbef8b77c7a6cfc7ca36bc3ab32adfa234b3259eca596aa9ba8592dd201e97af"
+        },
+        {
+          "filename": "isaiah-2.json",
+          "sha256": "c647a810bf8a8b805934871f9ea91027fd6beb27a95a95a56116dc5084087ea6"
+        }
+      ],
+      "counts": {
+        "displayTokens": 26947,
+        "alignedTokens": 26701,
+        "lexicalTokens": 26687,
+        "glossedTokens": 25733,
+        "versesWithSyntax": 1265,
+        "discardedSyntaxGroups": 1980
+      }
+    }
+  ],
+  "roles": [
+    "s",
+    "v",
+    "o",
+    "o2",
+    "io",
+    "p",
+    "adv",
+    "vc",
+    "aux",
+    "oc"
+  ],
+  "source": {
+    "ogaVersion": "0.2.0",
+    "ogaRecord": "14206061",
+    "ogaArchiveMd5": "d4117ae52f1cc6319c6ba20af0c1cf3b",
+    "ogaLicense": "CC BY-SA 4.0",
+    "stepCommit": "b86d26cdb1f51729e73b5b4eb7f7ccadc5dfba39",
+    "stepLicense": "CC BY 4.0",
+    "alignmentStrategyVersion": 1
+  }
+}

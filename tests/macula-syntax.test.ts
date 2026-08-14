@@ -84,14 +84,17 @@ test('syntax roles have deterministic Greek-first labels', () => {
   })
 })
 
-test('syntax assistance is limited to approved SBLGNT reading surfaces', () => {
+test('syntax assistance includes only approved NT and LXX reading surfaces', () => {
   assert.equal(syntaxAssistanceApplies('sblgnt', 'progressive'), true)
   assert.equal(syntaxAssistanceApplies('sblgnt', 'challenge'), true)
   assert.equal(syntaxAssistanceApplies('sblgnt', 'free-reading'), true)
   assert.equal(syntaxAssistanceApplies('sblgnt', 'psalm'), false)
   assert.equal(syntaxAssistanceApplies('sblgnt', 'prayer'), false)
   assert.equal(syntaxAssistanceApplies('lxx', 'progressive'), false)
-  assert.equal(syntaxAssistanceApplies('lxx', 'free-reading'), false)
+  assert.equal(syntaxAssistanceApplies('lxx', 'free-reading', 'genesis'), true)
+  assert.equal(syntaxAssistanceApplies('lxx', 'psalm', 'psalms'), true)
+  assert.equal(syntaxAssistanceApplies('lxx', 'free-reading', 'exodus'), false)
+  assert.equal(syntaxAssistanceApplies('lxx', 'prayer'), false)
 })
 
 test('Insight requires explicit verse-number selection and a separate action', () => {

@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef } from 'react'
 import type { ScriptureVerse } from '../data/dailyOffice'
-import type { NtSyntaxBook } from '../models/syntax'
+import type { LxxSyntaxBook, NtSyntaxBook } from '../models/syntax'
 import { syntaxInsightForVerse } from '../models/syntax'
 
 interface InsightPanelProps {
-  book: NtSyntaxBook | null
+  book: NtSyntaxBook | LxxSyntaxBook | null
   error: string | null
   loading: boolean
   reference: string

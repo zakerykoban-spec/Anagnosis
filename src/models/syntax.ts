@@ -41,6 +41,12 @@ export interface NtSyntaxBook {
   verses: Record<string, CompactSyntaxClause[]>
 }
 
+export interface LxxSyntaxBook {
+  schemaVersion: 1
+  bookId: string
+  syntaxVerses: Record<string, CompactSyntaxClause[]>
+}
+
 export interface SyntaxRoleLabel {
   greek: string
   english: string
@@ -88,9 +94,11 @@ const ROLE_LABELS: Record<SyntaxRoleCode, SyntaxRoleLabel> = {
 export function syntaxAssistanceApplies(
   corpus: 'sblgnt' | 'lxx',
   context: 'progressive' | 'challenge' | 'free-reading' | 'psalm' | 'prayer' | null,
+  bookId?: string | null,
 ) {
-  return corpus === 'sblgnt'
-    && (
+  if (corpus === 'lxx') return ['genesis', 'psalms', 'isaiah'].includes(bookId ?? '')
+    && (context === 'free-reading' || context === 'psalm')
+  return (
       context === 'progressive'
       || context === 'challenge'
       || context === 'free-reading'
@@ -102,13 +110,14 @@ export function syntaxRoleLabel(role: SyntaxRoleCode) {
 }
 
 export function syntaxInsightForVerse(
-  book: NtSyntaxBook | null,
+  book: NtSyntaxBook | LxxSyntaxBook | null,
   verseId: string,
   surfaces: string[],
 ): SyntaxClauseInsight[] {
   if (!book) return []
 
-  return (book.verses[verseId] ?? []).map(([flags, compactGroups]) => {
+  const verses = 'syntaxVerses' in book ? book.syntaxVerses : book.verses
+  return (verses[verseId] ?? []).map(([flags, compactGroups]) => {
     const groups = compactGroups.flatMap(([roleIndex, startTokenIndex, endTokenIndex]) => {
       const role = SYNTAX_ROLES[roleIndex]
       const label = role ? ROLE_LABELS[role] : null
