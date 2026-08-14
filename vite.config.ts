@@ -11,9 +11,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icons/apple-touch-icon.png'],
       manifest: {
-        name: 'Ἀνάγνωσις',
-        short_name: 'Ἀνάγνωσις',
-        description: 'A focused daily reader for Greek Scripture.',
+        name: 'Ἀνάγνωσις · Preview',
+        short_name: 'Preview',
+        description: 'Temporary Anagnosis acceptance preview.',
         theme_color: '#30231b',
         background_color: '#30231b',
         display: 'standalone',
