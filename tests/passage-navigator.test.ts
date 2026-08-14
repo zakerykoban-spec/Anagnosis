@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import {
   formatPassageReference,
   loadRecentPassages,
+  LOGOS_BOOK_ALIAS_TARGETS,
   parsePassageReference,
   recordRecentPassage,
   type PassageDestination,
@@ -33,6 +34,102 @@ test('reference input resolves an exact verse', () => {
     result.destination && formatPassageReference(result.destination),
     'Mark 9:2',
   )
+})
+
+test('Logos-style punctuation and spacing resolve the same destination', () => {
+  const expected = {
+    destination: {
+      corpus: 'sblgnt' as const,
+      bookId: 'luke',
+      chapter: 3,
+      verseNumber: 6,
+    },
+  }
+
+  assert.deepEqual(parsePassageReference('Lk 3.6'), expected)
+  assert.deepEqual(parsePassageReference('Lk 3:6'), expected)
+  assert.deepEqual(parsePassageReference('Lk 3 6'), expected)
+  assert.deepEqual(parsePassageReference('Lk. 3 . 6'), expected)
+})
+
+test('Logos numbered-book forms resolve with ordinals and Roman numerals', () => {
+  const expected = {
+    destination: {
+      corpus: 'sblgnt' as const,
+      bookId: '1-john',
+      chapter: 1,
+      verseNumber: 3,
+    },
+  }
+
+  assert.deepEqual(parsePassageReference('1jo 1 3'), expected)
+  assert.deepEqual(parsePassageReference('1st John 1.3'), expected)
+  assert.deepEqual(parsePassageReference('I John 1:3'), expected)
+  assert.deepEqual(parsePassageReference('First John 1:3'), expected)
+})
+
+test('every documented Logos alias with a direct Anagnosis work resolves', () => {
+  for (const target of LOGOS_BOOK_ALIAS_TARGETS) {
+    for (const alias of target.aliases) {
+      assert.deepEqual(
+        parsePassageReference(`${alias} 1`),
+        {
+          destination: {
+            corpus: target.corpus,
+            bookId: target.bookId,
+            chapter: 1,
+          },
+        },
+        `${alias} should resolve to ${target.bookId}`,
+      )
+    }
+  }
+})
+
+test('Logos canonical names map Samuel and Kings to LXX Kingdoms', () => {
+  assert.deepEqual(parsePassageReference('1 Sam 3:4'), {
+    destination: {
+      corpus: 'lxx',
+      bookId: '1-kingdoms',
+      chapter: 3,
+      verseNumber: 4,
+    },
+  })
+  assert.deepEqual(parsePassageReference('2 Kgs 5.14'), {
+    destination: {
+      corpus: 'lxx',
+      bookId: '4-kingdoms',
+      chapter: 5,
+      verseNumber: 14,
+    },
+  })
+})
+
+test('plain Daniel-family Logos aliases choose the Theodotion reader', () => {
+  assert.deepEqual(parsePassageReference('Dan 3:16'), {
+    destination: {
+      corpus: 'lxx',
+      bookId: 'daniel-theodotion',
+      chapter: 3,
+      verseNumber: 16,
+    },
+  })
+  assert.deepEqual(parsePassageReference('Sus 1:1'), {
+    destination: {
+      corpus: 'lxx',
+      bookId: 'susanna-theodotion',
+      chapter: 1,
+      verseNumber: 1,
+    },
+  })
+  assert.deepEqual(parsePassageReference('Bel 1:1'), {
+    destination: {
+      corpus: 'lxx',
+      bookId: 'bel-and-the-dragon-theodotion',
+      chapter: 1,
+      verseNumber: 1,
+    },
+  })
 })
 
 test('spaced numbered books and LXX books use the existing catalog', () => {
