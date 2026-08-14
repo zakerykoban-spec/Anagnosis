@@ -1,0 +1,485 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "name": "MACULA Greek Linguistic Datasets",
+    "repository": "https://github.com/Clear-Bible/macula-greek",
+    "maculaCommit": "8423afe47b9e8f24b7772e808af45c7159a6fe7e",
+    "license": "CC BY 4.0",
+    "attribution": "MACULA Greek Linguistic Datasets, available at https://github.com/Clear-Bible/macula-greek/",
+    "alignmentStrategyVersion": 1,
+    "copiedFields": [
+      "tree nesting",
+      "wg@class=cl",
+      "@role",
+      "@predication",
+      "w@ref"
+    ],
+    "alignmentOnlyFields": [
+      "w@normalized"
+    ],
+    "reviewedSurfaceExceptions": [
+      {
+        "key": "john.8.5:4",
+        "canonical": "Μωσῆς",
+        "macula": "Μωϋσῆς"
+      }
+    ],
+    "files": {
+      "matthew": {
+        "path": "SBLGNT/lowfat/01-matthew.xml",
+        "sha256": "83082bb2a094f06a4f9fd03e1f5a4b2af3977622a5c705ab65ab15ba74986de5"
+      },
+      "mark": {
+        "path": "SBLGNT/lowfat/02-mark.xml",
+        "sha256": "1906a855c55c00c4048de8d919caa81a35ebb7726a82b9031830e3dd9c266db8"
+      },
+      "luke": {
+        "path": "SBLGNT/lowfat/03-luke.xml",
+        "sha256": "10efdbb0415c1020cc288e25496496683c54ec884eb1cdee3f0ea47a0409e81b"
+      },
+      "john": {
+        "path": "SBLGNT/lowfat/04-john.xml",
+        "sha256": "071d44e5a0e6c4b9c7e65944d924aed47d2b53c1774ed3ea9043b2651057715c"
+      },
+      "acts": {
+        "path": "SBLGNT/lowfat/05-acts.xml",
+        "sha256": "8b3093174e5cdf8d6846c316e1dc76e4dfd9d3599d6044b3419d692bcd5df37d"
+      },
+      "romans": {
+        "path": "SBLGNT/lowfat/06-romans.xml",
+        "sha256": "b4553cdfab04484617196657a82d596fb135ac82b252b0b55e0a3655513b7134"
+      },
+      "1-corinthians": {
+        "path": "SBLGNT/lowfat/07-1corinthians.xml",
+        "sha256": "701972e038bfb04c262a59e27ac73b9948800c6b67ac17e09cf3238dd41ecba2"
+      },
+      "2-corinthians": {
+        "path": "SBLGNT/lowfat/08-2corinthians.xml",
+        "sha256": "b675686f0a69744be1ff4057994860ee59c923fbd662bf2435841cf93ea71522"
+      },
+      "galatians": {
+        "path": "SBLGNT/lowfat/09-galatians.xml",
+        "sha256": "33b390ff9f22fda1d7d27b9d234bc7f7cdd111efff9e72398da763cfce3b772b"
+      },
+      "ephesians": {
+        "path": "SBLGNT/lowfat/10-ephesians.xml",
+        "sha256": "0ad9968729285b856f5a8b0e51a3845a7d7256ab03abe31a47b827bf3b078824"
+      },
+      "philippians": {
+        "path": "SBLGNT/lowfat/11-philippians.xml",
+        "sha256": "59d5843599152524b66b43ece2364b91b8155c92fadd832860086e71066f5daa"
+      },
+      "colossians": {
+        "path": "SBLGNT/lowfat/12-colossians.xml",
+        "sha256": "10646a85185273b4df4d8e2f9019ca5748cced50fbe3348d5fffb0dd83ae0035"
+      },
+      "1-thessalonians": {
+        "path": "SBLGNT/lowfat/13-1thessalonians.xml",
+        "sha256": "71baa51b9f4e90d63cef7a7dba05c31d08359ce7349f03afaa7745ffab12a467"
+      },
+      "2-thessalonians": {
+        "path": "SBLGNT/lowfat/14-2thessalonians.xml",
+        "sha256": "d4546f7b670aa74bdc171497ea97f44c3b59fb89b5d2d529b1c6791d77018186"
+      },
+      "1-timothy": {
+        "path": "SBLGNT/lowfat/15-1timothy.xml",
+        "sha256": "968be311bf38e20dbb74ca56f78bd81fe3490066aec524ed328b0c45f057c86b"
+      },
+      "2-timothy": {
+        "path": "SBLGNT/lowfat/16-2timothy.xml",
+        "sha256": "ac85240a120687404dc192fed630b81ddf906a5aa9b3e27d465fce66c9d3ff2d"
+      },
+      "titus": {
+        "path": "SBLGNT/lowfat/17-titus.xml",
+        "sha256": "7a9af3c04636e2d558b06e7685a289cdd7982f920a946f96417e252e3fc8f708"
+      },
+      "philemon": {
+        "path": "SBLGNT/lowfat/18-philemon.xml",
+        "sha256": "3782b340f3946192829fe07c229c2201390790bef2536d0223180f28bfaa756d"
+      },
+      "hebrews": {
+        "path": "SBLGNT/lowfat/19-hebrews.xml",
+        "sha256": "d993eed41dc40e2b920021735853499ddaa136b5a373c7be294a87cf383fe077"
+      },
+      "james": {
+        "path": "SBLGNT/lowfat/20-james.xml",
+        "sha256": "b65a8516c3f263ad907ba3c6061ca9b524ced71ae7c2cbc753ba58e4a2cac6ef"
+      },
+      "1-peter": {
+        "path": "SBLGNT/lowfat/21-1peter.xml",
+        "sha256": "5884b7c028e716535ac6a23b454cd23b19dbcc9519416f2f7f128f38de978cd2"
+      },
+      "2-peter": {
+        "path": "SBLGNT/lowfat/22-2peter.xml",
+        "sha256": "d382f7cf9151419ce68cf8250a33436b5aba09ea6109b3bbf202271a0a1a99fc"
+      },
+      "1-john": {
+        "path": "SBLGNT/lowfat/23-1john.xml",
+        "sha256": "cd7e151003667ceaec07b2276b2a75f8dbc6f2c57d5e5e5f09149ceffdf86b5e"
+      },
+      "2-john": {
+        "path": "SBLGNT/lowfat/24-2john.xml",
+        "sha256": "de822aa64dc6374ba1a0920fe85e44639b26d6a74e671c49b167334c17291a47"
+      },
+      "3-john": {
+        "path": "SBLGNT/lowfat/25-3john.xml",
+        "sha256": "bf5737c05c54083f315d777e7b8f0056c893fff8632a82d6186258872b07f579"
+      },
+      "jude": {
+        "path": "SBLGNT/lowfat/26-jude.xml",
+        "sha256": "096aaad13159b9354399e640344c07f4ba52ea28e14e26db4d17c4050ee63e80"
+      },
+      "revelation": {
+        "path": "SBLGNT/lowfat/27-revelation.xml",
+        "sha256": "21d60a5eefce0b30a0c9d9426b07faa659a2a59953cdabb11b84964068715df5"
+      }
+    }
+  },
+  "roles": [
+    "s",
+    "v",
+    "o",
+    "o2",
+    "io",
+    "p",
+    "adv",
+    "vc",
+    "aux",
+    "oc"
+  ],
+  "totals": {
+    "displayTokens": 137741,
+    "alignedTokens": 137741,
+    "reviewedSurfaceExceptions": 1,
+    "versesWithSyntax": 7939,
+    "clauses": 30464,
+    "groups": 85103,
+    "discardedUnsupportedRoles": 6
+  },
+  "books": [
+    {
+      "id": "matthew",
+      "filename": "matthew.json",
+      "sha256": "465c15c176387d45506b9c04cb986c1fecd8197e492b8ad90f38e7527f507cf3",
+      "displayTokens": 18329,
+      "alignedTokens": 18329,
+      "reviewedSurfaceExceptions": 0,
+      "versesWithSyntax": 1068,
+      "clauses": 4122,
+      "groups": 11651,
+      "discardedUnsupportedRoles": 1
+    },
+    {
+      "id": "mark",
+      "filename": "mark.json",
+      "sha256": "8340d75c61608a9d1f4807191dc2eefea0c6e181dd17121ec6682dcfd5256649",
+      "displayTokens": 11286,
+      "alignedTokens": 11286,
+      "reviewedSurfaceExceptions": 0,
+      "versesWithSyntax": 673,
+      "clauses": 2694,
+      "groups": 7427,
+      "discardedUnsupportedRoles": 0
+    },
+    {
+      "id": "luke",
+      "filename": "luke.json",
+      "sha256": "c71608946eab8427d1b6a52e2f8b0a68949ea718f94f3f41bdb10789297b323a",
+      "displayTokens": 19446,
+      "alignedTokens": 19446,
+      "reviewedSurfaceExceptions": 0,
+      "versesWithSyntax": 1149,
+      "clauses": 4599,
+      "groups": 12655,
+      "discardedUnsupportedRoles": 2
+    },
+    {
+      "id": "john",
+      "filename": "john.json",
+      "sha256": "918abb9a6efdc5801981d805bebf3455524f40a5d307f934448177b986799ce4",
+      "displayTokens": 15625,
+      "alignedTokens": 15625,
+      "reviewedSurfaceExceptions": 1,
+      "versesWithSyntax": 878,
+      "clauses": 3741,
+      "groups": 10759,
+      "discardedUnsupportedRoles": 0
+    },
+    {
+      "id": "acts",
+      "filename": "acts.json",
+      "sha256": "f297264ef8e3aec576cd96a1e6ac6588dbf079238e507ba70de420af58090496",
+      "displayTokens": 18412,
+      "alignedTokens": 18412,
+      "reviewedSurfaceExceptions": 0,
+      "versesWithSyntax": 1002,
+      "clauses": 4036,
+      "groups": 11725,
+      "discardedUnsupportedRoles": 0
+    },
+    {
+      "id": "romans",
+      "filename": "romans.json",
+      "sha256": "126836599ece0b7a9a18e0d73b11d5b1cb848f6a866b6129dc1b7097a16e3d7d",
+      "displayTokens": 7055,
+      "alignedTokens": 7055,
+      "reviewedSurfaceExceptions": 0,
+      "versesWithSyntax": 430,
+      "clauses": 1453,
+      "groups": 4075,
+      "discardedUnsupportedRoles": 0
+    },
+    {
+      "id": "1-corinthians",
+      "filename": "1-corinthians.json",
+      "sha256": "2e696641ff535ee4aedf8a034fa170e48fbe0054433aee3b2ff01adca98c9cc8",
+      "displayTokens": 6812,
+      "alignedTokens": 6812,
+      "reviewedSurfaceExceptions": 0,
+      "versesWithSyntax": 437,
+      "clauses": 1541,
+      "groups": 4263,
+      "discardedUnsupportedRoles": 0
+    },
+    {
+      "id": "2-corinthians",
+      "filename": "2-corinthians.json",
+      "sha256": "d7d46729fb603722b5f2475b16625e8bd4d55f86e0abc4bb7b12d0e7142d7065",
+      "displayTokens": 4473,
+      "alignedTokens": 4473,
+      "reviewedSurfaceExceptions": 0,
+      "versesWithSyntax": 256,
+      "clauses": 923,
+      "groups": 2559,
+      "discardedUnsupportedRoles": 1
+    },
+    {
+      "id": "galatians",
+      "filename": "galatians.json",
+      "sha256": "2c66985241748dc2c668f440293c64fcefec4b0fe7f121516b2deee6f7d66a71",
+      "displayTokens": 2226,
+      "alignedTokens": 2226,
+      "reviewedSurfaceExceptions": 0,
+      "versesWithSyntax": 149,
+      "clauses": 493,
+      "groups": 1443,
+      "discardedUnsupportedRoles": 1
+    },
+    {
+      "id": "ephesians",
+      "filename": "ephesians.json",
+      "sha256": "ab8aecde446b00df42b705065b5deb8fdbc53ddfb9c79090cab022778724c58f",
+      "displayTokens": 2416,
+      "alignedTokens": 2416,
+      "reviewedSurfaceExceptions": 0,
+      "versesWithSyntax": 155,
+      "clauses": 463,
+      "groups": 1195,
+      "discardedUnsupportedRoles": 0
+    },
+    {
+      "id": "philippians",
+      "filename": "philippians.json",
+      "sha256": "8aa274acd6aa5740a2d078425730dc42e1add3f50d110995f620bf0abdf11f8a",
+      "displayTokens": 1626,
+      "alignedTokens": 1626,
+      "reviewedSurfaceExceptions": 0,
+      "versesWithSyntax": 104,
+      "clauses": 348,
+      "groups": 919,
+      "discardedUnsupportedRoles": 1
+    },
+    {
+      "id": "colossians",
+      "filename": "colossians.json",
+      "sha256": "527042addce2dc63e18fad7b85e3fe93b5c748b92788d10b04fcfeace9098924",
+      "displayTokens": 1580,
+      "alignedTokens": 1580,
+      "reviewedSurfaceExceptions": 0,
+      "versesWithSyntax": 95,
+      "clauses": 310,
+      "groups": 819,
+      "discardedUnsupportedRoles": 0
+    },
+    {
+      "id": "1-thessalonians",
+      "filename": "1-thessalonians.json",
+      "sha256": "717e658c0d981bcea6c70f1a0a8a3462c459077debe62031f5672894868c3cd6",
+      "displayTokens": 1473,
+      "alignedTokens": 1473,
+      "reviewedSurfaceExceptions": 0,
+      "versesWithSyntax": 89,
+      "clauses": 300,
+      "groups": 828,
+      "discardedUnsupportedRoles": 0
+    },
+    {
+      "id": "2-thessalonians",
+      "filename": "2-thessalonians.json",
+      "sha256": "d5bfe7b386daad96c90315ec518232f0e97bfd9d4507d14ca6eb5100acf27bef",
+      "displayTokens": 820,
+      "alignedTokens": 820,
+      "reviewedSurfaceExceptions": 0,
+      "versesWithSyntax": 47,
+      "clauses": 156,
+      "groups": 426,
+      "discardedUnsupportedRoles": 0
+    },
+    {
+      "id": "1-timothy",
+      "filename": "1-timothy.json",
+      "sha256": "1ea6b9273872d8cc58f5e5f892d01bef3d057d6a5035415fe0d3b2530076fd6c",
+      "displayTokens": 1591,
+      "alignedTokens": 1591,
+      "reviewedSurfaceExceptions": 0,
+      "versesWithSyntax": 113,
+      "clauses": 367,
+      "groups": 946,
+      "discardedUnsupportedRoles": 0
+    },
+    {
+      "id": "2-timothy",
+      "filename": "2-timothy.json",
+      "sha256": "f2e9b273d2be8a1d10976e918c15535b5017a206e6553c1c2a3d0ca9ea65aad0",
+      "displayTokens": 1235,
+      "alignedTokens": 1235,
+      "reviewedSurfaceExceptions": 0,
+      "versesWithSyntax": 83,
+      "clauses": 254,
+      "groups": 686,
+      "discardedUnsupportedRoles": 0
+    },
+    {
+      "id": "titus",
+      "filename": "titus.json",
+      "sha256": "f8aeff6e44e46c15e67a8c8d8f0d89a98ee51ca57f615316df3c2915cff5b0ee",
+      "displayTokens": 659,
+      "alignedTokens": 659,
+      "reviewedSurfaceExceptions": 0,
+      "versesWithSyntax": 46,
+      "clauses": 147,
+      "groups": 377,
+      "discardedUnsupportedRoles": 0
+    },
+    {
+      "id": "philemon",
+      "filename": "philemon.json",
+      "sha256": "d48d42f9e328b658e30f9545848f3632dbea7665e5c795c3c2123d3758f02095",
+      "displayTokens": 334,
+      "alignedTokens": 334,
+      "reviewedSurfaceExceptions": 0,
+      "versesWithSyntax": 25,
+      "clauses": 65,
+      "groups": 183,
+      "discardedUnsupportedRoles": 0
+    },
+    {
+      "id": "hebrews",
+      "filename": "hebrews.json",
+      "sha256": "4db10da9a91b7d4c283435375a658d7fbdb64dac710c439f315a5bfc8c6f0b0c",
+      "displayTokens": 4935,
+      "alignedTokens": 4935,
+      "reviewedSurfaceExceptions": 0,
+      "versesWithSyntax": 303,
+      "clauses": 1074,
+      "groups": 3079,
+      "discardedUnsupportedRoles": 0
+    },
+    {
+      "id": "james",
+      "filename": "james.json",
+      "sha256": "bd6ffcaec0fa3fdcbdd4a606abec4ff4f4fc76c84d051010e2954cb2cfc10818",
+      "displayTokens": 1739,
+      "alignedTokens": 1739,
+      "reviewedSurfaceExceptions": 0,
+      "versesWithSyntax": 108,
+      "clauses": 384,
+      "groups": 1049,
+      "discardedUnsupportedRoles": 0
+    },
+    {
+      "id": "1-peter",
+      "filename": "1-peter.json",
+      "sha256": "ac8d5f62a3a6072c9e81f092c99ad7b85c9ad18edd5fd7ee6502d8a885e7bb55",
+      "displayTokens": 1678,
+      "alignedTokens": 1678,
+      "reviewedSurfaceExceptions": 0,
+      "versesWithSyntax": 105,
+      "clauses": 345,
+      "groups": 915,
+      "discardedUnsupportedRoles": 0
+    },
+    {
+      "id": "2-peter",
+      "filename": "2-peter.json",
+      "sha256": "64f6194ce55c1784be8bba015cd99ee996b72ecc94afb1c9802513064a614f4f",
+      "displayTokens": 1098,
+      "alignedTokens": 1098,
+      "reviewedSurfaceExceptions": 0,
+      "versesWithSyntax": 61,
+      "clauses": 218,
+      "groups": 664,
+      "discardedUnsupportedRoles": 0
+    },
+    {
+      "id": "1-john",
+      "filename": "1-john.json",
+      "sha256": "866e73f9763b89ea2fec02eef04b3ca7975656bcc27eae2c1515074ac45af363",
+      "displayTokens": 2137,
+      "alignedTokens": 2137,
+      "reviewedSurfaceExceptions": 0,
+      "versesWithSyntax": 105,
+      "clauses": 465,
+      "groups": 1300,
+      "discardedUnsupportedRoles": 0
+    },
+    {
+      "id": "2-john",
+      "filename": "2-john.json",
+      "sha256": "58baae17f941fa9d6b2de4f200ea7905d922b191f5ca9d7196477b88685edb94",
+      "displayTokens": 245,
+      "alignedTokens": 245,
+      "reviewedSurfaceExceptions": 0,
+      "versesWithSyntax": 13,
+      "clauses": 49,
+      "groups": 142,
+      "discardedUnsupportedRoles": 0
+    },
+    {
+      "id": "3-john",
+      "filename": "3-john.json",
+      "sha256": "226d50a0dbf8d382cf0157b04880e130b35c247ea3f67a524ae94c7c303bf0a8",
+      "displayTokens": 219,
+      "alignedTokens": 219,
+      "reviewedSurfaceExceptions": 0,
+      "versesWithSyntax": 15,
+      "clauses": 59,
+      "groups": 155,
+      "discardedUnsupportedRoles": 0
+    },
+    {
+      "id": "jude",
+      "filename": "jude.json",
+      "sha256": "1f6b29996740a7fbe6a0cc7b74127a4c91aed7c24bc85b785c6ff70f26c82794",
+      "displayTokens": 459,
+      "alignedTokens": 459,
+      "reviewedSurfaceExceptions": 0,
+      "versesWithSyntax": 25,
+      "clauses": 94,
+      "groups": 264,
+      "discardedUnsupportedRoles": 0
+    },
+    {
+      "id": "revelation",
+      "filename": "revelation.json",
+      "sha256": "047d563ff0b7c4a4c0faecd47f11a6933f28b595374f5a2779b40c91e11a2589",
+      "displayTokens": 9833,
+      "alignedTokens": 9833,
+      "reviewedSurfaceExceptions": 0,
+      "versesWithSyntax": 405,
+      "clauses": 1764,
+      "groups": 4599,
+      "discardedUnsupportedRoles": 0
+    }
+  ]
+}

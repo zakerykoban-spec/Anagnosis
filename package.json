@@ -14,7 +14,9 @@
     "scripture:validate": "node scripts/validate-sblgnt.mjs && node scripts/validate-lxx.mjs",
     "scripture:validate:lxx": "node scripts/validate-lxx.mjs",
     "scripture:import:step": "node scripts/import-step-tagnt.mjs",
-    "scripture:validate:step": "node scripts/validate-step-tagnt.mjs"
+    "scripture:validate:step": "node scripts/validate-step-tagnt.mjs",
+    "scripture:import:syntax": "node scripts/import-macula-syntax.mjs",
+    "scripture:validate:syntax": "node scripts/validate-macula-syntax.mjs"
   },
   "dependencies": {
     "react": "^19.2.7",

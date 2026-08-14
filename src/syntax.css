@@ -1,0 +1,272 @@
+.insight-action {
+  position: fixed;
+  z-index: 34;
+  right: max(14px, env(safe-area-inset-right));
+  bottom: calc(var(--reader-navigation-height) + 12px);
+  display: grid;
+  min-width: 116px;
+  min-height: 48px;
+  gap: 1px;
+  place-content: center;
+  padding: 7px 18px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  color: var(--paper-light);
+  background: var(--accent);
+  box-shadow: 0 7px 24px var(--shadow);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.insight-action span {
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.insight-action small {
+  color: color-mix(in srgb, var(--paper-light) 78%, transparent);
+  font-size: 0.55rem;
+}
+
+.insight-action:hover,
+.insight-action:focus-visible {
+  background: var(--accent-dark);
+}
+
+.insight-backdrop {
+  position: fixed;
+  z-index: 90;
+  inset: 0;
+  display: grid;
+  align-items: end;
+  overscroll-behavior: none;
+  background: color-mix(in srgb, #241913 38%, transparent);
+  animation: veil-in 140ms ease-out;
+}
+
+.insight-panel {
+  width: min(100%, 620px);
+  max-height: min(82dvh, 760px);
+  margin: 0 auto;
+  padding: 20px max(22px, env(safe-area-inset-right)) max(22px, env(safe-area-inset-bottom)) max(22px, env(safe-area-inset-left));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--line-strong);
+  border-bottom: 0;
+  border-radius: 16px 16px 0 0;
+  color: var(--ink);
+  background: var(--paper);
+  box-shadow: 0 -18px 54px var(--shadow);
+}
+
+.insight-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px;
+  gap: 18px;
+  align-items: start;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.insight-header h2,
+.insight-kicker,
+.insight-verse,
+.insight-status,
+.insight-source,
+.insight-clauses,
+.insight-groups {
+  margin: 0;
+}
+
+.insight-kicker {
+  display: grid;
+  gap: 1px;
+  color: var(--accent);
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+.insight-kicker small,
+.insight-header h2,
+.insight-source small {
+  color: var(--muted);
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.58rem;
+  font-weight: 500;
+}
+
+.insight-header h2 {
+  margin-top: 5px;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+}
+
+.insight-close {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  color: var(--accent);
+  font-size: 1.35rem;
+  background: transparent;
+  cursor: pointer;
+}
+
+.insight-verse {
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line);
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+  font-size: clamp(1.22rem, 5vw, 1.5rem);
+  line-height: 1.48;
+}
+
+.insight-status {
+  display: grid;
+  gap: 3px;
+  padding: 24px 0;
+  color: var(--muted);
+  text-align: center;
+}
+
+.insight-status small {
+  font-size: 0.62rem;
+}
+
+.insight-error {
+  color: var(--accent);
+}
+
+.insight-clauses {
+  display: grid;
+  gap: 14px;
+  padding: 16px 0 0;
+  list-style: none;
+}
+
+.insight-clauses > li {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--paper-light) 46%, transparent);
+}
+
+.insight-clause-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  color: var(--accent);
+}
+
+.insight-clause-header strong {
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+  font-size: 0.84rem;
+  font-weight: 650;
+}
+
+.insight-clause-header small,
+.insight-observations small {
+  color: var(--muted);
+  font-size: 0.56rem;
+}
+
+.insight-observations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 10px 12px 0;
+  list-style: none;
+}
+
+.insight-observations li {
+  display: grid;
+  gap: 1px;
+  padding: 4px 7px;
+  border: 1px solid color-mix(in srgb, var(--antique-gold) 42%, var(--line));
+  border-radius: 5px;
+  color: var(--antique-gold);
+  font-size: 0.65rem;
+}
+
+.insight-groups > div {
+  display: grid;
+  grid-template-columns: minmax(108px, 0.36fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  padding: 11px 12px;
+}
+
+.insight-groups > div + div {
+  border-top: 1px solid color-mix(in srgb, var(--line) 68%, transparent);
+}
+
+.insight-groups dt {
+  display: grid;
+  gap: 1px;
+  color: var(--accent);
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+  font-size: 0.72rem;
+  font-weight: 650;
+}
+
+.insight-groups dt small {
+  color: var(--muted);
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.53rem;
+  font-weight: 500;
+}
+
+.insight-groups dd {
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+  font-size: 0.95rem;
+  line-height: 1.42;
+}
+
+.insight-source {
+  display: grid;
+  gap: 2px;
+  padding-top: 15px;
+  color: var(--muted);
+  font-size: 0.61rem;
+}
+
+@media (min-width: 780px) {
+  .insight-action {
+    right: max(24px, calc((100vw - 1120px) / 2 + 24px));
+  }
+
+  .insight-panel {
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--line-strong);
+    border-radius: 14px;
+  }
+}
+
+@media (max-width: 430px) {
+  .insight-action {
+    right: 12px;
+    min-width: 104px;
+    min-height: 44px;
+    padding-inline: 14px;
+  }
+
+  .insight-groups > div {
+    grid-template-columns: 100px minmax(0, 1fr);
+    gap: 9px;
+    padding-inline: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .insight-backdrop {
+    animation: none;
+  }
+}

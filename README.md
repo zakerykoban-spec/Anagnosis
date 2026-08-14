@@ -26,6 +26,8 @@ npm test
 npm run lint
 npm run build
 npm run scripture:validate
+npm run scripture:validate:step
+npm run scripture:validate:syntax
 ```
 
 Rebuilding the generated LXX data additionally requires the frozen
