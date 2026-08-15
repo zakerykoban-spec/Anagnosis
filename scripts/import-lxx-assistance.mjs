@@ -3,6 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
+import { LXX_ASSISTANCE_BOOKS } from './scripture/lxx-assistance-books.mjs'
 
 const OGA_RECORD = '14206061'
 const OGA_VERSION = '0.2.0'
@@ -12,19 +13,12 @@ const SCHEMA = 1
 const ALIGNMENT = 1
 const ROLE_CODES = ['s', 'v', 'o', 'o2', 'io', 'p', 'adv', 'vc', 'aux', 'oc']
 const ROLE_MAP = new Map([['SBJ','s'],['OBJ','o'],['PNOM','p'],['ADV','adv'],['OCOMP','oc']])
-const BOOKS = {
-  genesis: ['tlg0527.tlg001.opp-grc2.tok01_sentence-seg01_annotated_lemma.conllu','485bcca19fa10cb8b6433fa160336f3e4b3afe2b672968d4f3710910db2fc420'],
-  psalms: ['tlg0527.tlg027.1st1K-grc1.tok01_sentence-seg01_annotated_lemma.conllu','d0d3949ba8a47fe0ba05e79955f3ee9ce564c76222f4133d233f6c0b51fecd23'],
-  isaiah: ['tlg0527.tlg048.1st1K-grc1.tok01_sentence-seg01_annotated_lemma.conllu','b97fc47a0474ffe081be6df7d6abedb7cf1ef77b5bf73a8998c83ce875158ab2'],
-}
-
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const ogaDir = process.argv[2] ? path.resolve(process.argv[2]) : null
-const stepDir = process.argv[3] ? path.resolve(process.argv[3]) : null
-if (!ogaDir || !stepDir) throw new Error('Usage: node scripts/import-lxx-assistance.mjs <OGA conllu directory> <STEPBible-Data checkout>')
+if (!ogaDir) throw new Error('Usage: node scripts/import-lxx-assistance.mjs <OGA conllu directory>')
 const output = path.join(repo, 'src/data/scripture/generated/lxx-assistance')
 const scripture = path.join(repo, 'src/data/scripture/generated/lxx')
-const tbesgRelative = 'Lexicons/TBESG - Translators Brief lexicon of Extended Strongs for Greek - STEPBible.org CC BY.txt'
+const glossaryFile = path.join(repo, 'scripts/data/lxx-step-glossary.json')
 
 function sha256(value) { return crypto.createHash('sha256').update(value).digest('hex') }
 function verified(filename, expected) { const actual=sha256(fs.readFileSync(filename)); if(actual!==expected)throw new Error(`${filename}: expected ${expected}, received ${actual}`); return filename }
@@ -36,8 +30,17 @@ function mixedScript(value) { return /[A-Za-z]/u.test(value) && /\p{Script=Greek
 function conflictingMorphology(token) {
   return /^[navdplrcm]$/u.test(token.pos) && token.raw !== '_' && token.raw[0] !== token.pos
 }
-function reviewedRejection(match, token) {
-  return match.verseId === 'isaiah.1.2' && normalize(token.surface) === normalize('ὕψωσα')
+const REVIEWED_REJECTIONS = new Set([
+  'isaiah|isaiah.1.2|υψωσα',
+  '1-chronicles|1-chronicles.12.33|εκπορευομενοι',
+  '1-esdras|1-esdras.5.55|εθεμελιωσαν',
+  'amos|amos.5.15|ηγαπηκαμεν',
+  'malachi|malachi.2.14|διεμαρτυρατο',
+  'letter-of-jeremiah|letter-of-jeremiah.1.37|χηραν',
+  'daniel-old-greek|daniel-old-greek.5.4|ηυλογουν',
+])
+function reviewedRejection(bookId, match, token) {
+  return REVIEWED_REJECTIONS.has(`${bookId}|${match.verseId}|${normalize(token.surface)}`)
 }
 function readVerses(bookId) {
   const book = JSON.parse(fs.readFileSync(path.join(scripture, `${bookId}.json`), 'utf8'))
@@ -80,17 +83,11 @@ function align(canonical, sentences) {
   return pairs
 }
 function glosses() {
-  const file = path.join(stepDir, tbesgRelative)
-  const map = new Map()
-  for (const line of fs.readFileSync(file, 'utf8').replace(/^\uFEFF/u, '').split(/\r?\n/u)) {
-    const f = line.split('\t')
-    if (!/^G\d/u.test(f[0] ?? '') || !f[3] || !f[6]) continue
-    for (const lemma of f[3].split(/[,;]/u)) {
-      const key = normalize(lemma)
-      if (key && !map.has(key)) map.set(key, f[6].trim())
-    }
+  const glossary = JSON.parse(fs.readFileSync(glossaryFile, 'utf8'))
+  if (glossary.schemaVersion !== 1 || glossary.source?.stepCommit !== STEP_COMMIT) {
+    throw new Error('The compact STEP glossary is not pinned to the reviewed commit.')
   }
-  return map
+  return new Map(Object.entries(glossary.entries))
 }
 const POS = { n:'ὄνομα', v:'ῥῆμα', a:'ἐπίθετον', d:'ἐπίρρημα', p:'ἀντωνυμία', l:'ἄρθρον', r:'πρόθεσις', c:'σύνδεσμος', u:'σημεῖον', m:'ἀριθμός' }
 const FEATURE = { Case:{n:'ὀνομαστική',g:'γενική',d:'δοτική',a:'αἰτιατική',v:'κλητική'}, Number:{s:'ἑνικός',p:'πληθυντικός',d:'δυϊκός'}, Gender:{m:'ἀρσενικόν',f:'θηλυκόν',n:'οὐδέτερον'}, Mood:{i:'ὁριστική',s:'ὑποτακτική',o:'εὐκτική',m:'προστακτική',n:'ἀπαρέμφατον',p:'μετοχή'}, Tense:{p:'ἐνεστώς',i:'παρατατικός',f:'μέλλων',a:'ἀόριστος',r:'παρακείμενος',l:'ὑπερσυντέλικος'}, Voice:{a:'ἐνεργητική',m:'μέση',p:'παθητική',e:'μέση/παθητική'}, Person:{1:'πρῶτον πρόσωπον',2:'δεύτερον πρόσωπον',3:'τρίτον πρόσωπον'} }
@@ -138,7 +135,8 @@ fs.mkdirSync(output, { recursive:true })
 for (const filename of fs.readdirSync(output)) fs.unlinkSync(path.join(output, filename))
 const dictionary = glosses()
 const manifestBooks = []
-for (const [bookId, [basename, sourceSha256]] of Object.entries(BOOKS)) {
+for (const [bookId, approvedSource] of Object.entries(LXX_ASSISTANCE_BOOKS)) {
+  const { filename: basename, sha256: sourceSha256, tier } = approvedSource
   const sourceFile = verified(path.join(ogaDir, basename), sourceSha256)
   const verses = readVerses(bookId)
   const canonical = canonicalTokens(verses)
@@ -147,14 +145,14 @@ for (const [bookId, [basename, sourceSha256]] of Object.entries(BOOKS)) {
   const lemmaTable=[]; const lemmaIndex=new Map(); const morphologyTable=[]; const morphologyIndex=new Map(); const lexicalVerses={}
   let glossed=0
   for (const sentence of sentences) for (const token of sentence) {
-    const match=pairs.get(token); if(!match || mixedScript(token.lemma) || token.pos==='u' || conflictingMorphology(token) || reviewedRejection(match,token)) continue
+    const match=pairs.get(token); if(!match || mixedScript(token.lemma) || token.pos==='u' || conflictingMorphology(token) || reviewedRejection(bookId,match,token)) continue
     const lemma=token.lemma.normalize('NFC'); const gloss=dictionary.get(normalize(lemma))??''; if(gloss) glossed += 1
     const lk=`${lemma}\0${gloss}`; if(!lemmaIndex.has(lk)){lemmaIndex.set(lk,lemmaTable.length);lemmaTable.push([lemma,gloss,0])}
     const morph=morphology(token); const mk=morph.join('\0'); if(!morphologyIndex.has(mk)){morphologyIndex.set(mk,morphologyTable.length);morphologyTable.push(morph)}
     const list=lexicalVerses[match.verseId]??[]; list.push([match.index,lemmaIndex.get(lk),morphologyIndex.get(mk),token.id,0]); lexicalVerses[match.verseId]=list
   }
   const syntax=syntaxFor(sentences,pairs)
-  const source={ogaVersion:OGA_VERSION,ogaRecord:OGA_RECORD,ogaArchiveMd5:OGA_ARCHIVE_MD5,ogaFile:basename,ogaLicense:'CC BY-SA 4.0',stepCommit:STEP_COMMIT,stepLicense:'CC BY 4.0',alignmentStrategyVersion:ALIGNMENT}
+  const source={ogaVersion:OGA_VERSION,ogaRecord:OGA_RECORD,ogaArchiveMd5:OGA_ARCHIVE_MD5,ogaFile:basename,ogaFileSha256:sourceSha256,ogaLicense:'CC BY-SA 4.0',stepCommit:STEP_COMMIT,stepLicense:'CC BY 4.0',stepGlossary:'reviewed-committed-derivative',alignmentStrategyVersion:ALIGNMENT,approvalTier:tier}
   const counts={displayTokens:canonical.length,alignedTokens:pairs.size,lexicalTokens:Object.values(lexicalVerses).reduce((n,x)=>n+x.length,0),glossedTokens:glossed,versesWithSyntax:Object.keys(syntax.verses).length,discardedSyntaxGroups:syntax.omitted}
   const verseIds=Object.keys(lexicalVerses); const split=Math.ceil(verseIds.length/2); const files=[]
   for (const [part, ids] of [verseIds.slice(0,split),verseIds.slice(split)].entries()) {
@@ -162,8 +160,8 @@ for (const [bookId, [basename, sourceSha256]] of Object.entries(BOOKS)) {
     const data={schemaVersion:SCHEMA,bookId,part:part+1,source,counts,lemmaTable,morphologyTable,lexicalVerses:lexicalPart,syntaxVerses:syntaxPart}
     const text=JSON.stringify(data); const filename=`${bookId}-${part+1}.json`; fs.writeFileSync(path.join(output,filename),text+'\n'); files.push({filename,sha256:sha256(text+'\n')})
   }
-  manifestBooks.push({id:bookId,files,counts})
+  manifestBooks.push({id:bookId,approvalTier:tier,ogaFile:basename,ogaFileSha256:sourceSha256,files,counts})
 }
-const manifest={schemaVersion:SCHEMA,pilot:true,books:manifestBooks,roles:ROLE_CODES,source:{ogaVersion:OGA_VERSION,ogaRecord:OGA_RECORD,ogaArchiveMd5:OGA_ARCHIVE_MD5,ogaLicense:'CC BY-SA 4.0',stepCommit:STEP_COMMIT,stepLicense:'CC BY 4.0',alignmentStrategyVersion:ALIGNMENT}}
+const manifest={schemaVersion:SCHEMA,pilot:false,scope:'reviewed-expansion',minimumExactWitnessAlignmentPercent:99,books:manifestBooks,roles:ROLE_CODES,source:{ogaVersion:OGA_VERSION,ogaRecord:OGA_RECORD,ogaArchiveMd5:OGA_ARCHIVE_MD5,ogaLicense:'CC BY-SA 4.0',stepCommit:STEP_COMMIT,stepLicense:'CC BY 4.0',stepGlossary:'reviewed-committed-derivative',alignmentStrategyVersion:ALIGNMENT}}
 fs.writeFileSync(path.join(output,'manifest.json'),JSON.stringify(manifest,null,2)+'\n')
-process.stdout.write(`Generated LXX assistance pilot: ${JSON.stringify(manifestBooks.map((b)=>({id:b.id,...b.counts})))}\n`)
+process.stdout.write(`Generated reviewed LXX assistance expansion: ${JSON.stringify(manifestBooks.map((b)=>({id:b.id,...b.counts})))}\n`)

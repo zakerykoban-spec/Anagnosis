@@ -1,3 +1,5 @@
+import { lxxAssistanceApplies } from '../lxxAssistanceCatalog.ts'
+
 export type SyntaxRoleCode =
   | 's'
   | 'v'
@@ -96,8 +98,7 @@ export function syntaxAssistanceApplies(
   context: 'progressive' | 'challenge' | 'free-reading' | 'psalm' | 'prayer' | null,
   bookId?: string | null,
 ) {
-  if (corpus === 'lxx') return ['genesis', 'psalms', 'isaiah'].includes(bookId ?? '')
-    && (context === 'free-reading' || context === 'psalm')
+  if (corpus === 'lxx') return lxxAssistanceApplies(context, bookId)
   return (
       context === 'progressive'
       || context === 'challenge'

@@ -19,7 +19,8 @@
     "scripture:validate:syntax": "node scripts/validate-macula-syntax.mjs",
     "scripture:import:lxx-assistance": "node scripts/import-lxx-assistance.mjs",
     "scripture:validate:lxx-assistance": "node scripts/validate-lxx-assistance.mjs",
-    "scripture:audit:lxx-assistance": "node scripts/audit-lxx-assistance-coverage.mjs"
+    "scripture:audit:lxx-assistance": "node scripts/audit-lxx-assistance-coverage.mjs",
+    "scripture:audit:lxx-assistance:samples": "node scripts/audit-lxx-assistance-samples.mjs"
   },
   "dependencies": {
     "react": "^19.2.7",

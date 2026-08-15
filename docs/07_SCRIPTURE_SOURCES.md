@@ -167,4 +167,7 @@ and Open Text readings and are lazy-loaded by book.
 - MACULA Greek syntax metadata is documented in
   `docs/10_MACULA_SYNTAX_DATA.md`.
 
-The Septuagint does not currently receive either enrichment layer.
+The Septuagint receives optional enrichment only for the explicit allowlist
+documented in `docs/32_LXX_ASSISTANCE_EXPANSION.md`. Unsupported, alternate-
+witness, or below-threshold books remain unannotated. The canonical displayed
+LXX text is never replaced or rewritten by this metadata.
