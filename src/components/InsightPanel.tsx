@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react'
 import type { ScriptureVerse } from '../data/dailyOffice'
 import type { LxxSyntaxBook, NtSyntaxBook } from '../models/syntax'
-import { syntaxInsightForVerse } from '../models/syntax'
+import { SYNTAX_CLAUSE_LABEL, syntaxInsightForVerse } from '../models/syntax'
 
 interface InsightPanelProps {
   book: NtSyntaxBook | LxxSyntaxBook | null
@@ -117,8 +117,8 @@ export function InsightPanel({
       {!loading && !error && clauses.length > 0 && <ol className="insight-clauses">
         {clauses.map((clause, clauseIndex) => <li key={`${verse.id}:${clauseIndex}`}>
           <header className="insight-clause-header">
-            <strong>Πρότασις {clauseIndex + 1}</strong>
-            {showGloss && <small>Clause {clauseIndex + 1}</small>}
+            <strong>{SYNTAX_CLAUSE_LABEL.greek} {clauseIndex + 1}</strong>
+            {showGloss && <small>{SYNTAX_CLAUSE_LABEL.english} {clauseIndex + 1}</small>}
           </header>
           {clause.observations.length > 0 && <ul className="insight-observations">
             {clause.observations.map((observation) => <li key={observation.greek}>

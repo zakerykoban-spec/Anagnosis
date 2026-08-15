@@ -1,3 +1,9 @@
+import {
+  INSIGHT_HELP_OBSERVATIONS,
+  INSIGHT_HELP_TERMS,
+  UNSUPPORTED_LXX_HELP_GROUPS,
+} from '../helpContent'
+
 export function HelpPanel({ showGloss }: { showGloss: boolean }) {
   return <details className="help-panel">
     <summary>
@@ -15,13 +21,40 @@ export function HelpPanel({ showGloss }: { showGloss: boolean }) {
       </section>
       <section>
         <h4>Λεξικὴ βοήθεια</h4>
-        <p>Tap any safely aligned SBLGNT word in Progressive, Challenge, or Open Text reading. A faint dotted mark only identifies a lemma used thirty times or fewer; every aligned word can still be opened.</p>
-        <p>English glosses follow the English-aids setting. Lexical popups are also available for explicitly reviewed Septuagint witnesses; unsupported books remain unannotated.</p>
+        <p>Tap a Greek word to open any available lexical and grammatical assistance. A faint dotted mark only identifies an uncommon lemma; every assisted word can still be opened.</p>
+        <p>English glosses follow the English-aids setting.</p>
       </section>
       <section>
         <h4>Σύνταξις</h4>
-        <p>Tap the small verse number to select a verse, then choose Σύνταξις · Insight. The panel groups the canonical Greek verse by clause and syntactic role; it never opens from an ordinary word tap.</p>
-        <p>Syntax assistance is available throughout SBLGNT reading and for explicitly reviewed Septuagint witnesses. English labels follow the English-aids setting.</p>
+        <ol className="help-steps">
+          <li>Tap the small verse number to intentionally select a verse.</li>
+          <li>Tap <span className="help-control-name">Σύνταξις · Insight</span>.</li>
+        </ol>
+        <p>Ordinary word taps and navigation do not automatically open or preserve an Insight selection.</p>
+        <p>Insight is a deterministic structural reading aid derived from reviewed syntax metadata. It is not an English translation, commentary, theological interpretation, or AI-generated exegesis. The canonical Greek verse remains the text being analyzed.</p>
+        <p>English explanatory labels appear only when English aids are enabled.</p>
+        <dl className="help-definition-list">
+          {INSIGHT_HELP_TERMS.map((term) => <div key={term.greek}>
+            <dt>{term.greek}</dt>
+            {showGloss && <dd>{term.english}</dd>}
+          </div>)}
+        </dl>
+        <p className="help-subheading">Structural observations</p>
+        <dl className="help-definition-list">
+          {INSIGHT_HELP_OBSERVATIONS.map((term) => <div key={term.greek}>
+            <dt>{term.greek}</dt>
+            {showGloss && <dd>{term.english}</dd>}
+          </div>)}
+        </dl>
+      </section>
+      <section>
+        <h4>Κάλυψις βοηθείας</h4>
+        <p>All 27 SBLGNT books support lexical assistance and Insight. Reviewed Septuagint support remains intentionally limited.</p>
+        <p>Unsupported books remain fully readable, but do not provide word glosses or Insight:</p>
+        <ul className="help-compact-list">
+          {UNSUPPORTED_LXX_HELP_GROUPS.map((group) => <li key={group.ids.join(':')}>{group.label}</li>)}
+        </ul>
+        <p>Their assistance is reserved for later witness-specific research and review; this does not indicate a defect in the books or their canonical Greek text.</p>
       </section>
       <section>
         <h4>Λέξεις γραμματικαί</h4>
