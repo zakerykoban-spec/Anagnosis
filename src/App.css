@@ -1157,26 +1157,51 @@
 
 .scripture-book-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-auto-flow: row;
+  gap: 2px;
+  padding: 2px;
+  background: color-mix(in srgb, var(--line) 70%, transparent);
 }
 
 .scripture-book-choice {
+  --book-tint: var(--accent);
   display: grid;
-  min-height: 70px;
-  gap: 4px;
+  min-width: 0;
+  min-height: 64px;
+  gap: 3px;
   align-content: center;
-  padding: 10px 14px;
+  justify-items: center;
+  padding: 7px 3px 6px;
   border: 0;
-  border-right: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
+  box-shadow: inset 0 3px var(--book-tint);
   color: var(--ink);
-  text-align: left;
-  background: transparent;
+  text-align: center;
+  background: color-mix(in srgb, var(--book-tint) 11%, var(--paper));
   cursor: pointer;
 }
 
-.scripture-book-choice:nth-child(2n) {
-  border-right: 0;
+.scripture-book-choice[data-book-group='law'],
+.scripture-book-choice[data-book-group='gospels'] {
+  --book-tint: #777227;
+}
+
+.scripture-book-choice[data-book-group='history'] {
+  --book-tint: #3f747b;
+}
+
+.scripture-book-choice[data-book-group='wisdom'],
+.scripture-book-choice[data-book-group='letters'] {
+  --book-tint: #8a5b43;
+}
+
+.scripture-book-choice[data-book-group='prophets'],
+.scripture-book-choice[data-book-group='general'] {
+  --book-tint: #47713f;
+}
+
+.scripture-book-choice[data-book-group='apocalypse'] {
+  --book-tint: #8a4852;
 }
 
 .scripture-book-choice:hover,
@@ -1185,7 +1210,7 @@
 .scripture-chapter-choice:focus-visible,
 .scripture-browser-back:hover,
 .scripture-browser-back:focus-visible {
-  background: var(--hover);
+  background: color-mix(in srgb, var(--book-tint, var(--accent)) 20%, var(--paper));
 }
 
 .scripture-book-choice span {
@@ -1195,13 +1220,16 @@
     "Book Antiqua",
     "Times New Roman",
     serif;
-  font-size: 0.91rem;
+  font-size: clamp(0.7rem, 2.6vw, 0.86rem);
   line-height: 1.1;
+  white-space: nowrap;
 }
 
 .scripture-book-choice small {
   color: var(--muted);
-  font-size: 0.58rem;
+  font-size: 0.5rem;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .scripture-chapter-grid {
@@ -1901,8 +1929,7 @@
   }
 
   .scripture-book-choice {
-    min-height: 68px;
-    padding-inline: 12px;
+    min-height: 62px;
   }
 
   .scripture-chapter-grid {

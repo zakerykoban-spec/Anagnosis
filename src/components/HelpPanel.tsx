@@ -16,12 +16,12 @@ export function HelpPanel({ showGloss }: { showGloss: boolean }) {
       <section>
         <h4>Λεξικὴ βοήθεια</h4>
         <p>Tap any safely aligned SBLGNT word in Progressive, Challenge, or Open Text reading. A faint dotted mark only identifies a lemma used thirty times or fewer; every aligned word can still be opened.</p>
-        <p>English glosses follow the English-aids setting. Septuagint readings do not yet include lexical popups.</p>
+        <p>English glosses follow the English-aids setting. Lexical popups are also available for explicitly reviewed Septuagint witnesses; unsupported books remain unannotated.</p>
       </section>
       <section>
         <h4>Σύνταξις</h4>
         <p>Tap the small verse number to select a verse, then choose Σύνταξις · Insight. The panel groups the canonical Greek verse by clause and syntactic role; it never opens from an ordinary word tap.</p>
-        <p>Syntax assistance is available for SBLGNT Progressive, Challenge, and Open Text reading. English labels follow the English-aids setting.</p>
+        <p>Syntax assistance is available throughout SBLGNT reading and for explicitly reviewed Septuagint witnesses. English labels follow the English-aids setting.</p>
       </section>
       <section>
         <h4>Λέξεις γραμματικαί</h4>
