@@ -104,6 +104,7 @@ import {
   isExplicitVerseSelected,
   type VerseMoveIntent,
 } from './verseSelection'
+import { keepVerseComfortablyVisible } from './verseViewport'
 import { UI } from './ui/lexicon'
 import altarBanner from './assets/banners/banner-altar.webp'
 import afterMealBanner from './assets/banners/banner-meal-after.webp'
@@ -429,7 +430,7 @@ export default function App() {
   const menuTrigger = useRef<HTMLButtonElement|null>(null)
   const currentContentsItem = useRef<HTMLDivElement|null>(null)
   const pendingScroll = useRef<
-    { kind: 'top' } | { kind: 'verse'; verseId: string } | null
+    { kind: 'top' } | { kind: 'verse'; verseId: string; edgeAware?: boolean } | null
   >(null)
   const freeReadingBoundaryGuard = useRef(createSingleFlightGuard())
   const lexicalAnchor = useRef<HTMLButtonElement|null>(null)
@@ -624,7 +625,14 @@ export default function App() {
       return
     }
 
-    verseElements.current[request.verseId]?.scrollIntoView({
+    const verseElement = verseElements.current[request.verseId]
+    if (!verseElement) return
+    if (request.edgeAware) {
+      keepVerseComfortablyVisible(verseElement)
+      return
+    }
+
+    verseElement.scrollIntoView({
       behavior: 'auto',
       block: 'center',
     })
@@ -750,13 +758,15 @@ export default function App() {
     const nextVerse=scriptureReading.verses[nextIndex]
     selectVerse(explicitVerseSelectionAfterMove(nextVerse.id,intent))
     if(nextIndex===displayedVerseIndex){
-      verseElements.current[nextVerse.id]?.scrollIntoView({
-        behavior:'auto',
-        block:'center',
-      })
+      const verseElement=verseElements.current[nextVerse.id]
+      if(!verseElement)return
+      if(intent==='navigation')keepVerseComfortablyVisible(verseElement)
+      else verseElement.scrollIntoView({behavior:'auto',block:'center'})
       return
     }
-    pendingScroll.current={kind:'verse',verseId:nextVerse.id}
+    pendingScroll.current=intent==='navigation'
+      ? {kind:'verse',verseId:nextVerse.id,edgeAware:true}
+      : {kind:'verse',verseId:nextVerse.id}
     if(freeReadingEntry){
       setFreeReadingVerseIndex(nextIndex)
       if(displayedBookId){
