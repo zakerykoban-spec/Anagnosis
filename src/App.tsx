@@ -62,6 +62,10 @@ import {
   type ScriptureCorpusId,
 } from './scriptureCatalog'
 import {
+  scriptureBookAriaLabel,
+  scriptureBookTile,
+} from './scriptureBrowserPresentation'
+import {
   loadLxxChapter,
   loadSblgntChapter,
   loadScriptureBook,
@@ -1305,7 +1309,7 @@ export default function App() {
       </nav>
       <div className="scripture-browser-body">
         {scriptureBrowserView==='books'
-          ? <><div className="scripture-browser-heading"><span>{scriptureBrowserCorpus==='sblgnt'?'Καινὴ Διαθήκη':'Ἑβδομήκοντα'}</span>{options.showGloss&&<small>{planSelectorStream?'Choose the book for this reading plan':scriptureBrowserCorpus==='sblgnt'?'Choose a book':'Choose a Septuagint book'}</small>}</div><div className="scripture-book-grid">{scriptureBrowserBooks.map((book)=><button className="scripture-book-choice" type="button" key={`${scriptureBrowserCorpus}:${book.id}`} onClick={()=>selectScriptureBrowserBook(book)}><span>{book.titleGreek}</span><small>{options.showGloss&&book.titleEnglish?`${book.titleEnglish} · `:''}{book.code} · {book.chapterNumbers.length}</small></button>)}</div></>
+          ? <><div className="scripture-browser-heading"><span>{scriptureBrowserCorpus==='sblgnt'?'Καινὴ Διαθήκη':'Ἑβδομήκοντα'}</span>{options.showGloss&&<small>{planSelectorStream?'Choose the book for this reading plan':scriptureBrowserCorpus==='sblgnt'?'Choose a book':'Choose a Septuagint book'}</small>}</div><div className="scripture-book-grid">{scriptureBrowserBooks.map((book)=>{const tile=scriptureBookTile(scriptureBrowserCorpus,book);return <button className="scripture-book-choice" data-book-group={tile.group} type="button" key={`${scriptureBrowserCorpus}:${book.id}`} title={book.titleGreek} aria-label={scriptureBookAriaLabel(book)} onClick={()=>selectScriptureBrowserBook(book)}><span>{tile.labelGreek}</span>{options.showGloss&&<small>{book.code}</small>}</button>})}</div></>
           : scriptureBrowserBook&&<><div className="scripture-browser-heading scripture-chapter-heading"><button className="scripture-browser-back" type="button" onClick={()=>{setScriptureBrowserBookId(null);setScriptureBrowserView('books');setScriptureBrowserError(null)}} aria-label="Back to books">‹</button><span>{scriptureBrowserBook.titleGreek}</span>{options.showGloss&&<small>{scriptureBrowserBook.code} · Choose a chapter</small>}</div><div className="scripture-chapter-grid">{chapterNumbers(scriptureBrowserBook).map((chapterNumber)=>{const loadingKey=`${scriptureBrowserCorpus}:${scriptureBrowserBook.id}:${String(chapterNumber)}`;return <button className="scripture-chapter-choice" type="button" key={loadingKey} disabled={scriptureBrowserLoadingKey!==null} onClick={()=>void openLibraryChapter(scriptureBrowserBook,chapterNumber)}>{scriptureBrowserLoadingKey===loadingKey?'…':chapterNumber}</button>})}</div></>}
       </div>
       {scriptureBrowserError&&<p className="read-history-error" role="alert">{scriptureBrowserError}</p>}
