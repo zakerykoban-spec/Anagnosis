@@ -80,7 +80,7 @@ export const SYNTAX_ROLES: readonly SyntaxRoleCode[] = [
   'oc',
 ]
 
-const ROLE_LABELS: Record<SyntaxRoleCode, SyntaxRoleLabel> = {
+export const SYNTAX_ROLE_LABELS: Record<SyntaxRoleCode, SyntaxRoleLabel> = {
   s: { greek: 'Ὑποκείμενον', english: 'Subject' },
   v: { greek: 'Ῥῆμα', english: 'Verb' },
   o: { greek: 'Ἀντικείμενον', english: 'Object' },
@@ -92,6 +92,17 @@ const ROLE_LABELS: Record<SyntaxRoleCode, SyntaxRoleLabel> = {
   aux: { greek: 'Βοηθητικὸν ῥῆμα', english: 'Auxiliary' },
   oc: { greek: 'Κατηγορούμενον ἀντικειμένου', english: 'Object complement' },
 }
+
+export const SYNTAX_CLAUSE_LABEL: SyntaxRoleLabel = {
+  greek: 'Πρότασις',
+  english: 'Clause',
+}
+
+export const SYNTAX_OBSERVATION_LABELS = [
+  { greek: 'Ἄνευ ῥήματος', english: 'Verbless predication', flag: 1 },
+  { greek: 'Ἐλλειπτικὴ κατηγόρησις', english: 'Elided predication', flag: 2 },
+  { greek: 'Σύνταξις περιόδου', english: 'Sentence-level grouping', flag: 4 },
+] as const
 
 export function syntaxAssistanceApplies(
   corpus: 'sblgnt' | 'lxx',
@@ -107,7 +118,7 @@ export function syntaxAssistanceApplies(
 }
 
 export function syntaxRoleLabel(role: SyntaxRoleCode) {
-  return ROLE_LABELS[role]
+  return SYNTAX_ROLE_LABELS[role]
 }
 
 export function syntaxInsightForVerse(
@@ -121,7 +132,7 @@ export function syntaxInsightForVerse(
   return (verses[verseId] ?? []).map(([flags, compactGroups]) => {
     const groups = compactGroups.flatMap(([roleIndex, startTokenIndex, endTokenIndex]) => {
       const role = SYNTAX_ROLES[roleIndex]
-      const label = role ? ROLE_LABELS[role] : null
+      const label = role ? SYNTAX_ROLE_LABELS[role] : null
       const text = surfaces.slice(startTokenIndex, endTokenIndex + 1).join(' ')
       return role && label && text
         ? [{
@@ -133,16 +144,9 @@ export function syntaxInsightForVerse(
           }]
         : []
     })
-    const observations = []
-    if ((flags & 1) === 1) {
-      observations.push({ greek: 'Ἄνευ ῥήματος', english: 'Verbless predication' })
-    }
-    if ((flags & 2) === 2) {
-      observations.push({ greek: 'Ἐλλειπτικὴ κατηγόρησις', english: 'Elided predication' })
-    }
-    if ((flags & 4) === 4) {
-      observations.push({ greek: 'Σύνταξις περιόδου', english: 'Sentence-level grouping' })
-    }
+    const observations = SYNTAX_OBSERVATION_LABELS
+      .filter((observation) => (flags & observation.flag) === observation.flag)
+      .map(({ greek, english }) => ({ greek, english }))
     return { flags, groups, observations }
   }).filter((clause) => clause.groups.length > 0)
 }

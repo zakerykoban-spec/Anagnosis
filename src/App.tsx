@@ -66,6 +66,11 @@ import {
   scriptureBookTile,
 } from './scriptureBrowserPresentation'
 import {
+  readerBannerKindForEntry,
+  type ReaderBannerKind,
+  type ReaderEntryContext,
+} from './readerPresentation'
+import {
   loadLxxChapter,
   loadSblgntChapter,
   loadScriptureBook,
@@ -128,7 +133,6 @@ type ReaderOptions = { showGloss: boolean; showProgressive: boolean; showChallen
 type MealIconKind = 'cup' | 'bread' | 'table'
 type OfficeIconKind = 'prayer' | 'codex' | 'lamp' | 'lyre' | 'lampstand'
 type OfficeDate = { iso: string; day: number; monthGreek: string; year: number; english: string; weekdayGreek: string }
-type ReaderBannerKind = 'altar' | 'meal' | 'after-meal' | 'psalm'
 type ScriptureBrowserView = 'books' | 'chapters'
 type ScriptureBrowserContext = 'contents' | 'free-reading'
 type PassageNavigatorView = 'contents' | 'recent'
@@ -364,6 +368,8 @@ export default function App() {
   const [options,setOptions] = useState<ReaderOptions>(()=>loadOptions())
   const [progress,setProgress] = useState<ReadingProgressState>(()=>loadProgress())
   const [activeEntry,setActiveEntry] = useState<OfficeEntry|null>(null)
+  const [readerEntryContext,setReaderEntryContext] =
+    useState<ReaderEntryContext>('daily-office')
   const [currentVerseIndex,setCurrentVerseIndex] = useState(0)
   const [psalmReading,setPsalmReading] = useState<ScriptureReading|null>(null)
   const [psalmError,setPsalmError] = useState<string|null>(null)
@@ -551,7 +557,6 @@ export default function App() {
         'next',
       )
     : null
-  const isDisplayedPsalm = displayedBookId === 'psalms'
   const isLongForm = scriptureReading !== null
   const lexicalContext = freeReadingEntry !== null
     ? 'free-reading'
@@ -703,7 +708,10 @@ export default function App() {
     })}</span>
   }
 
-  function openEntry(entry: OfficeEntry){
+  function openEntry(
+    entry: OfficeEntry,
+    context: ReaderEntryContext = 'daily-office',
+  ){
     setLexicalSelection(null)
     selectVerse(null)
     const stream=streamForEntry(entry)
@@ -730,6 +738,7 @@ export default function App() {
     setPassageNavigatorOpen(false)
     setScriptureBrowserOpen(false)
     setCurrentVerseIndex(nextIndex)
+    setReaderEntryContext(context)
     if(entry.id.startsWith('weekday-prayer:'))setSelectedWeekday(today.getDay())
     setActiveEntry(entry)
     setView('reader')
@@ -781,7 +790,7 @@ export default function App() {
 
       if (item.isCurrent) {
         setFreeReadingEntry(null)
-        openEntry(reading)
+        openEntry(reading, 'navigation')
         return
       }
 
@@ -802,6 +811,7 @@ export default function App() {
         pendingScroll.current = { kind: 'top' }
         setFreeReadingEntry(null)
         setActiveEntry(reading)
+        setReaderEntryContext('navigation')
         setReviewEntry(null)
         setCurrentVerseIndex(0)
         setReaderMenuOpen(false)
@@ -813,6 +823,7 @@ export default function App() {
       pendingScroll.current = { kind: 'top' }
       setFreeReadingEntry(null)
       setReviewEntry(reading)
+      setReaderEntryContext('navigation')
       setReviewVerseIndex(0)
       setReadHistoryOpen(false)
     } catch (error) {
@@ -869,6 +880,7 @@ export default function App() {
         setFreeReadingEntry(null)
         setReviewEntry(null)
         setActiveEntry(nextReading)
+        setReaderEntryContext('navigation')
         setCurrentVerseIndex(0)
       }
       setReaderMenuOpen(false)
@@ -927,6 +939,7 @@ export default function App() {
       pendingScroll.current = { kind: 'top' }
       setFreeReadingEntry(null)
       setActiveEntry(reading)
+      setReaderEntryContext('navigation')
       setReviewEntry(null)
       setCurrentVerseIndex(0)
       setView('reader')
@@ -965,6 +978,7 @@ export default function App() {
       : -1
 
     if (displayedDestinationIndex >= 0) {
+      setReaderEntryContext('navigation')
       moveToVerse(displayedDestinationIndex)
       rememberPassage(destination)
       setPassageNavigatorOpen(false)
@@ -993,6 +1007,7 @@ export default function App() {
       selectVerse(null)
       pendingScroll.current = { kind: 'verse', verseId: verse.id }
       setFreeReadingEntry(reading)
+      setReaderEntryContext('navigation')
       setFreeReadingVerseIndex(verseIndex)
       const location: FreeReadingLocation = {
         corpus: destination.corpus,
@@ -1093,6 +1108,7 @@ export default function App() {
         ? { kind: 'verse', verseId }
         : { kind: 'top' }
       setFreeReadingEntry(reading)
+      setReaderEntryContext('navigation')
       setFreeReadingVerseIndex(verseIndex)
       setReviewEntry(null)
       setScriptureBrowserOpen(false)
@@ -1238,6 +1254,7 @@ export default function App() {
     setFreeReadingEntry(null)
     setReviewEntry(null)
     setActiveEntry(null)
+    setReaderEntryContext('daily-office')
     setReaderMenuOpen(false)
     setReadHistoryOpen(false)
     setPassageNavigatorOpen(false)
@@ -1344,15 +1361,12 @@ export default function App() {
     : activeEntry
       ? markedToday(activeEntry.id)
       : false
-  const readerBannerKind: ReaderBannerKind | null = isDisplayedPsalm
-    ? 'psalm'
-    : displayedEntry.id === 'meal:after'
-      ? 'after-meal'
-      : isMealPrayer
-        ? 'meal'
-        : displayedEntry.kind === 'prayer'
-          ? 'altar'
-          : null
+  const readerBannerKind = readerBannerKindForEntry({
+    bookId: displayedBookId,
+    context: readerEntryContext,
+    entryId: displayedEntry.id,
+    entryKind: displayedEntry.kind,
+  })
   return <main className={`reader-shell reader-shell-${displayedEntry.kind}`}>
     <header className="reader-header">
       <button className="text-button" type="button" onClick={leaveReader}>

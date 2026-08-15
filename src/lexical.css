@@ -233,6 +233,56 @@
   margin: 0;
 }
 
+.help-steps {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.help-control-name,
+.help-subheading {
+  color: var(--accent);
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+  font-weight: 600;
+}
+
+.help-definition-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  border-top: 1px solid var(--line);
+}
+
+.help-definition-list > div {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+  align-content: start;
+  padding: 7px 8px 7px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.help-definition-list dt,
+.help-definition-list dd {
+  margin: 0;
+}
+
+.help-definition-list dt {
+  color: var(--accent);
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+  font-size: 0.76rem;
+}
+
+.help-definition-list dd {
+  color: var(--muted);
+  font-size: 0.6rem;
+}
+
+.help-compact-list {
+  gap: 3px !important;
+}
+
 .help-content h4 {
   color: var(--accent);
   font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
