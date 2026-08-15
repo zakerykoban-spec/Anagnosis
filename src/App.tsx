@@ -548,9 +548,7 @@ export default function App() {
       )
     : null
   const isDisplayedPsalm = displayedBookId === 'psalms'
-  const isLongForm = freeReadingEntry
-    ? !isDisplayedPsalm
-    : activeStream === 'progressive' || activeStream === 'challenge'
+  const isLongForm = scriptureReading !== null
   const lexicalContext = freeReadingEntry !== null
     ? 'free-reading'
     : activeStream
