@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 
-const ICON_PATH = 'icons/apple-touch-icon-anagnosis.png'
+const ICON_PATH = 'icons/apple-touch-icon-anagnosis-manuscript.png'
 
 test('dedicated iPhone icon is wired into the document and PWA assets', async () => {
   const [html, viteConfig] = await Promise.all([
