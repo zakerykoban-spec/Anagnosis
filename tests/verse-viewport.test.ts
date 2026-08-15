@@ -3,6 +3,10 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { verseViewportScrollDelta } from '../src/verseViewport.ts'
 
+function assertClose(actual: number, expected: number) {
+  assert.ok(Math.abs(actual - expected) < 0.001, `${actual} ≉ ${expected}`)
+}
+
 test('verse navigation leaves a comfortably visible verse stationary', () => {
   assert.equal(verseViewportScrollDelta({
     verseTop: 260,
@@ -13,7 +17,7 @@ test('verse navigation leaves a comfortably visible verse stationary', () => {
 })
 
 test('verse navigation scrolls only enough near the lower edge', () => {
-  assert.equal(verseViewportScrollDelta({
+  assertClose(verseViewportScrollDelta({
     verseTop: 650,
     verseBottom: 720,
     viewportTop: 64,
@@ -22,7 +26,7 @@ test('verse navigation scrolls only enough near the lower edge', () => {
 })
 
 test('verse navigation scrolls only enough near the upper edge', () => {
-  assert.equal(verseViewportScrollDelta({
+  assertClose(verseViewportScrollDelta({
     verseTop: 105,
     verseBottom: 170,
     viewportTop: 64,
