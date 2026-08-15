@@ -43,7 +43,7 @@ test('restored positions keep their centered scroll path while step navigation i
   )
   assert.match(
     app,
-    /pendingScroll\.current=\{kind:'verse',verseId:nextVerse\.id,edgeAware:true\}/u,
+    /pendingScroll\.current=intent==='navigation'\s*\? \{kind:'verse',verseId:nextVerse\.id,edgeAware:true\}/u,
   )
   assert.match(app, /keepVerseComfortablyVisible\(verseElement\)/u)
 })
