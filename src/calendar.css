@@ -1,0 +1,305 @@
+.calendar-mark[role='button'] {
+  border-radius: 6px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.calendar-mark[role='button']:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 4px;
+}
+
+.calendar-backdrop {
+  position: fixed;
+  z-index: 80;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding:
+    max(14px, env(safe-area-inset-top))
+    max(12px, env(safe-area-inset-right))
+    max(14px, env(safe-area-inset-bottom))
+    max(12px, env(safe-area-inset-left));
+  background: rgba(20, 16, 12, 0.46);
+}
+
+.calendar-dialog {
+  width: min(100%, 420px);
+  max-height: calc(100dvh - 28px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  color: var(--ink);
+  background: var(--paper);
+  box-shadow: 0 24px 70px rgba(20, 16, 12, 0.34);
+  -webkit-overflow-scrolling: touch;
+}
+
+.calendar-dialog button {
+  font: inherit;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.calendar-dialog-header {
+  position: sticky;
+  z-index: 2;
+  top: 0;
+  display: flex;
+  min-height: 58px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px 8px 18px;
+  border-bottom: 1px solid var(--line);
+  background: var(--paper);
+}
+
+.calendar-dialog-header h2 {
+  display: grid;
+  gap: 1px;
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.calendar-dialog-header h2 small,
+.calendar-month-heading small,
+.calendar-month-picker small,
+.calendar-weekdays small,
+.calendar-learning-note small,
+.calendar-information-note small {
+  color: var(--muted);
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.57rem;
+  font-weight: 400;
+}
+
+.calendar-close {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: var(--accent);
+  background: transparent;
+  cursor: pointer;
+  font-family: Georgia, serif;
+  font-size: 1.5rem;
+}
+
+.calendar-close:focus-visible,
+.calendar-month-arrow:focus-visible,
+.calendar-month-heading:focus-visible,
+.calendar-month-picker button:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.calendar-learning-note,
+.calendar-information-note {
+  display: grid;
+  gap: 3px;
+  margin: 0;
+  padding: 10px 18px;
+  color: var(--muted);
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+.calendar-learning-note {
+  border-bottom: 1px solid var(--line);
+}
+
+.calendar-information-note {
+  border-top: 1px solid var(--line);
+  text-align: center;
+}
+
+.calendar-month-controls {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  gap: 4px;
+  align-items: stretch;
+  padding: 10px 12px 8px;
+}
+
+.calendar-month-arrow,
+.calendar-month-heading {
+  min-height: 44px;
+  border: 0;
+  color: var(--accent);
+  background: transparent;
+  cursor: pointer;
+}
+
+.calendar-month-arrow {
+  border-radius: 50%;
+  font-family: Georgia, serif;
+  font-size: 1.55rem;
+}
+
+.calendar-month-heading {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 1px 7px;
+  place-content: center;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.calendar-month-heading strong {
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.calendar-month-heading > span {
+  align-self: center;
+  color: var(--ink);
+  font-size: 0.75rem;
+}
+
+.calendar-month-heading small {
+  grid-column: 1 / -1;
+}
+
+.calendar-month-heading:hover,
+.calendar-month-heading:focus-visible,
+.calendar-month-arrow:hover,
+.calendar-month-arrow:focus-visible,
+.calendar-month-picker button:hover,
+.calendar-month-picker button:focus-visible {
+  background: var(--hover);
+}
+
+.calendar-weekdays,
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.calendar-weekdays {
+  gap: 2px;
+  padding: 2px 14px 5px;
+  border-bottom: 1px solid var(--line);
+}
+
+.calendar-weekdays > div {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+  justify-items: center;
+  color: var(--accent);
+  text-align: center;
+}
+
+.calendar-weekdays strong {
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+  font-size: 0.65rem;
+  font-weight: 650;
+}
+
+.calendar-days {
+  gap: 3px;
+  padding: 8px 14px 12px;
+}
+
+.calendar-day-cell {
+  display: grid;
+  min-width: 0;
+  min-height: 38px;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--ink);
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+  font-size: 0.82rem;
+}
+
+.calendar-day-cell.is-outside {
+  color: var(--muted);
+  opacity: 0.44;
+}
+
+.calendar-day-cell.is-today {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--paper));
+  box-shadow: inset 0 0 0 1px var(--accent);
+  font-weight: 700;
+}
+
+.calendar-month-picker {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  padding: 5px 14px 14px;
+}
+
+.calendar-month-picker button {
+  display: grid;
+  min-width: 0;
+  min-height: 58px;
+  gap: 2px;
+  place-content: center;
+  padding: 6px 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--accent);
+  background: transparent;
+  cursor: pointer;
+  text-align: center;
+}
+
+.calendar-month-picker button > span {
+  overflow-wrap: anywhere;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+  font-size: 0.7rem;
+  line-height: 1.1;
+}
+
+.calendar-month-picker button.is-selected {
+  border-color: color-mix(in srgb, var(--accent) 62%, var(--line));
+  background: color-mix(in srgb, var(--accent) 7%, var(--paper));
+  font-weight: 650;
+}
+
+@media (max-width: 430px) {
+  .calendar-backdrop {
+    place-items: center;
+    padding-inline:
+      max(8px, env(safe-area-inset-right))
+      max(8px, env(safe-area-inset-left));
+  }
+
+  .calendar-dialog {
+    max-height: calc(100dvh - 20px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  }
+
+  .calendar-learning-note,
+  .calendar-information-note {
+    padding-inline: 14px;
+  }
+
+  .calendar-days,
+  .calendar-weekdays {
+    padding-inline: 10px;
+  }
+
+  .calendar-day-cell {
+    min-height: 35px;
+  }
+
+  .calendar-month-picker {
+    gap: 5px;
+    padding-inline: 10px;
+  }
+
+  .calendar-month-picker button {
+    min-height: 54px;
+  }
+}
