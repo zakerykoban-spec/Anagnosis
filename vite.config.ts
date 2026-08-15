@@ -9,7 +9,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icons/apple-touch-icon-anagnosis.png'],
+      includeAssets: ['icons/apple-touch-icon-anagnosis-manuscript.png'],
       manifest: {
         name: 'Ἀνάγνωσις',
         short_name: 'Ἀνάγνωσις',
