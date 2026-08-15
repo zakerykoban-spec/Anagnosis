@@ -1,6 +1,6 @@
 # STEP lexical data
 
-Anagnosis displays the SBLGNT 1.2 text unchanged. Its optional word-level lexical layer is a compact derivative of STEP Bible data and applies only to SBLGNT Progressive, Challenge, and Open Text readings. The Septuagint, Psalms, prayers, and table prayers are not enriched.
+Anagnosis displays its canonical SBLGNT and LXX text unchanged. Its optional word-level lexical layer is a compact derivative of STEP Bible data. It applies to SBLGNT Progressive, Challenge, and Open Text readings, plus the explicitly reviewed LXX witnesses recorded in `docs/32_LXX_ASSISTANCE_EXPANSION.md`. Unsupported LXX witnesses, prayers, and table prayers are not enriched.
 
 ## Pinned sources
 
@@ -15,6 +15,12 @@ The exact source paths and SHA-256 checksums are recorded in `src/data/scripture
 npm run scripture:import:step -- /path/to/STEPBible-Data
 npm run scripture:validate:step
 ```
+
+The LXX importer uses `scripts/data/lxx-step-glossary.json`, a compact reviewed
+gloss map recovered from already committed derivatives of that same pinned
+TBESG source. This keeps the LXX expansion reproducible without committing the
+raw multi-megabyte lexicon. OGA supplies the LXX lemma, morphology, and syntax;
+STEP supplies only an optional brief dictionary gloss.
 
 ## Alignment policy
 

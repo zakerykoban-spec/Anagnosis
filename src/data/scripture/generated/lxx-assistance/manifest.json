@@ -1,17 +1,22 @@
 {
   "schemaVersion": 1,
-  "pilot": true,
+  "pilot": false,
+  "scope": "reviewed-expansion",
+  "minimumExactWitnessAlignmentPercent": 99,
   "books": [
     {
       "id": "genesis",
+      "approvalTier": "accepted-pilot-exception",
+      "ogaFile": "tlg0527.tlg001.opp-grc2.tok01_sentence-seg01_annotated_lemma.conllu",
+      "ogaFileSha256": "485bcca19fa10cb8b6433fa160336f3e4b3afe2b672968d4f3710910db2fc420",
       "files": [
         {
           "filename": "genesis-1.json",
-          "sha256": "3f22897bc9a76648a8061487294b469e9fead3f2fc0d8a64d5b2ea515a2e16dd"
+          "sha256": "0b37dfbeac8e89939e0537c04f06ffcc63463ed881f655fe618deec5a44f20f3"
         },
         {
           "filename": "genesis-2.json",
-          "sha256": "dc6c78170d3a99ad947f35a8b0f9eb28dbceae1d3ee04ffecad032d3231be978"
+          "sha256": "a707825fd230098409ff8916b5539645d235784e973f9f375325c387d23272c4"
         }
       ],
       "counts": {
@@ -24,15 +29,258 @@
       }
     },
     {
+      "id": "1-chronicles",
+      "approvalTier": "exact-witness-expansion",
+      "ogaFile": "tlg0527.tlg015.1st1K-grc1.tok01_sentence-seg01_annotated_lemma.conllu",
+      "ogaFileSha256": "58ec523ded6e5fd205ca58bdbcac6db89725691850a2a2cd6eec09f1768f183d",
+      "files": [
+        {
+          "filename": "1-chronicles-1.json",
+          "sha256": "9a97e73a8d44c73a781c41a5cd610dd73431cb6b28078bd4ddf1392e611f743d"
+        },
+        {
+          "filename": "1-chronicles-2.json",
+          "sha256": "22ee99966b84a299b0bd4fdd42a5e648f2a4566d5a148d9e0d8493d73ec84160"
+        }
+      ],
+      "counts": {
+        "displayTokens": 15957,
+        "alignedTokens": 15927,
+        "lexicalTokens": 15922,
+        "glossedTokens": 13400,
+        "versesWithSyntax": 843,
+        "discardedSyntaxGroups": 882
+      }
+    },
+    {
+      "id": "2-chronicles",
+      "approvalTier": "exact-witness-expansion",
+      "ogaFile": "tlg0527.tlg016.1st1K-grc1.tok01_sentence-seg01_annotated_lemma.conllu",
+      "ogaFileSha256": "3230c29c2608f12617af0d520a031af06407e8e34ea0dbe27aeddd9e7f4dbd56",
+      "files": [
+        {
+          "filename": "2-chronicles-1.json",
+          "sha256": "4bf18eecd1455b1cdb810f5d87de9490930c940e5967870330605f62d7258ec4"
+        },
+        {
+          "filename": "2-chronicles-2.json",
+          "sha256": "6d3e2511085bb21d8a3fcdaaa77ab055be38f404a6f4fb0b55bba3897ab2401e"
+        }
+      ],
+      "counts": {
+        "displayTokens": 21052,
+        "alignedTokens": 21013,
+        "lexicalTokens": 21004,
+        "glossedTokens": 19609,
+        "versesWithSyntax": 823,
+        "discardedSyntaxGroups": 1497
+      }
+    },
+    {
+      "id": "1-esdras",
+      "approvalTier": "exact-witness-expansion",
+      "ogaFile": "tlg0527.tlg017.1st1K-grc1.tok01_sentence-seg01_annotated_lemma.conllu",
+      "ogaFileSha256": "e28afa35bad9bab537029be8ff725504b301cda7e9f1e85973af442d666edb22",
+      "files": [
+        {
+          "filename": "1-esdras-1.json",
+          "sha256": "7b44357b1ed3ac81427e7495e94e03d91fd02bfc7610ee1c79d9642b1cb6df97"
+        },
+        {
+          "filename": "1-esdras-2.json",
+          "sha256": "e05059c21d58f3f950ef4c16054516dc7c9f785a840e5875531a8fb0cfeb1adf"
+        }
+      ],
+      "counts": {
+        "displayTokens": 8812,
+        "alignedTokens": 8791,
+        "lexicalTokens": 8788,
+        "glossedTokens": 7882,
+        "versesWithSyntax": 413,
+        "discardedSyntaxGroups": 634
+      }
+    },
+    {
+      "id": "2-esdras",
+      "approvalTier": "exact-witness-expansion",
+      "ogaFile": "tlg0527.tlg018.1st1K-grc1.tok01_sentence-seg01_annotated_lemma.conllu",
+      "ogaFileSha256": "fb1b45fbca4a28dc4d466d1a36410e6f85454fd7d1a18cea73c46aeff6ea2c59",
+      "files": [
+        {
+          "filename": "2-esdras-1.json",
+          "sha256": "b72507cc1d40882fd0f7b95505b3d3cac7c19f6d8694145f805da1dbf216af97"
+        },
+        {
+          "filename": "2-esdras-2.json",
+          "sha256": "82cc4605189bed056a3885b21a5c7720057dbe75a9aabcd68059296027f0050c"
+        }
+      ],
+      "counts": {
+        "displayTokens": 12668,
+        "alignedTokens": 12640,
+        "lexicalTokens": 12638,
+        "glossedTokens": 11256,
+        "versesWithSyntax": 559,
+        "discardedSyntaxGroups": 813
+      }
+    },
+    {
+      "id": "esther",
+      "approvalTier": "exact-witness-expansion",
+      "ogaFile": "tlg0527.tlg019.1st1K-grc1.tok01_sentence-seg01_annotated_lemma.conllu",
+      "ogaFileSha256": "dfbcfc0f310e9cd1e8aa63df936cb3ab2728e551af6c2de2d2ab78dc200b3003",
+      "files": [
+        {
+          "filename": "esther-1.json",
+          "sha256": "7663e081781bffdbc9980a1872c5b0efa5c872a0b71eb8fc6c174651734e796f"
+        },
+        {
+          "filename": "esther-2.json",
+          "sha256": "8cec5918422ba3fb7eafe29ec8ad165b0c6a6391934d239fb944eaca2fc34bda"
+        }
+      ],
+      "counts": {
+        "displayTokens": 5832,
+        "alignedTokens": 5820,
+        "lexicalTokens": 5819,
+        "glossedTokens": 5264,
+        "versesWithSyntax": 261,
+        "discardedSyntaxGroups": 513
+      }
+    },
+    {
+      "id": "tobit",
+      "approvalTier": "exact-witness-expansion",
+      "ogaFile": "tlg0527.tlg021.1st1K-grc1.tok01_sentence-seg01_annotated_lemma.conllu",
+      "ogaFileSha256": "6e9f2d8edfc4978736997228bced304e9da7c0d7b8ec6628053108bb35b17a30",
+      "files": [
+        {
+          "filename": "tobit-1.json",
+          "sha256": "e2a62b15d15a36d1c405e6346b2576bd6dd886512baf9d6f271a3f48275bb04b"
+        },
+        {
+          "filename": "tobit-2.json",
+          "sha256": "552c848c0ec32d741ddf1526960d4713a2d4a33573f77fbfbee826c4a7c4336c"
+        }
+      ],
+      "counts": {
+        "displayTokens": 5451,
+        "alignedTokens": 5430,
+        "lexicalTokens": 5428,
+        "glossedTokens": 5103,
+        "versesWithSyntax": 240,
+        "discardedSyntaxGroups": 404
+      }
+    },
+    {
+      "id": "1-maccabees",
+      "approvalTier": "exact-witness-expansion",
+      "ogaFile": "tlg0527.tlg023.1st1K-grc1.tok01_sentence-seg01_annotated_lemma.conllu",
+      "ogaFileSha256": "fedc4d279e8f26d2a52845f855a2998b7f3b7d5981efc450987b8db0c25939d8",
+      "files": [
+        {
+          "filename": "1-maccabees-1.json",
+          "sha256": "541b46e43190f747662657ef97d3b4ae3933dd06870c46486203f665175f9f99"
+        },
+        {
+          "filename": "1-maccabees-2.json",
+          "sha256": "1958de096bc8e617f694d0aa9641088c7c6ad29295fc100277a6de2a92d651ad"
+        }
+      ],
+      "counts": {
+        "displayTokens": 18299,
+        "alignedTokens": 18263,
+        "lexicalTokens": 18258,
+        "glossedTokens": 17049,
+        "versesWithSyntax": 918,
+        "discardedSyntaxGroups": 1384
+      }
+    },
+    {
+      "id": "2-maccabees",
+      "approvalTier": "exact-witness-expansion",
+      "ogaFile": "tlg0527.tlg024.1st1K-grc1.tok01_sentence-seg01_annotated_lemma.conllu",
+      "ogaFileSha256": "b061fb2e801441751a41f6e1a937fc8b61c137662be280056e36482e6dd3ab32",
+      "files": [
+        {
+          "filename": "2-maccabees-1.json",
+          "sha256": "09a54361011d36f76e40bbf70a4509325d869b781c9e652d9782d77687fc08ae"
+        },
+        {
+          "filename": "2-maccabees-2.json",
+          "sha256": "571c4a282eeb17558c3c7ec889ab7e3bdc0b22745a06428d23dc43e134d6b615"
+        }
+      ],
+      "counts": {
+        "displayTokens": 11853,
+        "alignedTokens": 11834,
+        "lexicalTokens": 11833,
+        "glossedTokens": 10406,
+        "versesWithSyntax": 547,
+        "discardedSyntaxGroups": 1281
+      }
+    },
+    {
+      "id": "3-maccabees",
+      "approvalTier": "exact-witness-expansion",
+      "ogaFile": "tlg0527.tlg025.1st1K-grc1.tok01_sentence-seg01_annotated_lemma.conllu",
+      "ogaFileSha256": "1b16dba4f3a563f606af8b2c3170a754fccd4153613cb27007db7eadb5da5e59",
+      "files": [
+        {
+          "filename": "3-maccabees-1.json",
+          "sha256": "6fc9b1109eb35c102d5660aa5691f53d108d9dfc33403bf453d0cca5e23fa736"
+        },
+        {
+          "filename": "3-maccabees-2.json",
+          "sha256": "ad67285b7d678ca8b79077c775c308cf751d3977ea2ca5c9034163cad5fb8968"
+        }
+      ],
+      "counts": {
+        "displayTokens": 5062,
+        "alignedTokens": 5012,
+        "lexicalTokens": 5012,
+        "glossedTokens": 4380,
+        "versesWithSyntax": 225,
+        "discardedSyntaxGroups": 593
+      }
+    },
+    {
+      "id": "4-maccabees",
+      "approvalTier": "exact-witness-expansion",
+      "ogaFile": "tlg0527.tlg026.1st1K-grc1.tok01_sentence-seg01_annotated_lemma.conllu",
+      "ogaFileSha256": "ae2f3c447ffce56aaad0d8f834fb8be447bc2a8eeacdf12c619a4497d65519c2",
+      "files": [
+        {
+          "filename": "4-maccabees-1.json",
+          "sha256": "ae83d909a9f610c7a30e6da87f03f2d50757d4adb304a2986d3a5809d93b84a2"
+        },
+        {
+          "filename": "4-maccabees-2.json",
+          "sha256": "18f8bbda97d7093912549e9417050760a4a0d47a1f279c4b21ce0889dc24021b"
+        }
+      ],
+      "counts": {
+        "displayTokens": 7910,
+        "alignedTokens": 7823,
+        "lexicalTokens": 7822,
+        "glossedTokens": 6857,
+        "versesWithSyntax": 459,
+        "discardedSyntaxGroups": 831
+      }
+    },
+    {
       "id": "psalms",
+      "approvalTier": "accepted-pilot",
+      "ogaFile": "tlg0527.tlg027.1st1K-grc1.tok01_sentence-seg01_annotated_lemma.conllu",
+      "ogaFileSha256": "d0d3949ba8a47fe0ba05e79955f3ee9ce564c76222f4133d233f6c0b51fecd23",
       "files": [
         {
           "filename": "psalms-1.json",
-          "sha256": "ec9383f5666339cab1b69cc22fb4e4419bc5a860f95fa754d33af5cf3b7ce209"
+          "sha256": "aa00ea62c9bcb29c74cf193d39d108bfa4954d28b8dc19bd5cdd2555f1493b1f"
         },
         {
           "filename": "psalms-2.json",
-          "sha256": "17179e376dfbc1d2cb96e0678ae215b825cef5420cbf8301b261ad11feaf6203"
+          "sha256": "72a99fc7b1fa73e512ecb8469e9364b3bd3b96c1cc9a6e3e20503b49148461ca"
         }
       ],
       "counts": {
@@ -45,24 +293,531 @@
       }
     },
     {
+      "id": "proverbs",
+      "approvalTier": "exact-witness-expansion",
+      "ogaFile": "tlg0527.tlg029.1st1K-grc1.tok01_sentence-seg01_annotated_lemma.conllu",
+      "ogaFileSha256": "273f36b551e7edd258dae4d13325fb2cc141180512811c94c8d9ce1bfdafdaaa",
+      "files": [
+        {
+          "filename": "proverbs-1.json",
+          "sha256": "9fcf544f20ae67480caad4175c465c81455aabb6c591aead7ed74772a84f7f80"
+        },
+        {
+          "filename": "proverbs-2.json",
+          "sha256": "87186a78b91ba0dc701415bf859845e026cdd8db5db71fdfc3de820f7f22954d"
+        }
+      ],
+      "counts": {
+        "displayTokens": 11093,
+        "alignedTokens": 10995,
+        "lexicalTokens": 10993,
+        "glossedTokens": 10349,
+        "versesWithSyntax": 917,
+        "discardedSyntaxGroups": 1029
+      }
+    },
+    {
+      "id": "song-of-songs",
+      "approvalTier": "exact-witness-expansion",
+      "ogaFile": "tlg0527.tlg031.1st1K-grc1.tok01_sentence-seg01_annotated_lemma.conllu",
+      "ogaFileSha256": "276d59941a1d32d7caf5f1f5e07a3bd44d07d8843609ae5c9860f2b290ad3157",
+      "files": [
+        {
+          "filename": "song-of-songs-1.json",
+          "sha256": "202fac6ea0dddabb3453bc9094fdf9ba174e347829e8e54002abfe692e05f0cb"
+        },
+        {
+          "filename": "song-of-songs-2.json",
+          "sha256": "a58effd6f4e3cd8f250ed86d361a04ac5a741143cbf1712c6adcf85f496b9148"
+        }
+      ],
+      "counts": {
+        "displayTokens": 1990,
+        "alignedTokens": 1984,
+        "lexicalTokens": 1984,
+        "glossedTokens": 1788,
+        "versesWithSyntax": 114,
+        "discardedSyntaxGroups": 109
+      }
+    },
+    {
+      "id": "psalms-of-solomon",
+      "approvalTier": "exact-witness-expansion",
+      "ogaFile": "tlg0527.tlg035.1st1K-grc1.tok01_sentence-seg01_annotated_lemma.conllu",
+      "ogaFileSha256": "b5107f3ad8411cd31f3ad6336488dc01c831c73711a715aeafc1b0a04cb1e6ab",
+      "files": [
+        {
+          "filename": "psalms-of-solomon-1.json",
+          "sha256": "2c8e5fc290188257e531806f4842b7810b5f9482c1aafc5b9eecb7d7c4633daa"
+        },
+        {
+          "filename": "psalms-of-solomon-2.json",
+          "sha256": "03cd2a48215ca53f2201222134d2cd955d67f7fcab1252e2f5a8bb5bdda70316"
+        }
+      ],
+      "counts": {
+        "displayTokens": 4829,
+        "alignedTokens": 4815,
+        "lexicalTokens": 4811,
+        "glossedTokens": 4600,
+        "versesWithSyntax": 329,
+        "discardedSyntaxGroups": 391
+      }
+    },
+    {
+      "id": "amos",
+      "approvalTier": "exact-witness-expansion",
+      "ogaFile": "tlg0527.tlg037.1st1K-grc1.tok01_sentence-seg01_annotated_lemma.conllu",
+      "ogaFileSha256": "de63202e0fa7f5bf9981c595d11c2605544270ae91e04af33f4f472c5fc8635e",
+      "files": [
+        {
+          "filename": "amos-1.json",
+          "sha256": "e32efaa67b167c9c8808b88ce49c69b238b9cd95d1fac53def3dcaa46af20413"
+        },
+        {
+          "filename": "amos-2.json",
+          "sha256": "ff35eb7c8c9088a52e87bd29567c004e8f187fe4bdbedd53e6000464d7ec0ff3"
+        }
+      ],
+      "counts": {
+        "displayTokens": 3200,
+        "alignedTokens": 3178,
+        "lexicalTokens": 3176,
+        "glossedTokens": 2984,
+        "versesWithSyntax": 146,
+        "discardedSyntaxGroups": 230
+      }
+    },
+    {
+      "id": "micah",
+      "approvalTier": "exact-witness-expansion",
+      "ogaFile": "tlg0527.tlg038.1st1K-grc1.tok01_sentence-seg01_annotated_lemma.conllu",
+      "ogaFileSha256": "9fbca7e6c0583b166bef1721374ac43f8bd1af5e667f00ee9b21b808c591c8da",
+      "files": [
+        {
+          "filename": "micah-1.json",
+          "sha256": "c1c5d1352c779c30febddc317dac6a0943b4d54ca27ec2a4dfaff29b5cc88f8a"
+        },
+        {
+          "filename": "micah-2.json",
+          "sha256": "ab5034b7628b350b8fe22b2be061518345f925d852f70e8d7d5160f9e2920968"
+        }
+      ],
+      "counts": {
+        "displayTokens": 2343,
+        "alignedTokens": 2341,
+        "lexicalTokens": 2341,
+        "glossedTokens": 2204,
+        "versesWithSyntax": 105,
+        "discardedSyntaxGroups": 163
+      }
+    },
+    {
+      "id": "joel",
+      "approvalTier": "exact-witness-expansion",
+      "ogaFile": "tlg0527.tlg039.1st1K-grc1.tok01_sentence-seg01_annotated_lemma.conllu",
+      "ogaFileSha256": "a3b45c6180509388fffa191d87c72f9f00d00d4f82363e3266082c4bfcda8663",
+      "files": [
+        {
+          "filename": "joel-1.json",
+          "sha256": "7b9e71332fc59d021e5c42f70deb6c4c0c2851dc661f11a82ad72ea005ce0022"
+        },
+        {
+          "filename": "joel-2.json",
+          "sha256": "2e1fb9c6a9138197a4141242a686daded05db80d963093d0de1e40e773e3ef2d"
+        }
+      ],
+      "counts": {
+        "displayTokens": 1574,
+        "alignedTokens": 1573,
+        "lexicalTokens": 1572,
+        "glossedTokens": 1507,
+        "versesWithSyntax": 73,
+        "discardedSyntaxGroups": 113
+      }
+    },
+    {
+      "id": "obadiah",
+      "approvalTier": "exact-witness-expansion",
+      "ogaFile": "tlg0527.tlg040.1st1K-grc1.tok01_sentence-seg01_annotated_lemma.conllu",
+      "ogaFileSha256": "576e74c4efddd8eef7b06c3a8bd0e3e45cdc443a38651f905c9c8f7ffcc0624a",
+      "files": [
+        {
+          "filename": "obadiah-1.json",
+          "sha256": "3a458a814c6daa18b7a847fba8757a146faafed906ab245dc1852a4bb3909f4a"
+        },
+        {
+          "filename": "obadiah-2.json",
+          "sha256": "b05b9675833d6c14fd8ddcc3b84efa1213f3613e275f5febd2172fff6f01a3d7"
+        }
+      ],
+      "counts": {
+        "displayTokens": 454,
+        "alignedTokens": 452,
+        "lexicalTokens": 452,
+        "glossedTokens": 429,
+        "versesWithSyntax": 21,
+        "discardedSyntaxGroups": 28
+      }
+    },
+    {
+      "id": "jonah",
+      "approvalTier": "exact-witness-expansion",
+      "ogaFile": "tlg0527.tlg041.1st1K-grc1.tok01_sentence-seg01_annotated_lemma.conllu",
+      "ogaFileSha256": "ab5204cffaf22febd77a27bfb14e04396aa3e9d4d6052686c530624ea196722f",
+      "files": [
+        {
+          "filename": "jonah-1.json",
+          "sha256": "00dade3e2ee0c4dee4c8448db8d6179023fd9fd6529c183dbb1895a667835381"
+        },
+        {
+          "filename": "jonah-2.json",
+          "sha256": "ca25bcfe87f973bf9b240e38d286d681ad3d4afe86576cc0513fa998a1254ff7"
+        }
+      ],
+      "counts": {
+        "displayTokens": 1080,
+        "alignedTokens": 1077,
+        "lexicalTokens": 1075,
+        "glossedTokens": 1020,
+        "versesWithSyntax": 48,
+        "discardedSyntaxGroups": 82
+      }
+    },
+    {
+      "id": "nahum",
+      "approvalTier": "exact-witness-expansion",
+      "ogaFile": "tlg0527.tlg042.1st1K-grc1.tok01_sentence-seg01_annotated_lemma.conllu",
+      "ogaFileSha256": "ace0da78c51cb61b2fe215a0a1cee69f8a9b63a08660ee6678e37e1049dfd4e4",
+      "files": [
+        {
+          "filename": "nahum-1.json",
+          "sha256": "6e97dc17d772a7f7aaeddccb3a6e6b03c8adca05d314e9ac2852f6721e2b1b24"
+        },
+        {
+          "filename": "nahum-2.json",
+          "sha256": "48d6c43ea2d0dc49013e55baf389ff549b7187779cd9b48accbe24d3f44fff07"
+        }
+      ],
+      "counts": {
+        "displayTokens": 931,
+        "alignedTokens": 929,
+        "lexicalTokens": 928,
+        "glossedTokens": 860,
+        "versesWithSyntax": 47,
+        "discardedSyntaxGroups": 51
+      }
+    },
+    {
+      "id": "habakkuk",
+      "approvalTier": "exact-witness-expansion",
+      "ogaFile": "tlg0527.tlg043.1st1K-grc1.tok01_sentence-seg01_annotated_lemma.conllu",
+      "ogaFileSha256": "59418dd9443180a55a414078ea43c9418a872f31cd3156e836a6372457e37df8",
+      "files": [
+        {
+          "filename": "habakkuk-1.json",
+          "sha256": "1f22b32a29ac03f1707ddc52ef617c7128554f010b18d69139326a98be89413c"
+        },
+        {
+          "filename": "habakkuk-2.json",
+          "sha256": "a28dbbdc94fc8cd8c82d9e34e0b7f02fb3759ecf8892c3a3c4af39706cddccda"
+        }
+      ],
+      "counts": {
+        "displayTokens": 1089,
+        "alignedTokens": 1088,
+        "lexicalTokens": 1088,
+        "glossedTokens": 1034,
+        "versesWithSyntax": 55,
+        "discardedSyntaxGroups": 73
+      }
+    },
+    {
+      "id": "zephaniah",
+      "approvalTier": "exact-witness-expansion",
+      "ogaFile": "tlg0527.tlg044.1st1K-grc1.tok01_sentence-seg01_annotated_lemma.conllu",
+      "ogaFileSha256": "3875444877b59ea5c847356e9a81f722774c550b2b09b673f9ab9c6a6f071965",
+      "files": [
+        {
+          "filename": "zephaniah-1.json",
+          "sha256": "91a1663ffbd9de640c709a13204444d0884a2f5dc42eff0ba6744be9c6aa1cc6"
+        },
+        {
+          "filename": "zephaniah-2.json",
+          "sha256": "000b081bc29e227bcc6bb0adbe31710c48e268df004e754432544b9869d3e994"
+        }
+      ],
+      "counts": {
+        "displayTokens": 1226,
+        "alignedTokens": 1218,
+        "lexicalTokens": 1218,
+        "glossedTokens": 1165,
+        "versesWithSyntax": 51,
+        "discardedSyntaxGroups": 81
+      }
+    },
+    {
+      "id": "haggai",
+      "approvalTier": "exact-witness-expansion",
+      "ogaFile": "tlg0527.tlg045.1st1K-grc1.tok01_sentence-seg01_annotated_lemma.conllu",
+      "ogaFileSha256": "f12d6916074de6118a624ca6528d03fea1d8c81f0271864ad9596a7223c5e133",
+      "files": [
+        {
+          "filename": "haggai-1.json",
+          "sha256": "f95137c20087b9cf63bff6f48a72b6e45c92f61f81313245c17dd14d03a273d0"
+        },
+        {
+          "filename": "haggai-2.json",
+          "sha256": "11546567e785effe8c30f1c55393432499728afcf45f30513f2b94c3a04af538"
+        }
+      ],
+      "counts": {
+        "displayTokens": 949,
+        "alignedTokens": 948,
+        "lexicalTokens": 947,
+        "glossedTokens": 891,
+        "versesWithSyntax": 37,
+        "discardedSyntaxGroups": 68
+      }
+    },
+    {
+      "id": "zechariah",
+      "approvalTier": "exact-witness-expansion",
+      "ogaFile": "tlg0527.tlg046.1st1K-grc1.tok01_sentence-seg01_annotated_lemma.conllu",
+      "ogaFileSha256": "4ba6f81ba554903e32230eaa9d97ff9d628ad40d405a722b6ab41067b66a1868",
+      "files": [
+        {
+          "filename": "zechariah-1.json",
+          "sha256": "f8b729b68926149505cee2eba09bbb454cd61f556993afa3db01edf97c2be22a"
+        },
+        {
+          "filename": "zechariah-2.json",
+          "sha256": "ece2a2e371c97c60d11ab8caaa5b9dde530db37100f6b227b653ef88d8249336"
+        }
+      ],
+      "counts": {
+        "displayTokens": 4953,
+        "alignedTokens": 4945,
+        "lexicalTokens": 4939,
+        "glossedTokens": 4720,
+        "versesWithSyntax": 208,
+        "discardedSyntaxGroups": 319
+      }
+    },
+    {
+      "id": "malachi",
+      "approvalTier": "exact-witness-expansion",
+      "ogaFile": "tlg0527.tlg047.1st1K-grc1.tok01_sentence-seg01_annotated_lemma.conllu",
+      "ogaFileSha256": "37f5591066db1f60a7d82c790df4f6ba3572538ad9e81037eaa3dce93e1a48f6",
+      "files": [
+        {
+          "filename": "malachi-1.json",
+          "sha256": "f3e606ab9986d52a337bd6b920235f327c586914d8af1ce718be97dddc6ca055"
+        },
+        {
+          "filename": "malachi-2.json",
+          "sha256": "6d768adbb8144463090f0d7523b1d2f18112d8362020ebddc8a2f03d5589d497"
+        }
+      ],
+      "counts": {
+        "displayTokens": 1410,
+        "alignedTokens": 1402,
+        "lexicalTokens": 1400,
+        "glossedTokens": 1329,
+        "versesWithSyntax": 55,
+        "discardedSyntaxGroups": 97
+      }
+    },
+    {
       "id": "isaiah",
+      "approvalTier": "accepted-pilot",
+      "ogaFile": "tlg0527.tlg048.1st1K-grc1.tok01_sentence-seg01_annotated_lemma.conllu",
+      "ogaFileSha256": "b97fc47a0474ffe081be6df7d6abedb7cf1ef77b5bf73a8998c83ce875158ab2",
       "files": [
         {
           "filename": "isaiah-1.json",
-          "sha256": "cbef8b77c7a6cfc7ca36bc3ab32adfa234b3259eca596aa9ba8592dd201e97af"
+          "sha256": "827b4fa8de92281b3d6f3a4d40576f59ae7a394358a88b01ecc3231d6065625c"
         },
         {
           "filename": "isaiah-2.json",
-          "sha256": "c647a810bf8a8b805934871f9ea91027fd6beb27a95a95a56116dc5084087ea6"
+          "sha256": "8dfc4e2fbcd2c9538600d07a4215f0b8ad400d1474cd9808298b139f082753c3"
         }
       ],
       "counts": {
         "displayTokens": 26947,
         "alignedTokens": 26701,
         "lexicalTokens": 26687,
-        "glossedTokens": 25733,
+        "glossedTokens": 25734,
         "versesWithSyntax": 1265,
         "discardedSyntaxGroups": 1980
+      }
+    },
+    {
+      "id": "jeremiah",
+      "approvalTier": "exact-witness-expansion",
+      "ogaFile": "tlg0527.tlg049.1st1K-grc1.tok01_sentence-seg01_annotated_lemma.conllu",
+      "ogaFileSha256": "435e428fc31b266c2a56de3849f30616477b6d6613024bd7ed7f425c9db4c953",
+      "files": [
+        {
+          "filename": "jeremiah-1.json",
+          "sha256": "1fcfb446719928b23d7dc915f016ae32fe94496645206ef33f5ad1a1d9fdaca0"
+        },
+        {
+          "filename": "jeremiah-2.json",
+          "sha256": "b3200bd66a9ef64a839e924f1380ce11064a60fc6b5c8d30fbeeef2c2e97b48e"
+        }
+      ],
+      "counts": {
+        "displayTokens": 28783,
+        "alignedTokens": 28716,
+        "lexicalTokens": 28709,
+        "glossedTokens": 27172,
+        "versesWithSyntax": 1285,
+        "discardedSyntaxGroups": 2249
+      }
+    },
+    {
+      "id": "baruch",
+      "approvalTier": "exact-witness-expansion",
+      "ogaFile": "tlg0527.tlg050.1st1K-grc1.tok01_sentence-seg01_annotated_lemma.conllu",
+      "ogaFileSha256": "7cc856eeadc5e74cb67ebda28538306223a526aacc89a728cf13b372096560a0",
+      "files": [
+        {
+          "filename": "baruch-1.json",
+          "sha256": "e07679e18555362b85baf96eb48e21bb37938ce6e8f99004082a80398181a3e5"
+        },
+        {
+          "filename": "baruch-2.json",
+          "sha256": "d8085b49578dd6bde6bf4285e4f42e4f61f176833dbf1e276395b05e61a5285b"
+        }
+      ],
+      "counts": {
+        "displayTokens": 2592,
+        "alignedTokens": 2579,
+        "lexicalTokens": 2578,
+        "glossedTokens": 2450,
+        "versesWithSyntax": 139,
+        "discardedSyntaxGroups": 193
+      }
+    },
+    {
+      "id": "letter-of-jeremiah",
+      "approvalTier": "exact-witness-expansion",
+      "ogaFile": "tlg0527.tlg052.1st1K-grc1.tok01_sentence-seg01_annotated_lemma.conllu",
+      "ogaFileSha256": "00fdba427e647cf7aaf9a89cea3f0d8088a6bb46f1cb8ad3e6615092aa46d725",
+      "files": [
+        {
+          "filename": "letter-of-jeremiah-1.json",
+          "sha256": "7148f7b438018446956b20adc7faa5660abcd1bda5db342a3a1767dad034f8d7"
+        },
+        {
+          "filename": "letter-of-jeremiah-2.json",
+          "sha256": "1a6f293927b369a2f6c2c62b2beaec373ad1bb31f9f00e477df6c276b28eb949"
+        }
+      ],
+      "counts": {
+        "displayTokens": 1262,
+        "alignedTokens": 1251,
+        "lexicalTokens": 1250,
+        "glossedTokens": 1154,
+        "versesWithSyntax": 72,
+        "discardedSyntaxGroups": 130
+      }
+    },
+    {
+      "id": "ezekiel",
+      "approvalTier": "exact-witness-expansion",
+      "ogaFile": "tlg0527.tlg053.1st1K-grc1.tok01_sentence-seg01_annotated_lemma.conllu",
+      "ogaFileSha256": "4f4e21c136e5ee1733072c13932c8b6f302f4a5e24e0f9b034b115908a646053",
+      "files": [
+        {
+          "filename": "ezekiel-1.json",
+          "sha256": "5ff5b489472cdd26afc82068cf5dc5210b1602c94fe109bfe0f8629c5e5de5fd"
+        },
+        {
+          "filename": "ezekiel-2.json",
+          "sha256": "f0228fd2abd507ecca855d932ed48ccf6f02073f014ed1e08c8d59a52c4b42ee"
+        }
+      ],
+      "counts": {
+        "displayTokens": 29394,
+        "alignedTokens": 29282,
+        "lexicalTokens": 29277,
+        "glossedTokens": 27764,
+        "versesWithSyntax": 1249,
+        "discardedSyntaxGroups": 2186
+      }
+    },
+    {
+      "id": "daniel-old-greek",
+      "approvalTier": "exact-witness-expansion",
+      "ogaFile": "tlg0527.tlg056.1st1K-grc1.tok01_sentence-seg01_annotated_lemma.conllu",
+      "ogaFileSha256": "af92dd19ea7189029be10e56754f8783e7b271b89e224798bdf857b775bf3237",
+      "files": [
+        {
+          "filename": "daniel-old-greek-1.json",
+          "sha256": "aa1931479cdd753a920d9b740df25bf701af9e9f768d1b1692ee48e9130cd1d8"
+        },
+        {
+          "filename": "daniel-old-greek-2.json",
+          "sha256": "3070af8c9256e8689364afec44bb608b4c5b529ca0785d2468161b9f5d2f5605"
+        }
+      ],
+      "counts": {
+        "displayTokens": 10965,
+        "alignedTokens": 10918,
+        "lexicalTokens": 10914,
+        "glossedTokens": 10352,
+        "versesWithSyntax": 416,
+        "discardedSyntaxGroups": 760
+      }
+    },
+    {
+      "id": "daniel-theodotion",
+      "approvalTier": "exact-witness-expansion",
+      "ogaFile": "tlg0527.tlg057.1st1K-grc1.tok01_sentence-seg01_annotated_lemma.conllu",
+      "ogaFileSha256": "2746cca4cd9685a0faa07a35a5553054c9b0604d1cdf072c5bc85cbfacab0461",
+      "files": [
+        {
+          "filename": "daniel-theodotion-1.json",
+          "sha256": "7d537c7371bc4cc96f280d99cd4f4dfccf073991f4310102fab286491727fe7d"
+        },
+        {
+          "filename": "daniel-theodotion-2.json",
+          "sha256": "1fb16b6bbddf7838ba9b7519cf92535e52e70e6b2746137f6e57416236c6acfd"
+        }
+      ],
+      "counts": {
+        "displayTokens": 10120,
+        "alignedTokens": 10081,
+        "lexicalTokens": 10079,
+        "glossedTokens": 9514,
+        "versesWithSyntax": 412,
+        "discardedSyntaxGroups": 645
+      }
+    },
+    {
+      "id": "bel-and-the-dragon-old-greek",
+      "approvalTier": "exact-witness-expansion",
+      "ogaFile": "tlg0527.tlg058.1st1K-grc1.tok01_sentence-seg01_annotated_lemma.conllu",
+      "ogaFileSha256": "36833ef2ae22f6dfa802ed597d99a12f960f55716ae47eead6b3718f778fe7d7",
+      "files": [
+        {
+          "filename": "bel-and-the-dragon-old-greek-1.json",
+          "sha256": "8f5605b49e482652c82e96b11d71ba673806f2aa52ba3e71bc6cfb9d489968b3"
+        },
+        {
+          "filename": "bel-and-the-dragon-old-greek-2.json",
+          "sha256": "ea918b1d2ea59d0426a7061fccf57792848c1d6a73bcf9f360511603aa678cdb"
+        }
+      ],
+      "counts": {
+        "displayTokens": 903,
+        "alignedTokens": 898,
+        "lexicalTokens": 898,
+        "glossedTokens": 839,
+        "versesWithSyntax": 35,
+        "discardedSyntaxGroups": 73
       }
     }
   ],
@@ -85,6 +840,7 @@
     "ogaLicense": "CC BY-SA 4.0",
     "stepCommit": "b86d26cdb1f51729e73b5b4eb7f7ccadc5dfba39",
     "stepLicense": "CC BY 4.0",
+    "stepGlossary": "reviewed-committed-derivative",
     "alignmentStrategyVersion": 1
   }
 }

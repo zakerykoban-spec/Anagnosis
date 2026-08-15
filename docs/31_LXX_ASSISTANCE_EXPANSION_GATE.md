@@ -15,6 +15,9 @@ Pass F2b measured OGA v0.2.0 CoNLL-U annotations against every LXX work currentl
 
 Psalms and Isaiah are already in the accepted pilot. The remaining 31 candidates require the same semantic sampling and fail-closed generation used in F2a before exposure.
 
+Pass F2c completed that sampled review and implemented the accepted allowlist;
+see `docs/32_LXX_ASSISTANCE_EXPANSION.md`.
+
 ## Held books
 
 - Genesis is retained only as the already reviewed pilot exception: OGA uses an alternate `opp-grc2` witness and aligns at 98.99%.
