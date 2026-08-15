@@ -77,13 +77,16 @@ import type { ScriptureReferencePart } from './models/scripture'
 import {
   lexicalAssistanceApplies,
   lexicalWordsForVerse,
+  type LxxAssistanceBook,
   type LexicalWordInfo,
   type NtLexicalBook,
 } from './models/lexical'
 import { loadSblgntLexicalBook } from './stepLexicalLibrary'
 import { loadSblgntSyntaxBook } from './maculaSyntaxLibrary'
+import { loadLxxAssistanceBook } from './lxxAssistanceLibrary'
 import {
   syntaxAssistanceApplies,
+  type LxxSyntaxBook,
   type NtSyntaxBook,
 } from './models/syntax'
 import { createSingleFlightGuard } from './singleFlight'
@@ -139,11 +142,11 @@ type FreeReadingLocation = {
 }
 type LoadedLexicalBook = {
   bookId: string
-  data: NtLexicalBook | null
+  data: NtLexicalBook | LxxAssistanceBook | null
 }
 type LoadedSyntaxBook = {
   bookId: string
-  data: NtSyntaxBook | null
+  data: NtSyntaxBook | LxxSyntaxBook | null
 }
 
 const OPTIONS_KEY = 'anagnosis.options.v1'
@@ -552,13 +555,13 @@ export default function App() {
     ? 'free-reading'
     : activeStream
   const lexicalEnabled = displayedBookId !== null
-    && lexicalAssistanceApplies(displayedCorpus, lexicalContext)
+    && lexicalAssistanceApplies(displayedCorpus, lexicalContext, displayedBookId)
   const lexicalBook = lexicalEnabled
     && loadedLexicalBook.bookId === displayedBookId
     ? loadedLexicalBook.data
     : null
   const syntaxEnabled = displayedBookId !== null
-    && syntaxAssistanceApplies(displayedCorpus, lexicalContext)
+    && syntaxAssistanceApplies(displayedCorpus, lexicalContext, displayedBookId)
   const syntaxBook = syntaxEnabled
     && loadedSyntaxBook.bookId === displayedBookId
     ? loadedSyntaxBook.data
@@ -585,7 +588,10 @@ export default function App() {
   useEffect(() => {
     if (!lexicalEnabled || !displayedBookId) return
     let cancelled = false
-    loadSblgntLexicalBook(displayedBookId)
+    const loadAssistance = displayedCorpus === 'lxx'
+      ? loadLxxAssistanceBook
+      : loadSblgntLexicalBook
+    loadAssistance(displayedBookId)
       .then((data) => {
         if (!cancelled) setLoadedLexicalBook({ bookId: displayedBookId, data })
       })
@@ -593,7 +599,7 @@ export default function App() {
         if (!cancelled) setLoadedLexicalBook({ bookId: displayedBookId, data: null })
       })
     return () => { cancelled = true }
-  }, [displayedBookId, lexicalEnabled])
+  }, [displayedBookId, displayedCorpus, lexicalEnabled])
   useLayoutEffect(() => {
     if (!readHistoryOpen) return
     currentContentsItem.current?.scrollIntoView({
@@ -649,7 +655,9 @@ export default function App() {
     const request = ++insightRequest.current
     setSyntaxLoading(true)
     try {
-      const data = await loadSblgntSyntaxBook(displayedBookId)
+      const data = displayedCorpus === 'lxx'
+        ? await loadLxxAssistanceBook(displayedBookId)
+        : await loadSblgntSyntaxBook(displayedBookId)
       if (request !== insightRequest.current) return
       setLoadedSyntaxBook({ bookId: displayedBookId, data })
       setSyntaxLoading(false)
@@ -1321,7 +1329,7 @@ export default function App() {
       <OfficeReadingButton entry={calendarOffice.closingPrayer} icon="lampstand" showGloss={options.showGloss} complete={markedToday(calendarOffice.closingPrayer.id)} onOpen={openEntry}/>
     </div>
     <HomeReadingDock showGloss={options.showGloss} onOpenFreeReading={()=>void openFreeReading()} onOpenPrayer={openEntry}/>
-    {menuOpen&&<div className="options-backdrop" role="presentation" onPointerDown={e=>{if(e.target===e.currentTarget)setMenuOpen(false)}}><section className="options-menu office-options-menu" role="dialog" aria-modal="true"><header className="options-menu-header"><h2><VoiceText term={UI.options} showGloss={options.showGloss}/></h2><button className="options-close" type="button" onClick={()=>setMenuOpen(false)}>×</button></header><div className="options-list">{([{key:'showGloss',term:UI.englishAids},{key:'showProgressive',term:UI.progressiveReading},{key:'showChallenge',term:UI.challengeReading},{key:'showPsalm',term:UI.psalm}] as const).map(({key,term})=><label className="option-switch" key={key}><VoiceText term={term} showGloss={options.showGloss}/><input type="checkbox" checked={options[key]} onChange={(e:ChangeEvent<HTMLInputElement>)=>setOptions(c=>({...c,[key]:e.target.checked}))}/><span className="switch-track" aria-hidden="true"/></label>)}<div className="plan-options" aria-label="Reading plan books"><button className="plan-option" type="button" onClick={()=>openPlanSelector('progressive')}><span><strong>Πρόοδος</strong>{options.showGloss&&<small>Progressive book</small>}</span><span><em>{progressiveBook?.titleGreek ?? 'Γραφαί'}</em><small>{progressiveBook?.code}</small></span><span aria-hidden="true">›</span></button><button className="plan-option" type="button" onClick={()=>openPlanSelector('challenge')}><span><strong>Ἄσκησις</strong>{options.showGloss&&<small>Challenge book</small>}</span><span><em>{challengeBook?.titleGreek ?? 'Γραφαί'}</em><small>{challengeBook?.code}</small></span><span aria-hidden="true">›</span></button></div></div><HelpPanel showGloss={options.showGloss}/><section className="about-panel" aria-labelledby="about-title"><h3 id="about-title"><span>Περί</span>{options.showGloss&&<small>About</small>}</h3><div className="about-sources"><p>Ἀνάγνωσις is a daily Greek Scripture reader with completion-based plans and open-text reading.</p><p>SBLGNT 1.2 · CC BY 4.0</p><p>LXX Swete / First1KGreek · CC BY-SA 4.0</p><p>Lexical metadata: <a href="https://www.stepbible.org/" target="_blank" rel="noreferrer">STEP Bible</a> TAGNT, TEGMC, and TBESG · CC BY 4.0</p><p>Syntax metadata: <a href="https://github.com/Clear-Bible/macula-greek" target="_blank" rel="noreferrer">MACULA Greek Linguistic Datasets</a> · CC BY 4.0</p><p>Word and syntax assistance apply only to SBLGNT Progressive, Challenge, and Open Text readings; LXX assistance is not currently included.</p><p>Διδαχὴ 9–10 and traditional Greek prayers · public domain</p></div></section></section></div>}
+    {menuOpen&&<div className="options-backdrop" role="presentation" onPointerDown={e=>{if(e.target===e.currentTarget)setMenuOpen(false)}}><section className="options-menu office-options-menu" role="dialog" aria-modal="true"><header className="options-menu-header"><h2><VoiceText term={UI.options} showGloss={options.showGloss}/></h2><button className="options-close" type="button" onClick={()=>setMenuOpen(false)}>×</button></header><div className="options-list">{([{key:'showGloss',term:UI.englishAids},{key:'showProgressive',term:UI.progressiveReading},{key:'showChallenge',term:UI.challengeReading},{key:'showPsalm',term:UI.psalm}] as const).map(({key,term})=><label className="option-switch" key={key}><VoiceText term={term} showGloss={options.showGloss}/><input type="checkbox" checked={options[key]} onChange={(e:ChangeEvent<HTMLInputElement>)=>setOptions(c=>({...c,[key]:e.target.checked}))}/><span className="switch-track" aria-hidden="true"/></label>)}<div className="plan-options" aria-label="Reading plan books"><button className="plan-option" type="button" onClick={()=>openPlanSelector('progressive')}><span><strong>Πρόοδος</strong>{options.showGloss&&<small>Progressive book</small>}</span><span><em>{progressiveBook?.titleGreek ?? 'Γραφαί'}</em><small>{progressiveBook?.code}</small></span><span aria-hidden="true">›</span></button><button className="plan-option" type="button" onClick={()=>openPlanSelector('challenge')}><span><strong>Ἄσκησις</strong>{options.showGloss&&<small>Challenge book</small>}</span><span><em>{challengeBook?.titleGreek ?? 'Γραφαί'}</em><small>{challengeBook?.code}</small></span><span aria-hidden="true">›</span></button></div></div><HelpPanel showGloss={options.showGloss}/><section className="about-panel" aria-labelledby="about-title"><h3 id="about-title"><span>Περί</span>{options.showGloss&&<small>About</small>}</h3><div className="about-sources"><p>Ἀνάγνωσις is a daily Greek Scripture reader with completion-based plans and open-text reading.</p><p>SBLGNT 1.2 · CC BY 4.0</p><p>LXX Swete / First1KGreek · CC BY-SA 4.0</p><p>Lexical metadata: <a href="https://www.stepbible.org/" target="_blank" rel="noreferrer">STEP Bible</a> TAGNT, TEGMC, and TBESG · CC BY 4.0</p><p>Syntax metadata: <a href="https://github.com/Clear-Bible/macula-greek" target="_blank" rel="noreferrer">MACULA Greek Linguistic Datasets</a> · CC BY 4.0</p><p>Word and syntax assistance apply to SBLGNT readings and, as a preview pilot, Genesis, Psalms, and Isaiah in the LXX.</p><p>LXX morphology and filtered syntax: <a href="https://zenodo.org/records/14206061" target="_blank" rel="noreferrer">Opera Graeca Adnotata v0.2.0</a> · CC BY-SA 4.0</p><p>Διδαχὴ 9–10 and traditional Greek prayers · public domain</p></div></section></section></div>}
     {passageNavigatorDialog}
     {scriptureBrowserDialog}
   </section></main>

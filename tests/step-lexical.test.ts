@@ -56,14 +56,17 @@ test('generated Mark lexical metadata preserves the conservative baseline', () =
   assert.equal(fs.existsSync('imports/scripture/step'), false)
 })
 
-test('lexical assistance is limited to approved SBLGNT reading surfaces', () => {
+test('lexical assistance includes only approved NT and LXX reading surfaces', () => {
   assert.equal(lexicalAssistanceApplies('sblgnt', 'progressive'), true)
   assert.equal(lexicalAssistanceApplies('sblgnt', 'challenge'), true)
   assert.equal(lexicalAssistanceApplies('sblgnt', 'free-reading'), true)
   assert.equal(lexicalAssistanceApplies('sblgnt', 'psalm'), false)
   assert.equal(lexicalAssistanceApplies('sblgnt', 'prayer'), false)
   assert.equal(lexicalAssistanceApplies('lxx', 'progressive'), false)
-  assert.equal(lexicalAssistanceApplies('lxx', 'free-reading'), false)
+  assert.equal(lexicalAssistanceApplies('lxx', 'free-reading', 'genesis'), true)
+  assert.equal(lexicalAssistanceApplies('lxx', 'psalm', 'psalms'), true)
+  assert.equal(lexicalAssistanceApplies('lxx', 'free-reading', 'exodus'), false)
+  assert.equal(lexicalAssistanceApplies('lxx', 'prayer'), false)
 })
 
 test('every conservatively aligned Mark word is selectable while proper names are not marked uncommon', () => {

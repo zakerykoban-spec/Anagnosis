@@ -49,7 +49,7 @@ export function LexicalPopup({
         <div>
           <p className="lexical-surface">{info.surface}</p>
           <h2 id="lexical-popup-title">{info.lemma}</h2>
-          <small>Λεξικὸς τύπος · STEP Bible</small>
+          <small>Λεξικὸς τύπος · {info.sourceLabel ?? 'STEP Bible'}</small>
         </div>
         <button
           className="lexical-close"
